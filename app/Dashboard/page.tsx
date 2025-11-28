@@ -8,41 +8,82 @@ import {
   CaretDownIcon,
   PaperPlaneRight,
   Repeat,
+  ArrowUpRight,
 } from "@phosphor-icons/react";
 import React, { useState } from "react";
 import Image from "next/image";
 
 const Page = () => {
   const [askInput, setAskInput] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   const automationUpdates = [
     {
       id: 1,
-      initial: "A",
-      name: "Agent Alpha",
+      image: "/gmail.svg",
+      name: "My Agent",
       description: "Automation completed successfully",
     },
     {
       id: 2,
-      initial: "B",
-      name: "Agent Beta",
+      image: "/slack.svg",
+      name: "My Agent",
       description: "Task automation in progress",
     },
     {
       id: 3,
-      initial: "G",
-      name: "Agent Gamma",
+      image: "/gmail.svg",
+      name: "My Agent",
       description: "Last updated 2 hours ago",
+    },
+  ];
+
+  const Runningautomation = [
+    {
+      id: 1,
+      image: "/gmail.svg",
+      name: "My Agent",
+      description: "Automation completed successfully",
+    },
+    {
+      id: 2,
+      image: "/slack.svg",
+      name: "My Agent",
+      description: "Task automation in progress",
+    },
+    {
+      id: 3,
+      image: "/gmail.svg",
+      name: "My Agent",
+      description: "Last updated 2 hours ago",
+    },
+  ];
+
+  const Axleinsights = [
+    {
+      id: 1,
+      image: "/logo.svg",
+      text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quaerat, aliquid dignissimos!",
+    },
+    {
+      id: 2,
+      image: "/logo.svg",
+      text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quaerat, aliquid dignissimos!",
+    },
+    {
+      id: 3,
+      image: "/logo.svg",
+      text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Quaerat, aliquid dignissimos!",
     },
   ];
 
   return (
     <div className="w-full min-h-screen bg-dark">
       {/* Top Header Bar */}
-      <div className="border-b border-white/5 px-8 py-6 flex justify-between items-center">
+      <div className="px-8 py-6 flex justify-between items-center">
         <p className="text-white text-4xl font-semibold">Welcome Back, Tayo!</p>
 
-        <button className="flex items-center gap-4 px-6 py-2 rounded-full border border-white/4 hover:bg-white/5 transition-colors bg-white/4">
+        <button className="flex items-center gap-3 px-4 py-3 rounded-full border border-white/4 hover:bg-white/5 transition-colors bg-white/4">
           <Image
             src="/logo.svg"
             width="30"
@@ -50,48 +91,52 @@ const Page = () => {
             alt="User avatar"
             className="rounded-full"
           />
-          <span className="text-white/80 font-bold">Tayo</span>
-          <CaretDownIcon size={16} className="text-white/60" weight="fill" />
+          <span className="text-white/80 font-bold text-xl">Tayo</span>
+          <CaretDownIcon size={20} className="text-white/60" />
         </button>
       </div>
 
       {/* Main Section */}
       <div className="px-8 py-8">
         <div className="grid grid-cols-2 gap-8 mb-8">
-          {/* Running Agents */}
-          <div>
+          <div className="bg-white/2 rounded-4xl p-6">
             <div className="flex items-center gap-2 mb-6">
-              <ActivityIcon size={20} className="text-white/60" />
-              <h2 className="text-white text-sm font-semibold">
+              <Repeat size={30} className="text-white" />
+              <h2 className="text-white text-md font-semibold">
                 Running Agents
               </h2>
             </div>
 
             <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
+              {automationUpdates.map((running) => (
                 <div
-                  key={i}
-                  className="bg-white/2 rounded-xl p-4 flex items-center justify-between border border-white/5 hover:border-white/10 transition-colors"
+                  key={running.id}
+                  className="bg-white/3 rounded-2xl px-4 py-3 flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3 flex-1">
-                    <div className="w-8 h-8 rounded-full bg-base/30 flex items-center justify-center text-base text-sm font-semibold shrink-0">
-                      M
+                    <div className="">
+                      <Image
+                        src={running.image}
+                        alt="logo"
+                        width="30"
+                        height="30"
+                      />
                     </div>
                     <div className="flex-1">
-                      <p className="text-white text-sm font-medium">My Agent</p>
+                      <p className="text-white text-sm font-medium">
+                        {" "}
+                        {running.name}
+                      </p>
                       <p className="text-white/40 text-xs">
-                        My agent is currently running here
+                        {running.description}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-base flex items-center justify-center text-white shrink-0">
-                      <span className="text-xs">↗</span>
+                    <div className="w-10 h-10 rounded-full bg-base flex items-center justify-center text-white shrink-0">
+                      <ArrowUpRight size={20} />
                     </div>
-                    <button className="bg-base hover:bg-base/90 text-white px-6 py-2 rounded-full text-xs font-semibold transition-colors shrink-0">
-                      Review
-                    </button>
                   </div>
                 </div>
               ))}
@@ -99,23 +144,28 @@ const Page = () => {
           </div>
 
           {/* Automation Updates */}
-          <div className="bg-white/5 rounded-lg">
+          <div className="bg-white/2 rounded-4xl p-6">
             <div className="flex items-center gap-2 mb-6">
-              <Repeat size={30} className="text-white/60" />
+              <Repeat size={30} className="text-white" />
               <h2 className="text-white text-md font-semibold">
                 Automation Updates
               </h2>
             </div>
 
             <div className="space-y-4">
-              {automationUpdates.map((agent) => (
+              {Runningautomation.map((agent) => (
                 <div
                   key={agent.id}
-                  className="bg-white/2 rounded-xl p-4 flex items-center justify-between border border-white/5 hover:border-white/10 transition-colors"
+                  className="bg-white/3 rounded-2xl px-4 py-3 flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3 flex-1">
-                    <div className="w-8 h-8 rounded-full bg-base/30 flex items-center justify-center text-base text-sm font-semibold shrink-0">
-                      {agent.initial}
+                    <div className="">
+                      <Image
+                        src={agent.image}
+                        alt="logo"
+                        width="30"
+                        height="30"
+                      />
                     </div>
                     <div className="flex-1">
                       <p className="text-white text-sm font-medium">
@@ -128,10 +178,7 @@ const Page = () => {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-base flex items-center justify-center text-white shrink-0">
-                      <span className="text-xs">✓</span>
-                    </div>
-                    <button className="bg-base hover:bg-base/90 text-white px-6 py-2 rounded-full text-xs font-semibold transition-colors shrink-0">
+                    <button className="bg-base hover:bg-base/90 text-white px-8 py-3 rounded-full text-xs font-semibold transition-colors shrink-0">
                       Review
                     </button>
                   </div>
@@ -142,67 +189,65 @@ const Page = () => {
         </div>
 
         {/* Bottom CTA Cards */}
-        <div className="grid grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-3 gap-6 mb-28">
           {/* Create Agent Card */}
-          <div className="bg-white/2 rounded-2xl p-8 border border-white/5 hover:border-white/10 transition-colors flex flex-col items-center justify-center text-center min-h-[280px]">
-            <div className="text-4xl mb-4">🤖</div>
-            <h3 className="text-white font-semibold mb-3">
+          <div className="bg-white/2 rounded-4xl px-16 py-10 flex flex-col items-center justify-center text-center ">
+            <h3 className="text-white font-semibold mb-3 text-2xl ">
               Have a thing task that you need to automate?
             </h3>
-            <p className="text-white/50 text-sm mb-6">
-              Create an agent today and watch your tasks being done in real
-              time.
+            <p className="text-white/50 text-sm mb-6 max-w-mb">
+              Create an agent today and <br /> watch your tasks being done in
+              real time.
             </p>
-            <button className="bg-base hover:bg-base/90 text-white px-8 py-2 rounded-full font-semibold text-sm transition-colors">
+            <button className="bg-base hover:bg-base/90 text-white px-8 py-3 rounded-full font-semibold text-sm transition-colors">
               Create an Agent
             </button>
           </div>
 
           {/* Axle Insights Card */}
-          <div className="bg-white/2 rounded-2xl p-8 border border-white/5 hover:border-white/10 transition-colors">
-            <div className="flex items-center gap-2 mb-6">
-              <LightningIcon size={20} className="text-base" />
-              <h2 className="text-white text-sm font-semibold">
+          <div className="bg-white/2 rounded-4xl p-8 md:py-6 md:px-6">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-5">
+              <Repeat size={26} className="text-white" />
+              <h2 className="text-white text-xl font-semibold">
                 Axle Insights
               </h2>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <LightningIcon size={18} className="text-base mt-1 shrink-0" />
-                <p className="text-white/70 text-sm leading-relaxed">
-                  Lorem ipsum dolor sit amet consectetur adipiscing elit.
-                  Quisque
-                </p>
-              </div>
-              <div className="flex items-start gap-3">
-                <LightningIcon size={18} className="text-base mt-1 shrink-0" />
-                <p className="text-white/70 text-sm leading-relaxed">
-                  Lorem ipsum dolor sit amet consectetur adipiscing elit.
-                  Quisque
-                </p>
-              </div>
-              <div className="flex items-start gap-3">
-                <LightningIcon size={18} className="text-base mt-1 shrink-0" />
-                <p className="text-white/70 text-sm leading-relaxed">
-                  Lorem ipsum dolor sit amet consectetur adipiscing elit.
-                  Quisque
-                </p>
-              </div>
+            {/* Insights List */}
+            <div className="space-y-2">
+              {Axleinsights.map((insight, index) => (
+                <div
+                  key={index}
+                  className="flex items-start gap-4 bg-white/2 py-4 px-3 rounded-2xl"
+                >
+                  <div className="flex-shrink-0">
+                    <Image
+                      src={insight.image}
+                      width={28}
+                      height={28}
+                      alt="Insight logo"
+                      className="rounded-md"
+                    />
+                  </div>
+                  <p className="text-white/80 text-base text-xs">
+                    {insight.text}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Slack Card */}
-          <div className="bg-white/2 rounded-2xl p-8 border border-white/5 hover:border-white/10 transition-colors flex flex-col items-center justify-center text-center min-h-[280px]">
-            <div className="text-4xl mb-4">💬</div>
-            <h3 className="text-white font-semibold mb-3">
+          <div className="bg-white/2 rounded-4xl px-16 py-10 flex flex-col items-center justify-center text-center">
+            <h3 className="text-white font-semibold mb-3 text-2xl ">
               You've not connected your Slack
             </h3>
-            <p className="text-white/50 text-sm mb-6">
+            <p className="text-white/50 text-sm mb-6 max-w-mb">
               Connect your Slack today and automate your task being done in real
               time.
             </p>
-            <button className="bg-base hover:bg-base/90 text-white px-8 py-2 rounded-full font-semibold text-sm transition-colors">
+            <button className="bg-base hover:bg-base/90 text-white px-8 py-3 rounded-full font-semibold text-sm transition-colors">
               Connect your Slack
             </button>
           </div>
@@ -210,16 +255,24 @@ const Page = () => {
 
         {/* Ask Axle Input */}
         <div className="flex justify-center">
-          <div className="bg-white/4 rounded-full flex items-center gap-4 px-6 py-3 hover:border-white/10 transition-colors w-[50%]">
-            <Image src="/logo.svg" width="30" height="30" alt="" />
+          <div
+            onClick={() => setIsOpen(true)}
+            className="bg-white/4 rounded-full flex items-center gap-4 px-6 py-3 hover:border-white/10 transition-colors w-[50%] cursor-pointer"
+          >
+            <Image src="/logo.svg" width="30" height="30" alt="Axle Logo" />
+
             <input
               type="text"
               value={askInput}
               onChange={(e) => setAskInput(e.target.value)}
               placeholder="Ask Axle..."
-              className="flex-1 bg-transparent outline-none text-white placeholder:text-white/70 text-lg"
+              className="flex-1 bg-transparent outline-none text-white placeholder:text-white/70 text-lg cursor-pointer"
+              readOnly
             />
-            <button className="bg-base hover:bg-base/90 p-3 rounded-full text-white transition-colors shrink-0 active:scale-95">
+            <button
+              onClick={() => setIsOpen(true)}
+              className="bg-base hover:bg-base/90 p-3 rounded-full text-white transition-colors shrink-0 active:scale-95"
+            >
               <PaperPlaneRight size={18} />
             </button>
           </div>

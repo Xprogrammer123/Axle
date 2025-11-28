@@ -1,4 +1,4 @@
-import { Sidebar } from "@/components/Sidebar";
+import { Sidebar } from "@/app/Dashboard/components/Sidebar";
 
 export default function AppLayout({
   children,
@@ -10,7 +10,7 @@ export default function AppLayout({
       <body className="antialiased">
         <div className="flex">
           <Sidebar />
-          <main className="flex-1 ml-64">{children}</main>
+          <main className="flex-1 ml-72">{children}</main>
         </div>
       </body>
     </html>
