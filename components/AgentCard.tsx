@@ -33,7 +33,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({
       <div
         className={`${statusColor} px-4 py-2 rounded-full text-white text-xs font-semibold cursor-pointer hover:opacity-90 transition-opacity`}
       >
-        Review
+        Review 
       </div>
     </div>
   );
