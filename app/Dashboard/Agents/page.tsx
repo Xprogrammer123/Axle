@@ -22,32 +22,56 @@ const AgentsGrid = () => {
     },
     {
       id: 2,
-      title: "GitHub Agent",
-      subtitle: "Agent for GitHub and X.",
+      title: "Slack Agent",
+      subtitle: "Agent for Slack and Clickup.",
       description:
         "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quaerat, aliquid dignissimos! Beatae quibusdam vitae quas reiciendis, error dolor velit.",
       enabled: false,
     },
     {
       id: 3,
-      title: "GitHub Agent",
-      subtitle: "Agent for GitHub and X.",
+      title: "Notion Agent",
+      subtitle: "Agent for Notion and Figma.",
       description:
         "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quaerat, aliquid dignissimos! Beatae quibusdam vitae quas reiciendis, error dolor velit.",
       enabled: true,
     },
     {
       id: 4,
-      title: "GitHub Agent",
-      subtitle: "Agent for GitHub and X.",
+      title: "Telegram Agent",
+      subtitle: "Agent for Telegram and Gmail.",
       description:
         "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quaerat, aliquid dignissimos! Beatae quibusdam vitae quas reiciendis, error dolor velit.",
       enabled: true,
     },
     {
       id: 5,
-      title: "GitHub Agent",
-      subtitle: "Agent for GitHub and X.",
+      title: "X Agent",
+      subtitle: "Agent for X and Gmail.",
+      description:
+        "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quaerat, aliquid dignissimos! Beatae quibusdam vitae quas reiciendis, error dolor velit.",
+      enabled: false,
+    },
+    {
+      id: 6,
+      title: "Notion Agent",
+      subtitle: "Agent for Notion and Figma.",
+      description:
+        "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quaerat, aliquid dignissimos! Beatae quibusdam vitae quas reiciendis, error dolor velit.",
+      enabled: true,
+    },
+    {
+      id: 7,
+      title: "Telegram Agent",
+      subtitle: "Agent for Telegram and Gmail.",
+      description:
+        "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quaerat, aliquid dignissimos! Beatae quibusdam vitae quas reiciendis, error dolor velit.",
+      enabled: true,
+    },
+    {
+      id: 8,
+      title: "X Agent",
+      subtitle: "Agent for X and Gmail.",
       description:
         "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quaerat, aliquid dignissimos! Beatae quibusdam vitae quas reiciendis, error dolor velit.",
       enabled: false,
@@ -62,7 +86,7 @@ const AgentsGrid = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 p-10 bg-[#000] min-h-screen">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 p-10 bg-[#000]">
       {/* Create Agent Card */}
       <motion.div
         whileHover={{ scale: 1.02 }}
@@ -80,30 +104,34 @@ const AgentsGrid = () => {
         </button>
       </motion.div>
 
-      
+      {/* Agent Cards */}
       {agents.map((agent) => (
         <motion.div
           whileHover={{ scale: 1.02 }}
           key={agent.id}
-          className="bg-[#0b0b0b] rounded-3xl p-8 flex flex-col justify-between border border-white/10"
+          className="bg-white/4 rounded-4xl p-8 flex flex-col justify-between"
         >
-          <div>
-            <h3 className="text-white text-lg font-semibold mb-1">
+          <div className="mb-5">
+            <h3 className="text-white text-2xl font-semibold mb-1">
               {agent.title}
             </h3>
             <p className="text-white/60 text-sm mb-4">{agent.subtitle}</p>
-            <p className="text-white/40 text-sm leading-relaxed bg-white/5 p-4 rounded-xl">
+            <p className="text-white/40 text-sm bg-white/5 p-4 rounded-2xl mb-0 pb-10">
               {agent.description}
             </p>
           </div>
-
-          <div className="flex justify-between items-center mt-6">
-            <button className="bg-[#00c776] hover:bg-[#00e186] transition-all text-black font-semibold px-6 py-2 rounded-full">
+          {/* Bottom Section */}
+          <div className="flex items-end justify-between">
+            {/* View Button */}
+            <button className="bg-base hover:bg-base/90 transition-all text-white font-semibold py-4 rounded-full w-[70%] text-center">
               View Agent
             </button>
 
-            <div className="flex items-center gap-2">
-              <span className="text-white/60 text-xs">Enable/Disable</span>
+            {/* Toggle Section */}
+            <div className="flex flex-col items-end w-[15%]">
+              <span className="text-white/60 text-[10px] mb-1">
+                Enable/Disable
+              </span>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
@@ -111,7 +139,7 @@ const AgentsGrid = () => {
                   onChange={() => toggleAgent(agent.id)}
                   className="sr-only peer"
                 />
-                <div className="w-10 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:bg-[#00c776] transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+                <div className="w-12 h-6 bg-white/10 rounded-full peer peer-checked:bg-[#00c776] transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-6 after:transition-all peer-checked:after:translate-x-5"></div>
               </label>
             </div>
           </div>
