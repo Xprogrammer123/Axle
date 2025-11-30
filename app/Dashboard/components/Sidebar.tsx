@@ -3,12 +3,7 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  SquaresFour,
-  Cpu,
-  Plugs,
-  Faders,
-} from "@phosphor-icons/react";
+import { SquaresFour, Cpu, Plugs, Faders } from "@phosphor-icons/react";
 
 interface SidebarItem {
   label: string;
@@ -33,13 +28,13 @@ const sidebarItems: SidebarItem[] = [
   {
     label: "Apps",
     icon: <Plugs size={20} weight="bold" />,
-    href: "/apps",
+    href: "/Dashboard/Apps",
     id: "apps",
   },
   {
     label: "Settings",
     icon: <Faders size={20} weight="bold" />,
-    href: "/settings",
+    href: "/Dashboard/Settings",
     id: "settings",
   },
 ];
@@ -47,13 +42,12 @@ const sidebarItems: SidebarItem[] = [
 export const Sidebar = () => {
   const pathname = usePathname();
 
-  const isActive = (href: string) => {
-    return pathname.includes(href.split("/")[1]);
-  };
+  // ✅ Fix: Match exact route (case-insensitive)
+  const isActive = (href: string) => pathname === href;
 
   return (
     <div className="w-70 h-screen fixed left-0 top-0 flex flex-col p-6">
-     
+      {/* Logo */}
       <div className="flex items-center gap-3 mb-12">
         <Image
           src="/logo.svg"
@@ -65,6 +59,7 @@ export const Sidebar = () => {
         <span className="text-white text-2xl font-bold">Axle</span>
       </div>
 
+      {/* Navigation */}
       <nav className="flex flex-col gap-7 flex-1">
         {sidebarItems.map((item) => (
           <Link
