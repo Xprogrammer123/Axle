@@ -1,5 +1,5 @@
-import { Sidebar } from "@/app/Dashboard/components/Sidebar";
-import { Header } from "@/app/Dashboard/components/Header";
+import { Sidebar } from "@/app/app/components/Sidebar";
+import { Header } from "@/app/app/components/Header";
 
 export default function AppLayout({
   children,

@@ -16,25 +16,25 @@ const sidebarItems: SidebarItem[] = [
   {
     label: "Dashboard",
     icon: <SquaresFour size={20} weight="bold" />,
-    href: "/Dashboard",
-    id: "dashboard",
+    href: "/app",
+    id: "app",
   },
   {
     label: "Agents",
     icon: <Cpu size={20} weight="bold" />,
-    href: "/Dashboard/Agents",
+    href: "/app/agents",
     id: "agents",
   },
   {
     label: "Apps",
     icon: <Plugs size={20} weight="bold" />,
-    href: "/Dashboard/Apps",
+    href: "/app/apps",
     id: "apps",
   },
   {
     label: "Settings",
     icon: <Faders size={20} weight="bold" />,
-    href: "/Dashboard/Settings",
+    href: "/app/settings",
     id: "settings",
   },
 ];
@@ -60,12 +60,12 @@ export const Sidebar = () => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex flex-col gap-7 flex-1">
+      <nav className="flex flex-col gap-5 flex-1">
         {sidebarItems.map((item) => (
           <Link
             key={item.id}
             href={item.href}
-            className={`flex items-center gap-3 px-4 py-4 rounded-lg transition-all duration-200 ${
+            className={`flex items-center gap-2 p-3 rounded-lg transition-all duration-200 ${
               isActive(item.href)
                 ? "bg-base text-white"
                 : "text-white/60 hover:text-white/80 hover:bg-white/5"
