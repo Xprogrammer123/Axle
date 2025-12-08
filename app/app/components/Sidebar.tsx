@@ -48,15 +48,15 @@ export const Sidebar = () => {
   return (
     <div className="w-70 h-screen fixed left-0 top-0 flex flex-col p-6">
       {/* Logo */}
-      <div className="flex items-center gap-3 mb-12">
+      <div className="flex items-center mb-12">
         <Image
           src="/logo.svg"
           alt="Axle Logo"
-          width={32}
-          height={32}
+          width={28}
+          height={28}
           className="w-8 h-8"
         />
-        <span className="text-white text-2xl font-bold">Axle</span>
+        <span className="text-white text-3xl font-bold">xle</span>
       </div>
 
       {/* Navigation */}

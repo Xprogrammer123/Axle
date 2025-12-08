@@ -15,9 +15,8 @@ const initialIntegrations: Integration[] = [
   { id: 1, name: "Google", status: "connected", statusText: "Connected", warningText: null, buttonText: "Disconnect", enabled: true },
   { id: 2, name: "GitHub", status: "warning", statusText: "Warning: Please reconnect your app.", warningText: "Warning: Please reconnect your app.", buttonText: "Reconnect", enabled: true },
   { id: 3, name: "Slack", status: "disconnected", statusText: "Not Connected", warningText: null, buttonText: "Connect", enabled: false },
-  { id: 4, name: "Telegram", status: "connected", statusText: "Connected", warningText: null, buttonText: "Disconnect", enabled: true },
-  { id: 5, name: "X (Twitter)", status: "disconnected", statusText: "Not Connected", warningText: null, buttonText: "Connect", enabled: false },
-  { id: 6, name: "Gmail", status: "warning", statusText: "Error: Authentication expired.", warningText: "Error: Authentication expired.", buttonText: "Re-authenticate", enabled: true },
+  { id: 4, name: "X (Twitter)", status: "disconnected", statusText: "Not Connected", warningText: null, buttonText: "Connect", enabled: false },
+  { id: 5, name: "Instagram", status: "warning", statusText: "Error: Authentication expired.", warningText: "Error: Authentication expired.", buttonText: "Re-authenticate", enabled: true },
 ];
 
 export default function App() {

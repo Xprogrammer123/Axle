@@ -103,8 +103,8 @@ const Page = () => {
                         height="30"
                       />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-white text-sm font-medium">
+                    <div className="flex-1 gap-1">
+                      <p className="text-white text-md font-medium">
                         {" "}
                         {running.name}
                       </p>
@@ -148,8 +148,8 @@ const Page = () => {
                         height="30"
                       />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-white text-sm font-medium">
+                    <div className="flex-1 gap-1">
+                      <p className="text-white text-md font-medium">
                         {agent.name}
                       </p>
                       <p className="text-white/40 text-xs">
@@ -170,9 +170,9 @@ const Page = () => {
         </div>
 
       
-        <div className="grid grid-cols-3 gap-6 mb-28">
+        <div className="grid grid-cols-3 gap-6">
          
-          <div className="bg-white/2 rounded-4xl px-16 py-10 flex flex-col items-center justify-center text-center ">
+          <div className="bg-white/2 rounded-4xl px-8 py-10 flex flex-col items-center justify-center text-center ">
             <h3 className="text-white font-semibold mb-3 text-2xl ">
               Have a thing task that you need to automate?
             </h3>
@@ -208,7 +208,7 @@ const Page = () => {
                       width={28}
                       height={28}
                       alt="Insight logo"
-                      className="rounded-md"
+                      className=""
                     />
                   </div>
                   <p className="text-white/80 text-base text-xs">

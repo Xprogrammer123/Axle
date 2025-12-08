@@ -90,16 +90,16 @@ const AgentsGrid = () => {
       {/* Create Agent Card */}
       <motion.div
         whileHover={{ scale: 1.02 }}
-        className="bg-white/4 rounded-4xl px-16 py-10 flex flex-col items-center justify-center text-center "
+        className="bg-white/4 rounded-4xl px-8 py-10 flex flex-col items-center justify-center text-center "
       >
         <h3 className="text-white font-semibold mb-3 text-2xl ">
           Have a thing task that you need to automate?
         </h3>
         <p className="text-white/50 text-sm mb-6 max-w-mb">
-          Create an agent today and <br /> watch your tasks being done in real
+          Create an agent today and watch your tasks being done in real
           time.
         </p>
-        <button className="bg-base hover:bg-base/90 text-white px-8 py-3 rounded-full font-semibold text-sm transition-colors">
+        <button className="bg-base hover:bg-base/90 text-white px-12 py-4 rounded-full font-semibold text-sm transition-colors">
           Create an Agent
         </button>
       </motion.div>
@@ -116,20 +116,20 @@ const AgentsGrid = () => {
               {agent.title}
             </h3>
             <p className="text-white/60 text-sm mb-4">{agent.subtitle}</p>
-            <p className="text-white/40 text-sm bg-white/5 p-4 rounded-2xl mb-0 pb-10">
+            <p className="text-white/40 text-sm bg-white/5 p-3 rounded-2xl h-18 overflow-y-hidden">
               {agent.description}
             </p>
           </div>
           {/* Bottom Section */}
           <div className="flex items-end justify-between">
             {/* View Button */}
-            <button className="bg-base hover:bg-base/90 transition-all text-white font-semibold py-4 rounded-full w-[70%] text-center">
+            <button className="bg-base hover:bg-base/90 transition-all text-white font-semibold py-3.5 rounded-full w-[70%] text-center">
               View Agent
             </button>
 
             {/* Toggle Section */}
             <div className="flex flex-col items-end w-[15%]">
-              <span className="text-white/60 text-[10px] mb-1">
+              <span className="text-white/60 text-[12px] mb-1">
                 Enable/Disable
               </span>
               <label className="relative inline-flex items-center cursor-pointer">

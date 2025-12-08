@@ -82,10 +82,10 @@ const AskAxleInput = () => {
 
   return (
     <>
-      <div className="flex justify-center">
+      <div className="flex fixed rounded-full z-50 bottom-10 backdrop-blur-2xl justify-center">
         <div
           onClick={() => setIsOpen(true)}
-          className="relative bg-white/4 rounded-full flex items-center px-6 py-3 hover:border-white/10 transition-colors w-[70%] md:w-[800px] cursor-pointer"
+          className="relative bg-white/5 rounded-full flex items-center p-4 border-2 border-white/2  transition-colors w-[70%] md:w-[550px] cursor-pointer"
         >
           <Image src="/logo.svg" width={30} height={30} alt="Axle Logo" />
           <input

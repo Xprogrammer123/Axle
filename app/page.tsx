@@ -40,7 +40,7 @@ const Home = () => {
           dolor velit.
         </p>
 
-        <div className="flex flex-col items-end justify-between bg-white/5 border border-white/10 mt-8 rounded-4xl p-4 h-36 w-[90%] md:w-[800px] mb-11">
+        <div className="flex flex-col items-end justify-between bg-white/5 border border-white/10 mt-8 rounded-4xl p-4 h-32 w-[90%] md:w-[800px] mb-11">
           <Input
             placeholder="Ask Axle..."
             className="bg-transparent w-full border-none text-white focus:outline-none focus:ring-0 focus-visible:ring-0 placeholder:text-white/50"

@@ -53,14 +53,14 @@ const Authpage = () => {
   };
 
   return (
-    <div className="flex flex-col bg-dark min-h-screen p-4 sm:p-6 lg:p-8 w-screen overflow-hidden">
+    <div className="flex flex-col bg-dark min-h-screen p-4 w-screen overflow-hidden">
       <div className="mb-8 sm:mb-12">
         <Image
           src="/logo.svg"
           alt="Logo"
-          width={100}
-          height={100}
-          className="h-auto w-16 sm:w-20"
+          width={32}
+          height={32}
+          className="h-auto w-8 sm:w-10"
         />
       </div>
       <div className="w-full flex-1 flex gap-6 flex-col justify-center items-center">

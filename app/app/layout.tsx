@@ -1,5 +1,6 @@
 import { Sidebar } from "@/app/app/components/Sidebar";
 import { Header } from "@/app/app/components/Header";
+import AskAxleInput from "./components/ChatSidebar";
 
 export default function AppLayout({
   children,
@@ -17,7 +18,9 @@ export default function AppLayout({
         <Header />
 
         {/* Page Content */}
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6">{children}<div className="flex justify-center">
+        <AskAxleInput/>
+        </div></main>
       </div>
     </div>
   );
