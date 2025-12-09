@@ -27,7 +27,7 @@ const AskAxleInput = () => {
       id: 1,
       sender: "ai",
       name: "Axle",
-      image: "/axle.svg",
+      image: "/logo.svg",
       text: "Hello Tayo, How may I help you today?",
       time: "12:36 PM",
       date: "12/03/25",
@@ -95,7 +95,7 @@ const AskAxleInput = () => {
             id: Date.now() + 1,
             sender: "ai" as const,
             name: "Axle",
-            image: "/axle.svg",
+            image: "/logo.svg",
             text: aiFullText,
             time: new Date().toLocaleTimeString([], {
               hour: "2-digit",
@@ -241,7 +241,7 @@ const AskAxleInput = () => {
                     className="relative"
                   >
                     <Image
-                      src="/axle.svg"
+                      src="/logo.svg"
                       width={32}
                       height={32}
                       alt="Axle"
@@ -408,7 +408,7 @@ const AskAxleInput = () => {
                         transition={{ duration: 1.5, repeat: Infinity }}
                       >
                         <Image
-                          src="/axle.svg"
+                          src="/logo.svg"
                           width={28}
                           height={28}
                           alt="Axle"
@@ -460,7 +460,7 @@ const AskAxleInput = () => {
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <Image
-                        src="/axle.svg"
+                        src="/logo.svg"
                         width={28}
                         height={28}
                         alt="Axle"
@@ -508,7 +508,7 @@ const AskAxleInput = () => {
                         initial={{ width: 0 }}
                         animate={{ width: "100%" }}
                         transition={{ duration: 5, ease: "linear" }}
-                        className="absolute top-0 left-0 h-1 bg-gradient-to-r from-base to-base/50"
+                        className="absolute top-0 left-0 h-1 bg-linear-to-r from-base to-base/50"
                       />
                       <div className="text-white font-semibold mb-4 bg-base/20 p-6 border-b border-white/10">
                         <div className="flex items-center gap-2">
@@ -627,7 +627,7 @@ const AskAxleInput = () => {
                     <PaperPlaneRight size={18} weight="fill" />
                   </motion.button>
                 </motion.div>
-                <p className="text-white/30 text-xs mt-2 text-center">
+                <p className="text-white/50 text-xs mt-2 text-center">
                   Press Enter to send • Shift+Enter for new line
                 </p>
               </div>

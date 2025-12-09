@@ -8,7 +8,7 @@ import {
   CreditCard,
   SignOut,
   Trash,
-  Save,
+  CheckCircleIcon,
   CircleNotch,
 } from "@phosphor-icons/react";
 import { authAPI } from "@/lib/api";
@@ -277,7 +277,7 @@ const Settings = () => {
                 </>
               ) : (
                 <>
-                  <Save size={18} />
+                  <CheckCircleIcon size={18} />
                   Save Changes
                 </>
               )}
