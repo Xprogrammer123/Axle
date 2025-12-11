@@ -37,7 +37,9 @@ const AgentsGrid = () => {
       const data = await agentsAPI.list();
       setAgents(data.agents || []);
     } catch (error) {
-      showToast(error.message || "Failed to load agents", "error");
+      const message =
+        error instanceof Error ? error.message : "Failed to load agents";
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
@@ -55,7 +57,9 @@ const AgentsGrid = () => {
       showToast("Agent deleted successfully", "success");
       loadAgents();
     } catch (error) {
-      showToast(error.message || "Failed to delete agent", "error");
+      const message =
+        error instanceof Error ? error.message : "Failed to delete agent";
+      showToast(message, "error");
     } finally {
       setDeletingId(null);
     }
@@ -64,23 +68,24 @@ const AgentsGrid = () => {
   const toggleAgent = async (
     id: string,
     enabled: boolean,
-    e: React.MouseEvent
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
     e.preventDefault();
     e.stopPropagation();
 
     try {
-      // Update schedule enabled state
       await agentsAPI.update(id, {
         schedule: {
-          enabled: !enabled,
+          enabled,
           intervalMinutes: 5,
         },
       });
-      showToast(!enabled ? "Agent enabled" : "Agent disabled", "success");
+      showToast(enabled ? "Agent enabled" : "Agent disabled", "success");
       loadAgents();
     } catch (error) {
-      showToast(error.message || "Failed to update agent", "error");
+      const message =
+        error instanceof Error ? error.message : "Failed to update agent";
+      showToast(message, "error");
     }
   };
 
@@ -192,9 +197,12 @@ const AgentsGrid = () => {
                     <input
                       type="checkbox"
                       checked={isEnabled}
-                      onChange={(e) => toggleAgent(agent._id, isEnabled, e)}
+                      onChange={(e) =>
+                        toggleAgent(agent._id, e.target.checked, e)
+                      }
                       className="sr-only peer"
                     />
+
                     <div className="w-12 h-6 bg-white/10 rounded-full peer peer-checked:bg-[#00c776] transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-6 after:transition-all peer-checked:after:translate-x-5"></div>
                   </label>
                 </div>

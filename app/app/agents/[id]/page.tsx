@@ -65,7 +65,7 @@ const AgentDetailPage = () => {
         systemPrompt: data.agent.systemPrompt || "",
       });
     } catch (error) {
-      showToast(error.message || "Failed to load agent", "error");
+      showToast((error as Error).message || "Failed to load agent", "error");
       router.push("/app/agents");
     } finally {
       setLoading(false);
@@ -84,9 +84,10 @@ const AgentDetailPage = () => {
       });
       showToast("Agent updated successfully", "success");
       setIsEditing(false);
-      loadAgent();
     } catch (error) {
-      showToast(error.message || "Failed to update agent", "error");
+      const message =
+        error instanceof Error ? error.message : "Failed to update agent";
+      showToast(message, "error");
     } finally {
       setIsSaving(false);
     }
@@ -117,9 +118,10 @@ const AgentDetailPage = () => {
         !agent.schedule?.enabled ? "Agent enabled" : "Agent disabled",
         "success"
       );
-      loadAgent();
     } catch (error) {
-      showToast(error.message || "Failed to update agent", "error");
+      const message =
+        error instanceof Error ? error.message : "Failed to update agent";
+      showToast(message, "error");
     }
   };
 
@@ -134,7 +136,9 @@ const AgentDetailPage = () => {
         loadAgent();
       }, 2000);
     } catch (error) {
-      showToast(error.message || "Failed to run agent", "error");
+      const message =
+        error instanceof Error ? error.message : "Failed to run agent";
+      showToast(message, "error");
     } finally {
       setIsRunning(false);
     }
@@ -144,13 +148,18 @@ const AgentDetailPage = () => {
     if (!agent) return;
     if (!confirm("Are you sure you want to delete this agent?")) return;
 
-    try {
-      await agentsAPI.delete(agent._id);
-      showToast("Agent deleted successfully", "success");
-      router.push("/app/agents");
-    } catch (error) {
-      showToast(error.message || "Failed to delete agent", "error");
-    }
+   try {
+  await agentsAPI.delete(agent._id);
+  showToast("Agent deleted successfully", "success");
+  router.push("/app/agents");
+} catch (error) {
+  const message =
+    error instanceof Error
+      ? error.message
+      : "Failed to delete agent";
+  showToast(message, "error");
+}
+
   };
 
   const getStatusColor = () => {
