@@ -54,23 +54,23 @@ const AgentDetailPage = () => {
     }
   }, [agentId]);
 
- const loadAgent = async () => {
-  try {
-    setLoading(true);
-    const data = await agentsAPI.get(agentId); // returns Agent
-    setAgent(data); // <-- use data directly
-    setFormData({
-      name: data.name || "",
-      description: data.description || "",
-      systemPrompt: data.systemPrompt || "",
-    });
-  } catch (error) {
-    showToast((error as Error).message || "Failed to load agent", "error");
-    router.push("/app/agents");
-  } finally {
-    setLoading(false);
-  }
-};
+  const loadAgent = async () => {
+    try {
+      setLoading(true);
+      const data: Agent = await agentsAPI.get(agentId); // returns Agent
+      setAgent(data); // directly set the agent state
+      setFormData({
+        name: data.name || "",
+        description: data.description || "",
+        systemPrompt: data.systemPrompt || "",
+      });
+    } catch (error) {
+      showToast((error as Error).message || "Failed to load agent", "error");
+      router.push("/app/agents");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!agent) return;
