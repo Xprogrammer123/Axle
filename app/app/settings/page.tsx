@@ -95,7 +95,7 @@ const Settings = () => {
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
-          <CircleNotch size={48} className="text-base" />
+         <div className="loader-light"></div>
         </motion.div>
       </div>
     );

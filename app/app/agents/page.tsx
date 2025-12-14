@@ -98,7 +98,7 @@ const AgentsGrid = () => {
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
-          <CircleNotch size={48} className="text-base" />
+          <div className="loader-light"></div>
         </motion.div>
       </div>
     );
@@ -115,8 +115,8 @@ const AgentsGrid = () => {
           className="bg-white/4 rounded-4xl px-8 py-10 flex flex-col items-center justify-center text-center cursor-pointer border-2 border-dashed border-white/10 hover:border-base/50 transition-all"
         >
           <motion.div
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            // animate={{ scale: [1, 1.1, 1] }}
+            // transition={{ duration: 2, repeat: Infinity }}
             className="mb-4"
           >
             <div className="w-16 h-16 rounded-full bg-base/20 flex items-center justify-center">
@@ -167,11 +167,11 @@ const AgentsGrid = () => {
                 <h3 className="text-white text-2xl font-semibold mb-1">
                   {agent.name}
                 </h3>
-                <p className="text-white/60 text-sm mb-2">
+                {/* <p className="text-white/60 text-sm mb-2">
                   {agent.tools?.length
                     ? `Tools: ${agent.tools.join(", ")}`
                     : "No tools configured"}
-                </p>
+                </p> */}
                 <p className="text-white/40 text-sm bg-white/5 p-3 rounded-2xl min-h-[60px] overflow-y-hidden">
                   {agent.description || "No description provided"}
                 </p>

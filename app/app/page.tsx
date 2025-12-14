@@ -39,7 +39,8 @@ const Page = () => {
     try {
       setLoading(true);
       const data = await agentsAPI.list();
-      setAgents(data || []);
+      const resData = data.agents!;
+      setAgents(resData);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to load agents";
@@ -103,7 +104,7 @@ const Page = () => {
 
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <CircleNotch size={24} className="text-base animate-spin" />
+                <div className="loader-light"></div>
               </div>
             ) : runningAgents.length === 0 ? (
               <div className="text-center py-12 text-white/40">
@@ -164,7 +165,7 @@ const Page = () => {
 
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <CircleNotch size={24} className="text-base animate-spin" />
+               <div className="loader-light"></div>
               </div>
             ) : recentAgents.length === 0 ? (
               <div className="text-center py-12 text-white/40">
