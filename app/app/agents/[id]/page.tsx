@@ -58,9 +58,8 @@ const AgentDetailPage = () => {
     try {
       setLoading(true);
       const data = await agentsAPI.get(agentId); // returns Agent with _id
-      const resData = data.agent!;
       console.log(data)
-      setAgent(resData);
+      setAgent(data);
       setFormData({
         name: data.name || "",
         description: data.description || "",

@@ -212,8 +212,13 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
         name: formData.name,
         description: formData.description,
         systemPrompt: formData.systemPrompt || formData.description,
-        tools: allTools, // Provide all available tools to the agent
-        integrations: mappedIntegrations,
+        integrations: formData.integrations.map((id) => {
+          const integration = availableIntegrations.find((int) => int.id === id);
+          return {
+            name: integration?.name || id,
+            integrationId: id,
+          };
+        }),
         schedule: formData.schedule,
       });
 
@@ -225,8 +230,8 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
         name: "",
         description: "",
         systemPrompt: "",
-        integrations: [],
         tools: "*",
+        integrations: [],
         schedule: { enabled: false, intervalMinutes: 5 },
       });
     } catch (error) {
@@ -240,7 +245,7 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
     setFormData((prev) => ({
       ...prev,
       integrations: prev.integrations.includes(integrationId)
-        ? prev.integrations.filter((t) => t !== integrationId)
+        ? prev.integrations.filter((id) => id !== integrationId)
         : [...prev.integrations, integrationId],
     }));
   };
@@ -349,9 +354,7 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
               <div className="grid grid-cols-2 gap-3">
                 {availableIntegrations.map((integration) => {
                   const Icon = integration.icon;
-                  const obj = integration.id;
-                  const isSelected = formData.integrations.includes(obj);
-                  console.log(isSelected);
+                  const isSelected = formData.integrations.includes(integration.id);
                   return (
                     <motion.button
                       key={integration.id}
@@ -366,9 +369,7 @@ export const CreateAgentModal: React.FC<CreateAgentModalProps> = ({
                     >
                       <div className="flex items-center gap-3">
                         <Icon size={24} className={integration.color} />
-                        <span className="text-white font-medium">
-                          {integration.name}
-                        </span>
+                        <span className="text-white font-medium">{integration.name}</span>
                         {isSelected && (
                           <motion.div
                             initial={{ scale: 0 }}
