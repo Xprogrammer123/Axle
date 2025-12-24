@@ -37,9 +37,6 @@ const removeToken = () => {
     "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 };
 
-// Enhanced API request with token management
-// Cookies are sent automatically with credentials: "include"
-// Authorization header is kept as fallback for compatibility
 const apiRequest = async (
   endpoint: string,
   options: RequestInit = {}
@@ -131,12 +128,14 @@ const apiRequest = async (
   }
 };
 
+
+
 // Auth API
 export const authAPI = {
-  requestMagicLink: async (name: string, email: string) => {
-    return apiRequest("/auth", {
+  requestMagicLink: async (email: string) => {
+    return apiRequest("/auth/magic-link", {
       method: "POST",
-      body: JSON.stringify({ name, email }),
+      body: JSON.stringify({ email }),
     });
   },
 
@@ -188,6 +187,9 @@ export const authAPI = {
     }
   },
 };
+
+
+
 
 // Types for agent data
 export type AgentCreateData = {
@@ -272,6 +274,11 @@ export const agentsAPI = {
   },
 };
 
+
+
+
+
+
 // OAuth API
 export const oauthAPI = {
   getAuthUrl: async (provider: string) => {
@@ -295,6 +302,9 @@ export const oauthAPI = {
     });
   },
 };
+
+
+
 
 // Chat API (main agent chat)
 export const chatAPI = {

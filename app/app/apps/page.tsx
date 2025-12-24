@@ -1,94 +1,224 @@
 "use client";
-import { useState } from "react";
+
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import {
+  GoogleLogo,
+  GithubLogo,
+  SlackLogo,
+  InstagramLogo,
+  XLogo,
+  ArrowClockwise,
+  Plug,
+} from "@phosphor-icons/react";
+import { oauthAPI } from "@/lib/api";
+import { useToast } from "@/components/ui/toast";
+
+type ProviderId = "google" | "github" | "slack" | "instagram" | "x";
 
 type Integration = {
-  id: number;
-  name: string;
-  status: "connected" | "disconnected" | "warning";
-  statusText: string;
-  warningText: string | null;
-  buttonText: string;
-  enabled: boolean;
+  _id: string;
+  provider: ProviderId;
+  status?: "connected" | "warning";
+  message?: string;
 };
 
-const initialIntegrations: Integration[] = [
-  { id: 1, name: "Google", status: "connected", statusText: "Connected", warningText: null, buttonText: "Disconnect", enabled: true },
-  { id: 2, name: "GitHub", status: "warning", statusText: "Warning: Please reconnect your app.", warningText: "Warning: Please reconnect your app.", buttonText: "Reconnect", enabled: true },
-  { id: 3, name: "Slack", status: "disconnected", statusText: "Not Connected", warningText: null, buttonText: "Connect", enabled: false },
-  { id: 4, name: "X (Twitter)", status: "disconnected", statusText: "Not Connected", warningText: null, buttonText: "Connect", enabled: false },
-  { id: 5, name: "Instagram", status: "warning", statusText: "Error: Authentication expired.", warningText: "Error: Authentication expired.", buttonText: "Re-authenticate", enabled: true },
-];
+const PROVIDER_META: Record<
+  ProviderId,
+  {
+    label: string;
+    Icon: React.ElementType;
+    color: string;
+  }
+> = {
+  google: { label: "Google", Icon: GoogleLogo, color: "text-blue-400" },
+  github: { label: "GitHub", Icon: GithubLogo, color: "text-gray-400" },
+  slack: { label: "Slack", Icon: SlackLogo, color: "text-purple-400" },
+  instagram: {
+    label: "Instagram",
+    Icon: InstagramLogo,
+    color: "text-pink-400",
+  },
+  x: { label: "X (Twitter)", Icon: XLogo, color: "text-white" },
+};
 
-export default function App() {
-  const [integrations, setIntegrations] = useState<Integration[]>(initialIntegrations);
+const AppsPage = () => {
+  const { showToast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState<ProviderId | null>(null);
+  const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
+  const [integrations, setIntegrations] = useState<Integration[]>([]);
 
-  const handleToggle = (id: number) => {
-    setIntegrations(prev =>
-      prev.map(i => (i.id === id ? { ...i, enabled: !i.enabled } : i))
-    );
+  const loadIntegrations = async () => {
+    try {
+      setLoading(true);
+      const data = await oauthAPI.listIntegrations();
+      // Backend is expected to return { integrations: [...] }
+      setIntegrations(data.integrations || []);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load integrations";
+      showToast(message, "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAction = (id: number) => {
-    const integration = integrations.find(i => i.id === id);
-    if (integration) alert(`Action for ${integration.name}: ${integration.buttonText}`);
+  useEffect(() => {
+    loadIntegrations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleConnect = async (provider: ProviderId) => {
+    try {
+      setAuthLoading(provider);
+      const data = await oauthAPI.getAuthUrl(provider);
+      const url = data.url || data.authUrl || data.redirectUrl;
+      if (!url) {
+        showToast("No auth URL returned from server", "error");
+        return;
+      }
+      window.location.href = url;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to start connection";
+      showToast(message, "error");
+    } finally {
+      setAuthLoading(null);
+    }
   };
+
+  const handleDisconnect = async (integrationId: string) => {
+    if (
+      !confirm(
+        "Are you sure you want to disconnect this integration? Existing agents using it may stop working."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setDisconnectingId(integrationId);
+      await oauthAPI.disconnect(integrationId);
+      showToast("Integration disconnected", "success");
+      loadIntegrations();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to disconnect";
+      showToast(message, "error");
+    } finally {
+      setDisconnectingId(null);
+    }
+  };
+
+  const isProviderConnected = (provider: ProviderId) =>
+    integrations.some((i) => i.provider === provider);
+
+  const getIntegrationForProvider = (provider: ProviderId) =>
+    integrations.find((i) => i.provider === provider);
 
   return (
     <div className="bg-black p-10 grid grid-cols-1 md:grid-cols-3 gap-7">
-      {integrations.map((integration) => {
-        const { id, name, status, statusText, warningText, buttonText, enabled } = integration;
-
-        const statusColor =
-          status === "connected"
-            ? "text-[#00c776]"
-            : status === "disconnected"
-            ? "text-red-500"
-            : "text-white/50";
-
-        const warningColor = "text-yellow-500";
-
-        return (
-          <div
-            key={id}
-            className="bg-white/4 rounded-4xl p-8 flex flex-col justify-between h-full shadow-2xl"
+      {loading ? (
+        <div className="col-span-full flex items-center justify-center py-20">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           >
-            <div>
-              <h3 className="text-white text-2xl font-semibold mb-4">{name}</h3>
-              <div className="h-10 flex items-center mb-6 bg-white/4 p-6 rounded-2xl">
-                {warningText ? (
-                  <p className={`${warningColor} text-sm font-medium`}>{warningText}</p>
-                ) : (
-                  <p className={`${statusColor} text-sm font-medium`}>{statusText}</p>
-                )}
+            <div className="loader-light" />
+          </motion.div>
+        </div>
+      ) : (
+        (Object.keys(PROVIDER_META) as ProviderId[]).map((provider) => {
+          const { label, Icon, color } = PROVIDER_META[provider];
+          const integration = getIntegrationForProvider(provider);
+          const connected = Boolean(integration);
+          const status =
+            integration?.status || (connected ? "connected" : "disconnected");
+
+          const statusText =
+            status === "connected"
+              ? "Connected"
+              : status === "warning"
+              ? integration?.message || "Connection requires attention"
+              : "Not Connected";
+
+          const statusColor =
+            status === "connected"
+              ? "text-[#00c776]"
+              : status === "warning"
+              ? "text-yellow-500"
+              : "text-red-500";
+
+          const primaryLabel = connected ? "Disconnect" : "Connect";
+
+          return (
+            <div
+              key={provider}
+              className="bg-white/4 rounded-4xl p-8 flex flex-col justify-between h-full border border-white/10"
+            >
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <Icon size={28} className={color} />
+                  <h3 className="text-white text-2xl font-semibold">{label}</h3>
+                </div>
+                <div className="min-h-[56px] flex items-center mb-6 bg-white/5 px-4 rounded-2xl">
+                  <p className={`${statusColor} text-sm font-medium`}>
+                    {statusText}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mt-auto gap-4">
+                <button
+                  className="flex-1 bg-base hover:bg-base/90 text-white font-semibold py-3 rounded-full text-center transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() =>
+                    connected && integration
+                      ? handleDisconnect(integration._id)
+                      : handleConnect(provider)
+                  }
+                  disabled={
+                    authLoading === provider ||
+                    disconnectingId === integration?._id
+                  }
+                >
+                  {connected ? (
+                    disconnectingId === integration?._id ? (
+                      <>
+                        <ArrowClockwise
+                          size={18}
+                          className="animate-spin text-white"
+                        />
+                        Disconnecting...
+                      </>
+                    ) : (
+                      <>
+                        <PlugDisconnect size={18} />
+                        {primaryLabel}
+                      </>
+                    )
+                  ) : authLoading === provider ? (
+                    <>
+                      <ArrowClockwise
+                        size={18}
+                        className="animate-spin text-white"
+                      />
+                      Redirecting...
+                    </>
+                  ) : (
+                    <>
+                      <Plug size={18} />
+                      {primaryLabel}
+                    </>
+                  )}
+                </button>
               </div>
             </div>
-
-            <div className="flex items-center justify-between mt-auto">
-              <button
-                className="bg-base hover:bg-base/90 text-white font-semibold py-4 rounded-full w-full text-center transition-colors"
-                onClick={() => handleAction(id)}
-              >
-                {buttonText}
-              </button>
-
-              <div className="flex flex-col items-center ml-4">
-                <span className="text-white/60 text-[10px] mb-1 whitespace-nowrap">
-                  Enable/Disable
-                </span>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={enabled}
-                    onChange={() => handleToggle(id)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-12 h-6 bg-white/10 rounded-full peer peer-checked:bg-[#00c776] transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-6"></div>
-                </label>
-              </div>
-            </div>
-          </div>
-        );
-      })}
+          );
+        })
+      )}
     </div>
   );
-}
+};
+
+export default AppsPage;
