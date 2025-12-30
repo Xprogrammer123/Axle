@@ -157,7 +157,7 @@ export default function DashboardPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 h-fit rounded-xl bg-white/5 border border-white/10 w-fit">
-                      <Image src="/sparkle.svg" alt="Agent" height={20} width={20} className="size-5" />
+                    <SparkleIcon size={22} className="text-base" weight="fill" />
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">{agent.name}</span>

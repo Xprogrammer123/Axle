@@ -5,13 +5,13 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-black text-white relative overflow-x-hidden selection:bg-green-500/30">
+    <main className="min-h-screen scroll-smooth bg-black text-white relative overflow-x-hidden selection:bg-green-500/30">
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-white/10 bg-black/70 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <div className="flex items-center gap-2">
             <Image src="/logo.svg" alt="Axle" width={24} height={24} />
-            <span className="text-sm font-semibold tracking-tight">Axle</span>
+            {/* <span className="text-sm font-semibold tracking-tight">Axle</span> */}
           </div>
           <nav className="hidden items-center gap-6 text-sm text-white/60 md:flex">
             <a href="#how-it-works" className="hover:text-white">
@@ -25,17 +25,17 @@ export default function Home() {
             </a>
           </nav>
           <div className="flex items-center gap-3">
-            <Link
+            {/* <Link
               href="/auth"
               className="text-xs md:text-sm text-white/60 hover:text-white"
             >
               Log in
-            </Link>
+            </Link> */}
             <Link
               href="/auth"
-              className="rounded-full bg-white px-4 py-1.5 text-xs md:text-sm font-medium text-black hover:bg-white/90"
+              className="rounded-full bg-white px-4 py-2 text-xs md:text-sm font-semibold text-black hover:bg-white/90"
             >
-              Launch dashboard
+              Get Started
             </Link>
           </div>
         </div>
@@ -52,19 +52,19 @@ export default function Home() {
             <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
               Wire up{" "}
               <span className="bg-gradient-to-r from-emerald-300 via-sky-300 to-violet-300 bg-clip-text text-transparent">
-                God‑mode automation
+                Agentic automation
               </span>{" "}
               in minutes.
             </h1>
             <p className="max-w-xl text-sm text-white/60 md:text-base">
               Axle connects your product, your tools, and your data into a single automation
               layer. Design agents once, then watch every step stream into a live execution
-              canvas—no brittle zaps, no black boxes.
+              canvas. No brittle zaps, no black boxes.
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 href="/auth"
-                className="rounded-full bg-white px-5 py-2 text-sm font-medium text-black hover:bg-white/90"
+                className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-black hover:bg-white/90"
               >
                 Get started free
               </Link>
@@ -125,8 +125,8 @@ export default function Home() {
                 ))}
               </div>
               <div className="mt-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-sky-500/10 p-3 text-[11px] text-white/70">
-                God Agent is orchestrating GitHub, Slack, Gmail and Calendar in an iterative
-                loop—reasoning, executing tools, and updating memory automatically.
+                Axle is orchestrating GitHub, Slack, Gmail and Calendar in an iterative
+                loop reasoning, executing tools, and updating memory automatically.
               </div>
             </div>
           </div>
@@ -180,7 +180,7 @@ export default function Home() {
       {/* Use cases */}
       <section
         id="use-cases"
-        className="border-b border-white/10 bg-gradient-to-b from-black via-[#020617] to-black py-14"
+        className="border-b border-white/10 bg-gradient-to-b from-black via-base/5 to-base/10 py-14"
       >
         <div className="mx-auto max-w-6xl px-4">
           <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">

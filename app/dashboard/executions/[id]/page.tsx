@@ -104,7 +104,7 @@ export default function ExecutionDetailPage() {
           <div className="flex items-center gap-4">
             <StatusLargeIcon status={execution.status} />
             <div>
-              <h1 className="text-3xl font-light text-white tracking-tight">
+              <h1 className="text-2xl font-light text-white tracking-tight">
                 {execution.name || 'Untitled Execution'}
               </h1>
               <p className="text-white/40 mt-1">
@@ -116,7 +116,7 @@ export default function ExecutionDetailPage() {
 
           <div className="flex gap-2">
             {execution.status === 'failed' && (
-              <Button className="bg-white text-black hover:bg-white/90 rounded-full px-6">
+              <Button className="bg-base text-black w-fit hover:bg-base/90 rounded-full text-sm px-4">
                 Retry Execution
               </Button>
             )}
@@ -157,7 +157,7 @@ export default function ExecutionDetailPage() {
               <Brain size={20} weight="duotone" />
               <h2 className="text-lg font-medium">AI Reasoning</h2>
             </div>
-            <Card className="p-6 bg-white/[0.03] border-white/5 rounded-2xl">
+            <Card className="p-6 bg-base/[0.03] border-white/5 rounded-2xl">
               <div className="whitespace-pre-wrap text-white/50 text-sm leading-relaxed italic">
                 {execution.reasoning || "The agent is formulating a plan based on your instructions..."}
               </div>
@@ -222,12 +222,12 @@ export default function ExecutionDetailPage() {
                   <div key={i} className="group">
                     <div className="flex gap-4">
                       <div className="flex flex-col items-center">
-                        <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 ${action.error ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-white/5 border-white/10 text-white/40'
+                        <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 ${action.error ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-base/5 border-white/10 text-white/40'
                           }`}>
                           {i + 1}
                         </div>
                         {i < execution.actionsExecuted.length - 1 && (
-                          <div className="w-px h-full bg-white/5 my-1" />
+                          <div className="w-px h-full bg-base/5 my-1" />
                         )}
                       </div>
 
@@ -287,13 +287,13 @@ export default function ExecutionDetailPage() {
                             <pre className="text-[10px] text-white/20 font-mono overflow-x-auto">
                               {JSON.stringify(action.params, null, 2)}
                             </pre>
-                            <div className="h-px bg-white/5" />
+                            <div className="h-px bg-base/5" />
                             <pre className="text-[10px] text-emerald-500/30 font-mono overflow-x-auto">
                               {JSON.stringify(action.result, null, 2)}
                             </pre>
                             {action.outputValidation && (
                               <>
-                                <div className="h-px bg-white/5" />
+                                <div className="h-px bg-base/5" />
                                 <pre className="text-[10px] text-amber-300/60 font-mono overflow-x-auto">
                                   {JSON.stringify(action.outputValidation, null, 2)}
                                 </pre>
@@ -313,7 +313,7 @@ export default function ExecutionDetailPage() {
 
         {/* Right: Metadata & Artifacts */}
         <div className="space-y-8">
-          <Card className="p-6 bg-white/[0.02] border-white/5 rounded-2xl">
+          <Card className="p-6 bg-base/[0.02] border-white/5 rounded-2xl">
             <h3 className="text-sm font-medium text-white/60 mb-4">Execution Stats</h3>
             <div className="space-y-4 text-xs">
               <StatRow label="Trigger" value={execution.triggerType || 'manual'} />
@@ -362,10 +362,10 @@ export default function ExecutionDetailPage() {
                       href={link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-all group"
+                      className="flex items-center justify-between p-3 bg-base/5 border border-white/5 rounded-xl hover:bg-base/10 transition-all group"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-white/5 rounded-lg text-white/40 group-hover:text-white transition-colors">
+                        <div className="p-2 bg-base/5 rounded-lg text-white/40 group-hover:text-white transition-colors">
                           <ArrowSquareOut size={16} />
                         </div>
                         <span className="text-xs text-white/70 font-medium truncate max-w-[140px]">

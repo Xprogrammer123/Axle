@@ -35,7 +35,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* First-time onboarding animation overlay */}
         {showOnboarding && (
           <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center">
-            <div className="pointer-events-auto relative max-w-2xl mx-auto rounded-3xl border border-white/10 bg-gradient-to-br from-base/40 via-black to-black/90 shadow-2xl p-8 overflow-hidden">
+            <div className="pointer-events-auto backdrop-blur-md relative max-w-2xl mx-auto rounded-3xl border-2 border-black/40 bg-gradient-to-br from-base/40 via-black to-black/90 shadow-2xl p-8 overflow-hidden">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.12),transparent_60%),radial-gradient(circle_at_bottom,_rgba(96,165,250,0.12),transparent_60%)] pointer-events-none" />
               <div className="relative space-y-4">
                 <p className="text-xs uppercase tracking-[0.3em] text-white/40">
@@ -48,12 +48,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </span>
                   .
                 </h2>
-                <p className="text-sm md:text-base text-white/60">
+                <p className="text-sm md:text-white text-white/60">
                   Create an agent, connect your tools, and watch live executions stream into
                   the dashboard in real time. You can always open God Mode from the top bar to
                   orchestrate everything from one place.
                 </p>
-                <div className="flex flex-wrap gap-3 text-xs text-white/60">
+                <div className="flex flex-wrap flex-col gap-3 text-xs text-white/60">
                   <div className="flex items-center gap-2">
                     <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-300">
                       1
@@ -83,7 +83,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     onClick={() => setShowOnboarding(false)}
                     className="pointer-events-auto rounded-full bg-white text-black px-4 py-1.5 text-xs font-medium hover:bg-white/90 transition-colors"
                   >
-                    Let&apos;s build
+                    Get Started
                   </button>
                 </div>
               </div>
