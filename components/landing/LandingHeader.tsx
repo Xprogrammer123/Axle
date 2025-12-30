@@ -51,8 +51,7 @@ export function LandingHeader() {
                     <Link href="#solutions" className="text-lg text-neutral-300 py-2 border-b border-white/5">Solutions</Link>
                     <Link href="#pricing" className="text-lg text-neutral-300 py-2 border-b border-white/5">Pricing</Link>
                     <div className="flex flex-col gap-3 mt-4">
-                        <Button variant="ghost" className="w-full justify-start text-neutral-300">Log in</Button>
-                        <Button className="w-full bg-white text-black rounded-full">Start Free</Button>
+                        <Button className="w-full bg-base py-2.5 text-white rounded-full">Start Free</Button>
                     </div>
                 </div>
             )}

@@ -32,11 +32,10 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.1 }}
-                    className="text-5xl md:text-7xl font-bold tracking-tight text-white mb-6 leading-[1.1]"
-                    style={{ fontFamily: 'var(--font-unbounded), sans-serif' }}
+                    className="text-3xl md:text-6xl font-bold text-white mb-6"
                 >
                     Where Strategy Meets <br />
-                    <span className="bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-transparent">
+                    <span className="bg-linear-to-r from-base to-emerald-600 bg-clip-text text-transparent">
                         Intelligent Automation
                     </span>
                 </motion.h1>
@@ -46,7 +45,7 @@ export function HeroSection() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
-                    className="text-lg md:text-xl text-neutral-400 max-w-2xl mb-10 leading-relaxed"
+                    className="text-md md:text-lg text-neutral-400 max-w-2xl mb-10 leading-relaxed"
                 >
                     Deploy autonomous agents that understand your business context.
                     Automate complex workflows with human-like reasoning and
@@ -60,11 +59,11 @@ export function HeroSection() {
                     transition={{ duration: 0.5, delay: 0.3 }}
                     className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center mb-16"
                 >
-                    <Button size="lg" className="h-14 px-8 rounded-full bg-base text-black hover:bg-base/90 text-lg font-semibold w-full sm:w-auto shadow-lg shadow-white/5 transition-all hover:scale-105">
+                    <Button size="lg" className="px-8 rounded-full bg-base text-black hover:bg-base/90 text-lg font-semibold w-full sm:w-auto shadow-lg shadow-white/5 transition-all hover:scale-105">
                         Start Building Free
-                        <ArrowRight size={20} className="ml-2" />
+                        <ArrowRight size={20} className="" />
                     </Button>
-                    <Button size="lg" variant="outline" className="h-14 px-8 rounded-full border-white/10 hover:bg-base/5 text-white text-lg w-full sm:w-auto backdrop-blur-md">
+                    <Button size="lg" variant="outline" className="px-8 rounded-full border-white/10 hover:bg-base/5 text-white text-lg w-full sm:w-auto backdrop-blur-md">
                         <Play size={20} className="mr-2" weight="fill" />
                         Watch Demo
                     </Button>
