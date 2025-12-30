@@ -100,7 +100,7 @@ export default function ExecutionDetailPage() {
           <CaretLeft /> Back to Agent
         </Link>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center gap-5 justify-between">
           <div className="flex items-center gap-4">
             <StatusLargeIcon status={execution.status} />
             <div>
@@ -116,7 +116,7 @@ export default function ExecutionDetailPage() {
 
           <div className="flex gap-2">
             {execution.status === 'failed' && (
-              <Button className="bg-base text-black w-fit hover:bg-base/90 rounded-full text-sm px-4">
+              <Button className="bg-base text-black w-fit hover:bg-base/90 rounded-full text-sm px-5 py-2.5">
                 Retry Execution
               </Button>
             )}

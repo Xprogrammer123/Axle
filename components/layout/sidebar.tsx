@@ -26,16 +26,16 @@ export function Sidebar({ collapsed = false }) {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-fit flex-col bg-black/25 transition-all duration-300">
+    <aside className="flex md:h-full h-fit fixed md:relative z-50 bottom-0 backdrop-blur-md w-full md:w-fit md:items-center justify-center md:flex-col bg-black/25 transition-all duration-300">
       {/* Logo */}
-      <div className="p-6">
+      <div className="md:block hidden p-6">
         <Link href="/dashboard" className="flex items-center gap-2">
           <Image src="/logo.svg" alt="Logo" width={24} height={24} />
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="flex h-full flex-col justify-center space-y-4 p-4">
+      <nav className="flex md:h-full h-fit md:flex-col justify-center gap-3 md:space-y-4 py-4">
         {navigation.map(({ name, href, icon: Icon }) => {
           const isActive =
             pathname === href || pathname.startsWith(`${href}/`);
@@ -46,7 +46,7 @@ export function Sidebar({ collapsed = false }) {
               href={href}
               title={collapsed ? name : undefined}
               className={cn(
-                'flex w-fit items-center gap-3 rounded-xl p-3 transition-all',
+                'flex w-fit h-fit items-center gap-3 rounded-xl p-3 transition-all',
                 'hover:bg-white/4',
                 isActive
                   ? 'bg-base/10 text-base font-medium'

@@ -169,13 +169,13 @@ export default function AgentDetailPage() {
       {/* Back & Header */}
       <div>
         <Link href="/dashboard/agents" className="text-sm text-white/40 hover:text-white mb-4 flex items-center gap-1 transition-colors">
-          <CaretLeft /> Back to Team
+          <CaretLeft /> Back to Agents
         </Link>
 
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col items-start justify-between">
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-light text-white tracking-tight">{agent.name}</h1>
+            <div className="flex justify-between items-center gap-3">
+              <h1 className="md:text-3xl text-2xl font-semibold text-white tracking-tight">{agent.name}</h1>
               <div className={`px-2 py-0.5 rounded-full text-xs font-medium border ${agent.status === 'active'
                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                 : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
@@ -183,12 +183,12 @@ export default function AgentDetailPage() {
                 {agent.status === 'active' ? 'Active' : 'Paused'}
               </div>
             </div>
-            <p className="text-white/40 mt-1 max-w-xl">{agent.description || "No description provided."}</p>
+            <p className="text-white/40 mt-0.5 max-w-xl">{agent.description || "No description provided."}</p>
           </div>
 
           <div className="flex gap-2">
             <Button
-              className="bg-white/5 hover:bg-white/10 text-white border border-white/5"
+              className="bg-white/5 rounded-full mt-4 hover:bg-white/10 text-white border border-white/5"
               onClick={handleToggleStatus}
             >
               {agent.status === 'active' ? <Pause weight="fill" className="mr-2" /> : <Play weight="fill" className="mr-2" />}
@@ -289,8 +289,8 @@ export default function AgentDetailPage() {
 
         {/* Right Column: Run Panel */}
         <div className="lg:col-span-1">
-          <Card className="p-6 bg-gradient-to-b from-blue-900/10 to-transparent border border-white/10 rounded-2xl sticky top-6">
-            <div className="flex items-center gap-2 mb-4 text-blue-300">
+          <Card className="p-6 bg-gradient-to-b from-base/10 to-transparent border border-white/10 rounded-2xl sticky top-6">
+            <div className="flex items-center gap-2 mb-4 text-base">
               <Lightning weight="fill" size={20} />
               <h3 className="font-medium">Run Task</h3>
             </div>
@@ -301,10 +301,10 @@ export default function AgentDetailPage() {
                 rows={4}
                 value={taskInput}
                 onChange={(e) => setTaskInput(e.target.value)}
-                className="bg-black/20 border-white/10 resize-none text-sm"
+                className="bg-black/40 border-black/60 resize-none text-sm"
               />
               <Button
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-6"
+                className="w-full bg-base text-white rounded-full py-3"
                 onClick={handleRun}
                 disabled={!taskInput.trim() || running}
               >

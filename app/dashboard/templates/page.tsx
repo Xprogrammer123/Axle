@@ -199,13 +199,13 @@ export default function TemplatesPage() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto space-y-12">
+    <div className="max-w-6xl pb-40 mx-auto space-y-12">
 
       {/* Header */}
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col md:flex-row gap-5 md:items-end justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-white tracking-tight">Blueprints</h1>
-          <p className="text-white/40 mt-1">Start with a pre-configured role to save time.</p>
+          <p className="text-white/40 mt-1">Start with a pre-configured agent to save time.</p>
         </div>
         <div className="flex gap-2">
           <input

@@ -36,7 +36,7 @@ export default function DashboardPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-20">
       <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
-        Welcome back{live?.user ? `, ${live.user.plan === 'free' ? '' : ''}` : ''} Tayo!
+        Welcome back.
       </h1>
 
       <div className="flex flex-col gap-4 w-full">
@@ -136,7 +136,7 @@ export default function DashboardPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-xs text-white/50 hover:text-white px-3"
+                  className="text-xs text-white/50 hover:text-white bg-base rounded-full py-2 px-5 cursor-pointer"
                 >
                   View all
                 </Button>
@@ -153,7 +153,7 @@ export default function DashboardPage() {
                 <Link
                   key={agent._id}
                   href={`/dashboard/agents/${agent._id}`}
-                  className="flex items-center justify-between p-3 rounded-xl bg-background border border-white/5 hover:border-white/15 transition-colors"
+                  className="flex items-center justify-between p-3 rounded-xl bg-background border border-white/3 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 h-fit rounded-xl bg-white/5 border border-white/10 w-fit">
@@ -161,7 +161,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">{agent.name}</span>
-                      <span className="text-[11px] text-white/40 line-clamp-1">
+                      <span className="text-[11px] pr-5 text-white/40 line-clamp-1">
                         {agent.instructions || agent.description || 'No description'}
                       </span>
                     </div>
@@ -182,13 +182,13 @@ export default function DashboardPage() {
           <div className="bg-black/20 h-80 flex flex-col gap-4 border border-black/40 overflow-hidden rounded-3xl p-4 flex-1">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-white/80">
-                Connected channels
+                Connected Apps
               </h3>
               <Link href="/dashboard/integrations">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-xs text-white/50 hover:text-white px-3"
+                  className="text-xs text-white/50 hover:text-white bg-base rounded-full py-2 px-5 cursor-pointer"
                 >
                   Manage
                 </Button>

@@ -50,7 +50,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-12 pb-20">
+    <div className="max-w-3xl mx-auto space-y-12 pb-38">
 
       <div>
         <h1 className="text-3xl font-light text-white tracking-tight">Settings</h1>
@@ -93,27 +93,10 @@ export default function SettingsPage() {
               <Button
                 onClick={handleUpdateProfile}
                 disabled={saving}
-                className="bg-white text-black hover:bg-white/90 rounded-full px-8"
+                className="bg-base text-black hover:bg-white/90 rounded-full px-8"
               >
                 {saving ? 'Saving...' : 'Update Profile'}
               </Button>
-            </div>
-          </Card>
-        </section>
-
-        {/* Security & Access */}
-        <section>
-          <div className="flex items-center gap-2 mb-4 text-white/60">
-            <Key size={20} weight="duotone" />
-            <h2 className="text-lg font-medium">Access Keys</h2>
-          </div>
-          <Card className="p-8 bg-white/5 border border-white/5 rounded-2xl">
-            <div className="flex items-center justify-between p-4 bg-black/20 border border-white/5 rounded-xl">
-              <div>
-                <div className="text-sm font-medium text-white/80">Personal Access Token</div>
-                <div className="text-xs text-white/30 truncate max-w-[200px]">ax_live_••••••••••••••••••••</div>
-              </div>
-              <Button variant="ghost" className="text-xs text-blue-400">Rotate Key</Button>
             </div>
           </Card>
         </section>

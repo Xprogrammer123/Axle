@@ -51,7 +51,7 @@ const ALL_PROVIDERS = [
   {
     name: "X (Twitter)",
     provider: "twitter",
-    icon: "/x.svg",
+    icon: "/twitter.svg",
     category: "Social",
     description: "Post updates and track mentions.",
   },
@@ -87,7 +87,7 @@ export default function IntegrationsPage() {
     );
 
   return (
-    <div className="max-w-5xl pb-24 mx-auto space-y-12">
+    <div className="max-w-5xl pb-28 mx-auto space-y-12">
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-white tracking-tight">

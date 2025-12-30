@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Plus, Play, Pause, CaretRight, Robot } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
@@ -58,10 +59,10 @@ export default function AgentsPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col md:flex-row md:items-end gap-5 justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-white tracking-tight">Your Agents</h1>
-          <p className="text-white/40 mt-1">Manage and monitor your AI agents.</p>
+          <p className="text-white/40 mt-0.5">Manage and monitor your AI agents.</p>
         </div>
         <Link href="/dashboard/agents/new">
           <Button className="bg-base text-black cursor-pointer py-2.5 hover:bg-base/90 rounded-full px-6">
@@ -74,42 +75,42 @@ export default function AgentsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {agents.map((agent) => (
           <Link key={agent._id} href={`/dashboard/agents/${agent._id}`} className="block group">
-            <Card className="h-full bg-base/5 border border-white/5 hover:border-white/10 hover:bg-base/10 transition-all p-6 rounded-2xl flex flex-col justify-between">
+            <Card className="h-full bg-black/30 border border-black/50 transition-all p-6 rounded-4xl flex flex-col justify-between">
               <div>
                 <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 bg-base/5 rounded-xl text-white/80 group-hover:text-white group-hover:scale-110 transition-all">
-                    <Robot size={24} weight="duotone" />
+                  <div className="p-3 bg-base/5 rounded-full text-white/80 group-hover:text-white group-hover:scale-110 transition-all">
+                    <Image src="/Sparkle.svg" alt="Sparkle" width={48} height={48} className="size-6" />
                   </div>
-                  <div className={`px-2 py-0.5 rounded-full text-xs font-medium border ${agent.status === 'active'
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                  <div className={`px-3 py-1 rounded-full text-xs font-medium border ${agent.status === 'active'
+                    ? 'bg-base/10 text-base border-base/20'
                     : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
                     }`}>
                     {agent.status === 'active' ? 'Active' : 'Paused'}
                   </div>
                 </div>
 
-                <h3 className="text-lg font-medium text-white mb-2">{agent.name}</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">{agent.name}</h3>
                 <p className="text-sm text-white/50 line-clamp-2 h-10 ml-0.5">
-                  {agent.description || "No description provided."}
+                  {agent.instructions || "No description provided."}
                 </p>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
+              <div className="mt-6 pt-4 border-t border-white/5 flex flex-col w-full justify-between">
                 <span className="text-xs text-white/30">
                   {agent.lastRunAt ? `Ran ${safeFormatDistanceToNow(agent.lastRunAt, { addSuffix: true })}` : 'Never ran'}
                 </span>
 
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
+                <div className="flex mt-4 gap-2 w-full">
+                  {/* <Button
                     onClick={(e) => toggleStatus(e, agent)}
-                    className="p-1.5 hover:bg-base/10 rounded-lg text-white/60 hover:text-white transition-colors"
+                    className="p-3 px-3.5 rounded-full bg-base/10 text-white/60 hover:text-white transition-colors"
                     title={agent.status === 'active' ? 'Pause' : 'Resume'}
                   >
                     {agent.status === 'active' ? <Pause size={16} weight="fill" /> : <Play size={16} weight="fill" />}
-                  </button>
-                  <div className="p-1.5 hover:bg-base/10 rounded-lg text-white/60 hover:text-white transition-colors">
-                    <CaretRight size={16} weight="bold" />
-                  </div>
+                  </Button> */}
+                  <Link href={`/dashboard/agents/${agent._id}`} className="p-2.5 items-center justify-center flex font-semibold bg-base rounded-full text-white w-full transition-colors">
+                    View Agent
+                  </Link>
                 </div>
               </div>
             </Card>
