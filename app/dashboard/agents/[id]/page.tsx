@@ -736,7 +736,7 @@ export default function AgentDetailPage() {
                 Runs: <span className="text-white/80">{executions.length}</span>
               </span>
               <span>
-                Success:{' '}
+                Success:{' '} 
                 <span className="text-emerald-400">
                   {executions.filter((e: any) => e.status === 'success').length}
                 </span>
