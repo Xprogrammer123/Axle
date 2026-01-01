@@ -56,6 +56,8 @@ export default function IntegrationsPage() {
   const [loading, setLoading] = useState(true);
   const [connectingProvider, setConnectingProvider] = useState<string | null>(null);
   const [disconnectingProvider, setDisconnectingProvider] = useState<string | null>(null);
+  const [connectingProvider, setConnectingProvider] = useState<string | null>(null);
+  const [disconnectingProvider, setDisconnectingProvider] = useState<string | null>(null);
 
   async function loadData() {
     try {
@@ -75,6 +77,33 @@ export default function IntegrationsPage() {
   }, []);
 
   const handleConnect = async (provider: string) => {
+    try {
+      setConnectingProvider(provider);
+      const res: any = await api.connectIntegration(provider);
+      const authUrl = res?.authUrl || res?.url;
+      if (!authUrl) {
+        console.error('Missing authUrl from backend', res);
+        return;
+      }
+      window.location.href = authUrl;
+    } finally {
+      setConnectingProvider(null);
+    }
+  };
+
+  const handleDisconnect = async (provider: string) => {
+    const ok = window.confirm(`Disconnect ${provider}? You'll need to reconnect to use it again.`);
+    if (!ok) return;
+
+    try {
+      setDisconnectingProvider(provider);
+      await api.disconnectIntegration(provider);
+      await loadData();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setDisconnectingProvider(null);
+    }
     try {
       setConnectingProvider(provider);
       const res: any = await api.connectIntegration(provider);
@@ -140,6 +169,7 @@ export default function IntegrationsPage() {
     const healthItem = health?.integrations?.find((h: any) => h.provider === app.provider);
 
     const isConnected = integration?.status === "connected";
+    const isExpired = isConnected && healthItem?.status === 'expired';
     const isExpired = isConnected && healthItem?.status === 'expired';
 
     return (
@@ -212,10 +242,32 @@ export default function IntegrationsPage() {
                 Disconnect
               </Button>
             </div>
+            <div className="flex w-full items-center gap-2">
+              <Button
+                onClick={() => handleConnect(app.provider)}
+                className={
+                  isExpired
+                    ? "cursor-pointer rounded-full px-4 w-full py-2.5 text-sm bg-base text-white hover:bg-base/90"
+                    : "cursor-pointer rounded-full px-4 w-full py-2.5 text-sm bg-white/5 border border-white/10 text-white hover:bg-white/10"
+                }
+                loading={connectingProvider === app.provider}
+              >
+                {isExpired ? 'Reconnect' : 'Reconnect'}
+              </Button>
+              <Button
+                onClick={() => handleDisconnect(app.provider)}
+                variant="ghost"
+                className="cursor-pointer rounded-full px-4 py-2.5 text-sm bg-red-500/10 text-red-200 hover:text-red-100 border border-red-500/20 hover:bg-red-500/15"
+                loading={disconnectingProvider === app.provider}
+              >
+                Disconnect
+              </Button>
+            </div>
           ) : (
             <Button
               onClick={() => handleConnect(app.provider)}
               className="cursor-pointer rounded-full px-4 w-full py-2.5 text-sm"
+              loading={connectingProvider === app.provider}
               loading={connectingProvider === app.provider}
             >
               Connect

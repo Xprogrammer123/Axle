@@ -20,9 +20,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea, Input } from '@/components/ui/input';
-import { api, getToken } from '@/lib/api';
+import { api } from '@/lib/api';
 import { safeFormatDistanceToNow } from '@/lib/utils';
-import { socketClient } from '@/lib/socket';
 
 export default function AgentDetailPage() {
   const params = useParams();
@@ -30,10 +29,6 @@ export default function AgentDetailPage() {
   const [agent, setAgent] = useState<any>(null);
   const [executions, setExecutions] = useState<any[]>([]);
   const [integrations, setIntegrations] = useState<any[]>([]);
-  const [integrationHealth, setIntegrationHealth] = useState<any | null>(null);
-  const [triggers, setTriggers] = useState<any[]>([]);
-  const [webhooks, setWebhooks] = useState<any[]>([]);
-  const [webhookEvents, setWebhookEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Edit State
@@ -57,26 +52,15 @@ export default function AgentDetailPage() {
 
   async function loadData() {
     try {
-      const [agentData, executionsData, integrationsData, triggersData, webhooksData, healthData, webhookEventsData] = await Promise.all([
+      const [agentData, executionsData, integrationsData] = await Promise.all([
         api.getAgent(params.id as string),
         api.getExecutions({ agentId: params.id as string, limit: 5 }),
-        api.getIntegrations(),
-        api.getTriggers(params.id as string),
-        api.getWebhooks(),
-        api.getIntegrationHealth(),
-        api.getWebhookEvents()
+        api.getIntegrations()
       ]);
 
       setAgent(agentData.agent);
       setExecutions(executionsData.executions || []);
       setIntegrations(integrationsData.integrations || []);
-      setTriggers(triggersData.triggers || []);
-      setWebhooks((webhooksData.webhooks || []).filter((w: any) => {
-        const agentId = typeof w.agentId === 'string' ? w.agentId : w.agentId?._id;
-        return agentId === (params.id as string);
-      }));
-      setIntegrationHealth(healthData);
-      setWebhookEvents(webhookEventsData?.events || []);
       setEditInstructions(agentData.agent.instructions || '');
     } catch (e) {
       console.error(e);
@@ -88,71 +72,6 @@ export default function AgentDetailPage() {
   useEffect(() => {
     if (params.id) loadData();
   }, [params.id]);
-
-  // Socket-driven live status for this agent
-  useEffect(() => {
-    if (!agent?._id) return;
-
-    // Connect socket with auth token if available
-    const token = getToken();
-    socketClient.connect(token || undefined);
-
-    const unsubscribe = socketClient.subscribeToAgent(agent._id, {
-      onExecutionStarted: (data) => {
-        setLiveExecution({
-          id: data.executionId,
-          status: data.status,
-          actions: [],
-          startedAt: new Date().toISOString(),
-        });
-      },
-      onActionStarted: (data) => {
-        setLiveExecution((prev: any) =>
-          prev
-            ? {
-                ...prev,
-                actions: [
-                  ...prev.actions,
-                  {
-                    type: data.actionType,
-                    status: 'running',
-                    startedAt: new Date().toISOString(),
-                  },
-                ],
-              }
-            : prev
-        );
-      },
-      onActionCompleted: (data) => {
-        setLiveExecution((prev: any) =>
-          prev
-            ? {
-                ...prev,
-                actions: [
-                  ...(prev.actions || []),
-                  {
-                    type: data.actionType,
-                    status: data.success ? 'success' : 'failed',
-                    durationMs: data.durationMs,
-                  },
-                ],
-              }
-            : prev
-        );
-      },
-      onExecutionCompleted: (data) => {
-        // Refresh executions list when a run completes
-        loadData();
-        setLiveExecution((prev: any) =>
-          prev && prev.id === data.executionId ? { ...prev, status: data.status } : prev
-        );
-      },
-    });
-
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, [agent?._id]);
 
   const handleSaveInstructions = async () => {
     try {
@@ -172,8 +91,10 @@ export default function AgentDetailPage() {
 
   const handleRun = async () => {
     if (!taskInput.trim()) return;
+    if (!taskInput.trim()) return;
     setRunning(true);
     try {
+      await api.runAgent(agent._id, { task: taskInput });
       await api.runAgent(agent._id, { task: taskInput });
       setTaskInput('');
       // Refresh executions after a delay
@@ -316,18 +237,18 @@ export default function AgentDetailPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-20">
+    <div className="max-w-4xl mx-auto space-y-8 pb-20">
 
       {/* Back & Header */}
       <div>
         <Link href="/dashboard/agents" className="text-sm text-white/40 hover:text-white mb-4 flex items-center gap-1 transition-colors">
-          <CaretLeft /> Back to Agents
+          <CaretLeft /> Back to Team
         </Link>
 
-        <div className="flex flex-col items-start justify-between">
+        <div className="flex items-start justify-between">
           <div>
-            <div className="flex justify-between items-center gap-3">
-              <h1 className="md:text-3xl text-2xl font-semibold text-white tracking-tight">{agent.name}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-light text-white tracking-tight">{agent.name}</h1>
               <div className={`px-2 py-0.5 rounded-full text-xs font-medium border ${agent.status === 'active'
                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                 : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
@@ -335,9 +256,10 @@ export default function AgentDetailPage() {
                 {agent.status === 'active' ? 'Active' : 'Paused'}
               </div>
             </div>
-            <p className="text-white/40 mt-0.5 max-w-xl">{agent.description || "No description provided."}</p>
+            <p className="text-white/40 mt-1 max-w-xl">{agent.description || "No description provided."}</p>
           </div>
 
+          <div className="flex gap-2">
           <div className="flex gap-2">
             <Button
               className="rounded-full mt-4"
@@ -345,15 +267,17 @@ export default function AgentDetailPage() {
             >
               {agent.status === 'active' ? <Pause weight="fill" className="mr-2" /> : <Play weight="fill" className="mr-2" />}
               {agent.status === 'active' ? 'Pause Agent' : 'Resume Agent'}
+              {agent.status === 'active' ? <Pause weight="fill" className="mr-2" /> : <Play weight="fill" className="mr-2" />}
+              {agent.status === 'active' ? 'Pause Agent' : 'Resume Agent'}
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* Left Column */}
-        <div className="lg:col-span-8 space-y-8">
+        {/* Left Column: Instructions & Tools */}
+        <div className="lg:col-span-2 space-y-8">
 
           {/* Instructions */}
           <section>
@@ -377,7 +301,7 @@ export default function AgentDetailPage() {
                   />
                   <div className="flex justify-end gap-2">
                     <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>Cancel</Button>
-                    <Button size="sm" onClick={handleSaveInstructions}>Save</Button>
+                    <Button size="sm" onClick={handleSaveInstructions} className="bg-white text-black hover:bg-white/90">Save</Button>
                   </div>
                 </div>
               ) : (
@@ -388,314 +312,29 @@ export default function AgentDetailPage() {
             </Card>
           </section>
 
-          {/* Triggers */}
+          {/* Connected Integrations */}
           <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium text-white/80">Triggers</h2>
-            </div>
-
-            <Card className="p-5 bg-white/5 border border-white/5 rounded-2xl mb-4">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="text-sm font-medium text-white/80">Add triggers</div>
-                  <div className="text-xs text-white/30">Choose how this agent should start running.</div>
-                </div>
-                <Button
-                  onClick={handleCreateSelectedTriggers}
-                  disabled={savingTriggers || (!scheduleEnabled && !webhookEnabled)}
-                  className="rounded-full"
-                >
-                  {savingTriggers ? 'Saving…' : 'Add selected'}
-                </Button>
-              </div>
-
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm font-medium text-white/80">Schedule</div>
-                      <div className="text-xs text-white/30">Run automatically on a cadence.</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setScheduleEnabled(!scheduleEnabled)}
-                      className={`w-12 h-6 rounded-full flex items-center px-1 transition-colors ${scheduleEnabled ? 'bg-emerald-500/20' : 'bg-white/10'}`}
-                      aria-label="Toggle schedule trigger"
-                    >
-                      <div className={`w-4 h-4 rounded-full transition-all ${scheduleEnabled ? 'bg-emerald-400 ml-auto' : 'bg-white/20'}`} />
-                    </button>
+            <h2 className="text-lg font-medium text-white/80 mb-4">Available Tools</h2>
+            <div className="flex gap-3 flex-wrap">
+              {integrations.length === 0 ? (
+                <span className="text-sm text-white/20">No active integrations.</span>
+              ) : (
+                integrations.map((int: any) => (
+                  <div key={int.provider} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/5 text-sm text-white/70">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="capitalize">{int.provider}</span>
                   </div>
-                  {scheduleEnabled && (
-                    <div className="mt-3 space-y-3">
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setScheduleFrequency('daily')}
-                          className={`px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${
-                            scheduleFrequency === 'daily'
-                              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-                              : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
-                          }`}
-                        >
-                          Daily
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setScheduleFrequency('weekly')}
-                          className={`px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${
-                            scheduleFrequency === 'weekly'
-                              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-                              : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
-                          }`}
-                        >
-                          Weekly
-                        </button>
-                      </div>
-
-                      {scheduleFrequency === 'weekly' && (
-                        <div className="grid grid-cols-7 gap-1">
-                          {dayLabels.map((d) => (
-                            <button
-                              key={d.value}
-                              type="button"
-                              onClick={() => setScheduleDayOfWeek(d.value)}
-                              className={`px-2 py-2 rounded-xl border text-[11px] font-medium transition-colors ${
-                                scheduleDayOfWeek === d.value
-                                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-                                  : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
-                              }`}
-                            >
-                              {d.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-2">
-                        <div className="text-xs text-white/30">Time</div>
-                        <select
-                          value={scheduleHour}
-                          onChange={(e) => setScheduleHour(parseInt(e.target.value, 10))}
-                          className="bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white/80"
-                        >
-                          {Array.from({ length: 12 }).map((_, i) => {
-                            const h = i + 1;
-                            return (
-                              <option key={h} value={h}>{h}:00</option>
-                            );
-                          })}
-                        </select>
-                        <div className="flex gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setScheduleAmPm('AM')}
-                            className={`px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${
-                              scheduleAmPm === 'AM'
-                                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-                                : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
-                            }`}
-                          >
-                            AM
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setScheduleAmPm('PM')}
-                            className={`px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${
-                              scheduleAmPm === 'PM'
-                                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-                                : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
-                            }`}
-                          >
-                            PM
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="text-[11px] text-white/30">
-                        Will run: {scheduleFrequency === 'daily' ? 'Every day' : `Weekly on ${dayLabels.find(d => d.value === scheduleDayOfWeek)?.label || 'day'}`} at {scheduleHour}:00 {scheduleAmPm}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm font-medium text-white/80">Webhook event</div>
-                      <div className="text-xs text-white/30">Run when an external event happens.</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setWebhookEnabled(!webhookEnabled)}
-                      className={`w-12 h-6 rounded-full flex items-center px-1 transition-colors ${webhookEnabled ? 'bg-emerald-500/20' : 'bg-white/10'}`}
-                      aria-label="Toggle webhook trigger"
-                    >
-                      <div className={`w-4 h-4 rounded-full transition-all ${webhookEnabled ? 'bg-emerald-400 ml-auto' : 'bg-white/20'}`} />
-                    </button>
-                  </div>
-
-                  {webhookEnabled && (
-                    <div className="mt-3 grid grid-cols-1 gap-2 max-h-56 overflow-y-auto">
-                      {(webhookEvents.length ? webhookEvents : [{ id: 'github.push', label: 'New commit pushed', description: 'Triggers when code is pushed to a repository.' }]).map((ev: any) => (
-                        <button
-                          key={ev.id}
-                          type="button"
-                          onClick={() => setSelectedWebhookEventId(ev.id)}
-                          className={`text-left px-3 py-2 rounded-xl border transition-colors ${
-                            selectedWebhookEventId === ev.id
-                              ? 'border-emerald-500/30 bg-emerald-500/10'
-                              : 'border-white/10 bg-white/5 hover:bg-white/10'
-                          }`}
-                        >
-                          <div className={`text-xs font-medium ${selectedWebhookEventId === ev.id ? 'text-emerald-200' : 'text-white/80'}`}>
-                            {ev.label || ev.id}
-                          </div>
-                          <div className="text-[11px] text-white/30 line-clamp-2">{ev.description || ''}</div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Card>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="p-5 bg-white/5 border border-white/5 rounded-2xl">
-                <div className="text-xs uppercase tracking-widest text-white/30 mb-2">Schedules</div>
-                {scheduleTriggers.length === 0 ? (
-                  <div className="text-sm text-white/30">No schedule triggers yet.</div>
-                ) : (
-                  <div className="space-y-2">
-                    {scheduleTriggers.map((t: any) => (
-                      <div key={t._id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-black/20 border border-white/5">
-                        <div className="min-w-0">
-                          <div className="text-sm text-white/80 truncate">{cronToLabel(t.cronExpression || t.config?.cron)}</div>
-                          <div className="text-[11px] text-white/30">
-                            {t.enabled ? 'Enabled' : 'Disabled'}
-                            {t.lastTriggeredAt ? ` • Last: ${safeFormatDistanceToNow(t.lastTriggeredAt, { addSuffix: true })}` : ''}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleTrigger(t)}
-                            className={`text-[10px] px-2 py-0.5 rounded-full border ${t.enabled ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10' : 'border-white/10 text-white/30 bg-white/5'}`}
-                          >
-                            {t.enabled ? 'ON' : 'OFF'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteTrigger(t)}
-                            className="text-[10px] px-2 py-0.5 rounded-full border border-red-500/20 text-red-300 bg-red-500/10"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Card>
-
-              <Card className="p-5 bg-white/5 border border-white/5 rounded-2xl">
-                <div className="text-xs uppercase tracking-widest text-white/30 mb-2">Webhooks</div>
-                {webhookTriggers.length === 0 ? (
-                  <div className="text-sm text-white/30">No webhook triggers yet.</div>
-                ) : (
-                  <div className="space-y-2">
-                    {webhookTriggers.map((t: any) => {
-                      const match = webhooks.find((w: any) => w.webhookPath === (t.webhookPath || t.config?.webhookPath));
-                      const url = match?.url || match?.relativeUrl || t.webhookUrl;
-                      const source = (t.source || t.config?.source) as string | undefined;
-                      return (
-                        <div key={t._id} className="p-3 rounded-xl bg-black/20 border border-white/5">
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="text-sm text-white/80 truncate">
-                              {webhookSourceToLabel(source)}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => handleToggleTrigger(t)}
-                                className={`text-[10px] px-2 py-0.5 rounded-full border ${t.enabled ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10' : 'border-white/10 text-white/30 bg-white/5'}`}
-                              >
-                                {t.enabled ? 'ON' : 'OFF'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteTrigger(t)}
-                                className="text-[10px] px-2 py-0.5 rounded-full border border-red-500/20 text-red-300 bg-red-500/10"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                          {webhookSourceToDescription(source) && (
-                            <div className="mt-1 text-[11px] text-white/30 line-clamp-2">
-                              {webhookSourceToDescription(source)}
-                            </div>
-                          )}
-                          <div className="mt-2 text-[11px] text-white/30 break-all font-mono">
-                            {url || '—'}
-                          </div>
-                          {url && (
-                            <div className="mt-2 flex justify-end">
-                              <button
-                                type="button"
-                                onClick={() => copyText(url)}
-                                className="text-[11px] text-white/40 hover:text-white transition-colors"
-                              >
-                                Copy URL
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </Card>
+                ))
+              )}
             </div>
           </section>
 
-          {/* Live Run (socket-driven) */}
-          {liveExecution && (
-            <section>
-              <h2 className="text-lg font-medium text-white/80 mb-2">Live run</h2>
-              <Card className="p-4 bg-black/40 border border-emerald-500/30 rounded-2xl">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-white/80">
-                    Execution {liveExecution.id?.slice(-6)}
-                  </span>
-                  <span className="flex items-center gap-2 text-xs text-emerald-400">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    {liveExecution.status}
-                  </span>
-                </div>
-                <div className="space-y-1 max-h-40 overflow-y-auto text-xs text-white/60">
-                  {(liveExecution.actions || []).map((a: any, idx: number) => (
-                    <div key={idx} className="flex justify-between">
-                      <span>{a.type}</span>
-                      <span className="text-[10px]">
-                        {a.status}
-                        {a.durationMs ? ` • ${(a.durationMs / 1000).toFixed(1)}s` : ''}
-                      </span>
-                    </div>
-                  ))}
-                  {!liveExecution.actions?.length && (
-                    <p className="text-white/30 text-xs">Waiting for first action…</p>
-                  )}
-                </div>
-              </Card>
-            </section>
-          )}
-
         </div>
 
-        {/* Right Column */}
-        <div className="lg:col-span-4 space-y-6">
-          <Card className="p-6 bg-white/3 border-2 border-white/3 rounded-2xl top-6">
-            <div className="flex items-center gap-2 mb-4 text-base">
+        {/* Right Column: Run Panel */}
+        <div className="lg:col-span-1">
+          <Card className="p-6 bg-gradient-to-b from-blue-900/10 to-transparent border border-white/10 rounded-2xl sticky top-6">
+            <div className="flex items-center gap-2 mb-4 text-blue-300">
               <Lightning weight="fill" size={20} />
               <h3 className="font-medium">Run Task</h3>
             </div>
@@ -706,95 +345,59 @@ export default function AgentDetailPage() {
                 rows={4}
                 value={taskInput}
                 onChange={(e) => setTaskInput(e.target.value)}
-                className="bg-black/40 border-black/60 resize-none text-sm"
+                className="bg-black/20 border-white/10 resize-none text-sm"
               />
               <Button
-                className="w-full bg-base text-white rounded-full py-3"
+                className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl py-6"
                 onClick={handleRun}
+                disabled={!taskInput.trim() || running}
                 disabled={!taskInput.trim() || running}
               >
                 {running ? 'Starting...' : 'Run Agent'}
               </Button>
               <p className="text-xs text-white/30 text-center">
-                Agent will use available tools to run the task.
+                Agent will use available tools to accept the task.
               </p>
             </div>
           </Card>
-
-          
         </div>
 
       </div>
 
       {/* Execution History */}
-      <section className="pt-8 border-t border-white/5 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-medium text-white/80">Execution History</h2>
-          {executions.length > 0 && (
-            <div className="flex gap-4 text-xs text-white/40">
-              <span>
-                Runs: <span className="text-white/80">{executions.length}</span>
-              </span>
-              <span>
-                Success:{' '}
-                <span className="text-emerald-400">
-                  {executions.filter((e: any) => e.status === 'success').length}
-                </span>
-              </span>
-              <span>
-                Failed:{' '}
-                <span className="text-red-400">
-                  {executions.filter((e: any) => e.status === 'failed').length}
-                </span>
-              </span>
-            </div>
-          )}
-        </div>
+      <section className="pt-8 border-t border-white/5">
+        <h2 className="text-lg font-medium text-white/80 mb-6">Execution History</h2>
 
         <div className="bg-white/5 border border-white/5 rounded-2xl overflow-hidden">
           {executions.length === 0 ? (
             <div className="p-8 text-center text-white/20">No history available.</div>
           ) : (
             <div className="divide-y divide-white/5">
-              {executions.map((exec: any) => {
-                const started = exec.startedAt || exec.createdAt;
-                const finished = exec.finishedAt;
-                const durationMs = started && finished
-                  ? new Date(finished).getTime() - new Date(started).getTime()
-                  : undefined;
-                const actionsCount = exec.actionsExecuted?.length ?? 0;
-
-                return (
-                  <Link
-                    key={exec._id}
-                    href={`/dashboard/executions/${exec._id}`}
-                    className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <StatusIcon status={exec.status} />
-                      <div>
-                        <div className="text-sm font-medium text-white">
-                          {exec.name || 'Manual Run'}
-                        </div>
-                        <div className="text-xs text-white/40">
-                          {started &&
-                            safeFormatDistanceToNow(started, { addSuffix: true })}
-                        </div>
+              {executions.map((exec) => (
+                <Link
+                  key={exec._id}
+                  href={`/dashboard/executions/${exec._id}`}
+                  className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors group"
+                >
+                  <div className="flex items-center gap-4">
+                    <StatusIcon status={exec.status} />
+                    <div>
+                      <div className="text-sm font-medium text-white">
+                        {exec.executionName || 'Manual Run'}
+                      </div>
+                      <div className="text-xs text-white/40">
+                        {safeFormatDistanceToNow(exec.startedAt || exec.createdAt, { addSuffix: true })}
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-white/40">
-                      <span className="font-mono">
-                        {durationMs ? `${(durationMs / 1000).toFixed(1)}s` : ''}
-                      </span>
-                      <span>{actionsCount} actions</span>
-                      {typeof exec.creditsUsed === 'number' && (
-                        <span>{exec.creditsUsed} credits</span>
-                      )}
-                      <CaretLeft className="rotate-180 text-white/20 group-hover:text-white/60 transition-colors" />
-                    </div>
-                  </Link>
-                );
-              })}
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-xs text-white/30 font-mono">
+                      {exec.duration ? `${(exec.duration / 1000).toFixed(1)}s` : ''}
+                    </span>
+                    <CaretLeft className="rotate-180 text-white/20 group-hover:text-white/60 transition-colors" />
+                  </div>
+                </Link>
+              ))}
             </div>
           )}
         </div>
