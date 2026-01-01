@@ -41,13 +41,13 @@ const ALL_PROVIDERS = [
     category: "Productivity",
     description: "Create and read documents.",
   },
-  {
-    name: "Instagram",
-    provider: "instagram",
-    icon: "/insta.svg",
-    category: "Social",
-    description: "Manage posts and engagement.",
-  },
+  // {
+  //   name: "Instagram",
+  //   provider: "instagram",
+  //   icon: "/insta.svg",
+  //   category: "Social",
+  //   description: "Manage posts and engagement.",
+  // },
   {
     name: "X (Twitter)",
     provider: "twitter",
