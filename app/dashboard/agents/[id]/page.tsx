@@ -44,7 +44,6 @@ export default function AgentDetailPage() {
   const [taskInput, setTaskInput] = useState('');
   const [running, setRunning] = useState(false);
   const [liveExecution, setLiveExecution] = useState<any | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
   // Trigger creation state
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
@@ -172,10 +171,10 @@ export default function AgentDetailPage() {
   };
 
   const handleRun = async () => {
+    if (!taskInput.trim()) return;
     setRunning(true);
     try {
-      const payload = taskInput.trim() ? { task: taskInput } : {};
-      await api.runAgent(agent._id, payload);
+      await api.runAgent(agent._id, { task: taskInput });
       setTaskInput('');
       // Refresh executions after a delay
       setTimeout(loadData, 1000);
@@ -184,21 +183,6 @@ export default function AgentDetailPage() {
       console.error(e);
     } finally {
       setRunning(false);
-    }
-  };
-
-  const handleDeleteAgent = async () => {
-    const ok = window.confirm('Delete this agent? This will also delete all its triggers and executions.');
-    if (!ok) return;
-
-    setDeleting(true);
-    try {
-      await api.deleteAgent(agent._id);
-      router.replace('/dashboard/agents');
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setDeleting(false);
     }
   };
 
@@ -354,22 +338,13 @@ export default function AgentDetailPage() {
             <p className="text-white/40 mt-0.5 max-w-xl">{agent.description || "No description provided."}</p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 mt-4">
+          <div className="flex gap-2">
             <Button
-              className="bg-base text-white rounded-full px-5"
-              onClick={handleRun}
-              loading={running}
+              className="rounded-full mt-4"
+              onClick={handleToggleStatus}
             >
-              <Lightning size={16} weight="fill" />
-              Run now
-            </Button>
-            <Button
-              className="bg-red-500/10 text-red-200 hover:text-red-100 border border-red-500/20 rounded-full px-5"
-              onClick={handleDeleteAgent}
-              loading={deleting}
-            >
-              <Trash size={16} weight="fill" />
-              Delete
+              {agent.status === 'active' ? <Pause weight="fill" className="mr-2" /> : <Play weight="fill" className="mr-2" />}
+              {agent.status === 'active' ? 'Pause Agent' : 'Resume Agent'}
             </Button>
           </div>
         </div>
@@ -736,7 +711,7 @@ export default function AgentDetailPage() {
               <Button
                 className="w-full bg-base text-white rounded-full py-3"
                 onClick={handleRun}
-                disabled={running}
+                disabled={!taskInput.trim() || running}
               >
                 {running ? 'Starting...' : 'Run Agent'}
               </Button>

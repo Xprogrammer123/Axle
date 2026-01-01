@@ -10,7 +10,6 @@ import { Badge, Skeleton, EmptyState } from '@/components/ui/utils';
 import { api } from '@/lib/api';
 import { formatDateTime, formatDuration } from '@/lib/utils';
 import type { Execution } from '@/types';
-import { motion } from 'framer-motion';
 
 export default function ExecutionsPage() {
   const [executions, setExecutions] = useState<Execution[]>([]);
@@ -36,11 +35,9 @@ export default function ExecutionsPage() {
 
   const filteredExecutions = executions.filter(exec => {
     const searchLower = searchTerm.toLowerCase();
-    const agentName = (exec as any)?.agentName || (exec as any)?.agentId?.name || '';
-    const summaryText = (exec as any)?.summary || (exec as any)?.outputPayload?.summary || (exec as any)?.reasoning || (exec as any)?.error || '';
     return (
-      agentName.toLowerCase().includes(searchLower) ||
-      summaryText.toLowerCase().includes(searchLower) ||
+      exec.agentName?.toLowerCase().includes(searchLower) ||
+      exec.summary?.toLowerCase().includes(searchLower) ||
       exec._id.toLowerCase().includes(searchLower)
     );
   });
@@ -83,10 +80,6 @@ export default function ExecutionsPage() {
       {/* Executions List */}
       {loading ? (
         <div className="space-y-4">
-          <div className="page-loader" style={{ minHeight: 120 }}>
-            <div className="loader-light" />
-            <div className="page-loader-text">Loading executions…</div>
-          </div>
           {[...Array(5)].map((_, i) => (
             <Card key={i} className="p-6">
               <Skeleton className="h-6 w-48 mb-2" />
@@ -105,50 +98,38 @@ export default function ExecutionsPage() {
           description={searchTerm ? 'Try a different search term' : 'Run an agent to see executions here'}
         />
       ) : (
-        <motion.div
-          initial="hidden"
-          animate="show"
-          variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } }}
-          className="space-y-4"
-        >
+        <div className="space-y-4">
           {filteredExecutions.map((execution) => (
-            <motion.div
-              key={execution._id}
-              variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
-            >
-              <Link href={`/dashboard/executions/${execution._id}`}>
-                <Card hover className="p-6">
+            <Link key={execution._id} href={`/dashboard/executions/${execution._id}`}>
+              <Card hover className="p-6">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-semibold">
-                        {(execution as any)?.agentName || (execution as any)?.agentId?.name || 'Unknown Agent'}
+                        {execution.agentName || 'Unknown Agent'}
                       </h3>
                       <Badge variant={execution.status}>{execution.status}</Badge>
                     </div>
                     <p className="text-muted-foreground">
-                      {(execution as any)?.summary || (execution as any)?.outputPayload?.summary || (execution as any)?.reasoning || (execution as any)?.error || ''}
+                      {execution.summary || execution.statusExplained}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                  <span>{formatDateTime((execution as any).createdAt)}</span>
-                  {(execution as any).startedAt && (execution as any).finishedAt && (
-                    <span>
-                      • Duration: {formatDuration(new Date((execution as any).finishedAt).getTime() - new Date((execution as any).startedAt).getTime())}
-                    </span>
+                  <span>{execution.createdAtHuman || formatDateTime(execution.createdAt)}</span>
+                  {execution.durationHuman && (
+                    <span>• Duration: {execution.durationHuman}</span>
                   )}
-                  <span>• {(execution as any).actionsExecuted?.length || 0} actions</span>
-                  {(execution as any).creditsUsed ? (
-                    <span>• {(execution as any).creditsUsed} credits</span>
-                  ) : null}
+                  <span>• {execution.actionsExecuted?.length || 0} actions</span>
+                  {execution.creditsUsed && (
+                    <span>• {execution.creditsUsed} credits</span>
+                  )}
                 </div>
-                </Card>
-              </Link>
-            </motion.div>
+              </Card>
+            </Link>
           ))}
-        </motion.div>
+        </div>
       )}
     </div>
   );
