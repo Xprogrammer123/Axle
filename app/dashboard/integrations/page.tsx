@@ -132,6 +132,7 @@ export default function IntegrationsPage() {
 
     const isConnected = integration?.status === "connected";
     const isExpired = isConnected && healthItem?.status === 'expired';
+    const isExpired = isConnected && healthItem?.status === 'expired';
 
     return (
       <Card
@@ -195,10 +196,24 @@ export default function IntegrationsPage() {
                 {isExpired ? 'Reconnect' : 'Reconnect'}
               </Button>
             </div>
+            <div className="flex w-full items-center gap-2">
+              <Button
+                onClick={() => handleConnect(app.provider)}
+                className={
+                  isExpired
+                    ? "cursor-pointer rounded-full px-4 w-full py-2.5 text-sm bg-base text-white hover:bg-base/90"
+                    : "cursor-pointer rounded-full px-4 w-full py-2.5 text-sm bg-white/5 border border-white/10 text-white hover:bg-white/10"
+                }
+                loading={connectingProvider === app.provider}
+              >
+                {isExpired ? 'Reconnect' : 'Reconnect'}
+              </Button>
+            </div>
           ) : (
             <Button
               onClick={() => handleConnect(app.provider)}
               className="cursor-pointer rounded-full px-4 w-full py-2.5 text-sm"
+              loading={connectingProvider === app.provider}
               loading={connectingProvider === app.provider}
             >
               Connect
