@@ -19,8 +19,6 @@ export default function SettingsPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [timeZone, setTimeZone] = useState('');
-  const [automaticBackupsEnabled, setAutomaticBackupsEnabled] = useState(true);
-  const [notificationEmailsEnabled, setNotificationEmailsEnabled] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -36,8 +34,6 @@ export default function SettingsPage() {
           setName(user.name || '');
           setEmail(user.email || '');
           setTimeZone(user.timeZone || '');
-          setAutomaticBackupsEnabled(user.automaticBackupsEnabled ?? true);
-          setNotificationEmailsEnabled(user.notificationEmailsEnabled ?? false);
         }
 
         setOverview(ov?.overview || ov);
@@ -51,7 +47,7 @@ export default function SettingsPage() {
   const handleUpdateProfile = async () => {
     setSaving(true);
     try {
-      const payload: any = { name, timeZone, automaticBackupsEnabled, notificationEmailsEnabled };
+      const payload: any = { name, timeZone};
       await api.updateProfile(payload);
     } catch (e) {
       console.error(e);
@@ -60,28 +56,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handleToggleBackups = async () => {
-    const next = !automaticBackupsEnabled;
-    setAutomaticBackupsEnabled(next);
-    try {
-      await api.updateProfile({ automaticBackupsEnabled: next });
-    } catch (e) {
-      console.error(e);
-      setAutomaticBackupsEnabled(!next);
-    }
-  };
-
-  const handleToggleEmails = async () => {
-    const next = !notificationEmailsEnabled;
-    setNotificationEmailsEnabled(next);
-    try {
-      await api.updateProfile({ notificationEmailsEnabled: next });
-    } catch (e) {
-      console.error(e);
-      setNotificationEmailsEnabled(!next);
-    }
-  };
-
+ 
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -173,44 +148,6 @@ export default function SettingsPage() {
               >
                 Update Profile
               </Button>
-            </div>
-          </Card>
-        </section>
-
-        {/* Preferences */}
-        <section>
-          <div className="flex items-center gap-2 mb-4 text-white/60">
-            <Globe size={20} weight="duotone" />
-            <h2 className="text-lg font-medium">Platform</h2>
-          </div>
-          <Card className="p-8 bg-white/5 border border-white/5 rounded-2xl space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium text-white/80">Automatic Backups</div>
-                <div className="text-xs text-white/30">Save agent execution memory once a week.</div>
-              </div>
-              <button
-                type="button"
-                onClick={handleToggleBackups}
-                className={`w-12 h-6 rounded-full flex items-center px-1 transition-colors ${automaticBackupsEnabled ? 'bg-emerald-500/20' : 'bg-white/10'}`}
-                aria-label="Toggle automatic backups"
-              >
-                <div className={`w-4 h-4 rounded-full transition-all ${automaticBackupsEnabled ? 'bg-emerald-400 ml-auto' : 'bg-white/20'}`} />
-              </button>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium text-white/80">Notification Emails</div>
-                <div className="text-xs text-white/30">Receive summaries of failed executions.</div>
-              </div>
-              <button
-                type="button"
-                onClick={handleToggleEmails}
-                className={`w-12 h-6 rounded-full flex items-center px-1 transition-colors ${notificationEmailsEnabled ? 'bg-emerald-500/20' : 'bg-white/10'}`}
-                aria-label="Toggle notification emails"
-              >
-                <div className={`w-4 h-4 rounded-full transition-all ${notificationEmailsEnabled ? 'bg-emerald-400 ml-auto' : 'bg-white/20'}`} />
-              </button>
             </div>
           </Card>
         </section>
