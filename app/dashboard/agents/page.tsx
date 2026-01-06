@@ -27,7 +27,7 @@ export default function AgentsPage() {
   const fetchAgents = async () => {
     try {
       const data = await api.getAgents();
-      setAgents(data.agents);
+      setAgents((data.agents || []).filter(Boolean));
     } finally {
       setLoading(false);
     }

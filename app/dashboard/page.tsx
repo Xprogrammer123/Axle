@@ -41,9 +41,9 @@ export default function DashboardPage() {
     fetchLive();
   }, [router]);
 
-  const activeExecutions = live?.activeExecutions || [];
-  const recentExecutions = live?.recentExecutions || [];
-  const agents = live?.agents || [];
+  const activeExecutions = (live?.activeExecutions || []).filter(Boolean);
+  const recentExecutions = (live?.recentExecutions || []).filter(Boolean);
+  const agents = (live?.agents || []).filter(Boolean);
 
   const activeAgentIds = useMemo(() => {
     const ids = new Set<string>();
@@ -377,7 +377,7 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div className="bg-black/20 overflow-y-auto flex flex-col gap-2.5 border border-black/40 rounded-xl p-2.5">
-              {(live?.integrations || []).slice(0, 6).map((int: any) => (
+              {(live?.integrations || []).filter(Boolean).slice(0, 6).map((int: any) => (
                 <div
                   key={int.provider}
                   className="bg-background rounded-xl flex justify-between items-center p-2.5"

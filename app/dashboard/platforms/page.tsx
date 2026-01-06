@@ -30,7 +30,7 @@ export default function PlatformsPage() {
   const fetchPlatforms = async () => {
     try {
       const data = await api.getPlatforms();
-      setPlatforms(data.platforms || []);
+      setPlatforms((data.platforms || []).filter(Boolean));
     } catch (error) {
       console.error('Failed to fetch platforms:', error);
     } finally {
