@@ -1,6 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7000';
+const SOCKET_URL = "https://axle-api-q8oa.onrender.com";
 
 class SocketClient {
   private socket: Socket | null = null;
@@ -41,6 +41,7 @@ class SocketClient {
     onActionStarted?: (data: any) => void;
     onActionCompleted?: (data: any) => void;
     onExecutionCompleted?: (data: any) => void;
+    onExecutionEvent?: (data: any) => void;
   }) {
     if (!this.socket) {
       console.warn('Socket not connected');
@@ -55,6 +56,7 @@ class SocketClient {
       { name: 'execution:action_started', callback: callbacks.onActionStarted },
       { name: 'execution:action_completed', callback: callbacks.onActionCompleted },
       { name: 'execution:completed', callback: callbacks.onExecutionCompleted },
+      { name: 'execution:event', callback: callbacks.onExecutionEvent },
     ];
 
     events.forEach(({ name, callback }) => {

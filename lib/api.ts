@@ -1,5 +1,5 @@
 // API Configuration
-const API_ORIGIN = 'http://localhost:7000';
+const API_ORIGIN = 'https://axle-api-q8oa.onrender.com';
 const API_BASE_URL = `${API_ORIGIN.replace(/\/$/, '')}/api/v1`;
 
 // Token storage

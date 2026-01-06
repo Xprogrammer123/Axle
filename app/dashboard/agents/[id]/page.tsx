@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   CaretLeft,
   Play,
@@ -26,14 +26,15 @@ import {
   Check,
   Spinner,
   GitBranch,
-  ChatCircle
-} from '@phosphor-icons/react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Textarea, Input } from '@/components/ui/input';
-import { api, getToken } from '@/lib/api';
-import { safeFormatDistanceToNow } from '@/lib/utils';
-import { socketClient } from '@/lib/socket';
+  ChatCircle,
+  ArrowClockwise,
+} from "@phosphor-icons/react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Textarea, Input } from "@/components/ui/input";
+import { api, getToken } from "@/lib/api";
+import { safeFormatDistanceToNow } from "@/lib/utils";
+import { socketClient } from "@/lib/socket";
 
 export default function AgentDetailPage() {
   const params = useParams();
@@ -49,46 +50,69 @@ export default function AgentDetailPage() {
 
   // Edit State
   const [isEditing, setIsEditing] = useState(false);
-  const [editInstructions, setEditInstructions] = useState('');
+  const [editInstructions, setEditInstructions] = useState("");
 
   // Run State
-  const [taskInput, setTaskInput] = useState('');
+  const [taskInput, setTaskInput] = useState("");
   const [running, setRunning] = useState(false);
   const [liveExecution, setLiveExecution] = useState<any | null>(null);
 
   // Trigger creation state
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
-  const [scheduleFrequency, setScheduleFrequency] = useState<'daily' | 'weekly'>('daily');
+  const [scheduleFrequency, setScheduleFrequency] = useState<
+    "daily" | "weekly"
+  >("daily");
   const [scheduleDayOfWeek, setScheduleDayOfWeek] = useState<number>(1);
   const [scheduleHour, setScheduleHour] = useState<number>(9);
-  const [scheduleAmPm, setScheduleAmPm] = useState<'AM' | 'PM'>('AM');
+  const [scheduleAmPm, setScheduleAmPm] = useState<"AM" | "PM">("AM");
   const [webhookEnabled, setWebhookEnabled] = useState(false);
-  const [selectedWebhookEventId, setSelectedWebhookEventId] = useState<string>('github.push');
+  const [selectedWebhookEventId, setSelectedWebhookEventId] = useState<string>(
+    "github.push"
+  );
   const [savingTriggers, setSavingTriggers] = useState(false);
+  const [lastExecutionUpdate, setLastExecutionUpdate] = useState(Date.now());
 
   async function loadData() {
     try {
-      const [agentData, executionsData, integrationsData, triggersData, webhooksData, healthData, webhookEventsData] = await Promise.all([
+      const [
+        agentData,
+        executionsData,
+        integrationsData,
+        triggersData,
+        webhooksData,
+        healthData,
+        webhookEventsData,
+      ] = await Promise.all([
         api.getAgent(params.id as string),
         api.getExecutions({ agentId: params.id as string, limit: 5 }),
         api.getIntegrations(),
         api.getTriggers(params.id as string),
         api.getWebhooks(),
         api.getIntegrationHealth(),
-        api.getWebhookEvents()
+        api.getWebhookEvents(),
       ]);
 
       setAgent(agentData.agent);
-      setExecutions(executionsData.executions || []);
+      setExecutions(
+        (executionsData.executions || []).map((exec) => ({
+          ...exec,
+          events: exec.events || [],
+          turns: exec.turns || [],
+          state: exec.state || {},
+        }))
+      );
       setIntegrations(integrationsData.integrations || []);
       setTriggers(triggersData.triggers || []);
-      setWebhooks((webhooksData.webhooks || []).filter((w: any) => {
-        const agentId = typeof w.agentId === 'string' ? w.agentId : w.agentId?._id;
-        return agentId === (params.id as string);
-      }));
+      setWebhooks(
+        (webhooksData.webhooks || []).filter((w: any) => {
+          const agentId =
+            typeof w.agentId === "string" ? w.agentId : w.agentId?._id;
+          return agentId === (params.id as string);
+        })
+      );
       setIntegrationHealth(healthData);
       setWebhookEvents(webhookEventsData?.events || []);
-      setEditInstructions(agentData.agent.instructions || '');
+      setEditInstructions(agentData.agent.instructions || "");
     } catch (e) {
       console.error(e);
     } finally {
@@ -116,6 +140,54 @@ export default function AgentDetailPage() {
           actions: [],
           startedAt: new Date().toISOString(),
         });
+        // Add new execution to the list (only if it doesn't already exist)
+        const newExecution = {
+          _id: data.executionId,
+          name: "Running...",
+          status: "running",
+          startedAt: new Date(),
+          actionsExecuted: [],
+          events: [],
+          turns: [],
+          createdAt: new Date(),
+        };
+        setExecutions((prev) => {
+          // Check if execution already exists
+          const exists = prev.some((exec) => exec._id === data.executionId);
+          if (!exists) {
+            return [newExecution, ...prev];
+          }
+          return prev;
+        });
+      },
+      onExecutionEvent: (data) => {
+        // Update the live execution with new event in real-time
+        setExecutions((prev) =>
+          prev.map((exec) => {
+            if (exec._id === data.executionId) {
+              const events = exec.events || [];
+              const turns = exec.turns || [];
+
+              // Add the new event
+              const updatedEvents = [...events, data.event];
+
+              // If this is a conversation turn, add it to turns
+              const updatedTurns =
+                data.event.content && data.event.author
+                  ? [...turns, data.event]
+                  : turns;
+
+              return {
+                ...exec,
+                events: updatedEvents,
+                turns: updatedTurns,
+                // Update status to show it's actively running
+                status: "running",
+              };
+            }
+            return exec;
+          })
+        );
       },
       onActionStarted: (data) => {
         setLiveExecution((prev: any) =>
@@ -126,7 +198,7 @@ export default function AgentDetailPage() {
                   ...prev.actions,
                   {
                     type: data.actionType,
-                    status: 'running',
+                    status: "running",
                     startedAt: new Date().toISOString(),
                   },
                 ],
@@ -143,7 +215,7 @@ export default function AgentDetailPage() {
                   ...(prev.actions || []),
                   {
                     type: data.actionType,
-                    status: data.success ? 'success' : 'failed',
+                    status: data.success ? "success" : "failed",
                     durationMs: data.durationMs,
                   },
                 ],
@@ -151,11 +223,28 @@ export default function AgentDetailPage() {
             : prev
         );
       },
-      onExecutionCompleted: (data) => {
-        // Refresh executions list when a run completes
-        loadData();
+      onExecutionCompleted: async (data) => {
+        // Fetch the complete execution data to replace our partial state
+        try {
+          const executionResponse = await api.getExecution(data.executionId);
+          const completeExecution = executionResponse.execution;
+
+          // Replace the partial execution with complete data
+          setExecutions((prev) =>
+            prev.map((exec) =>
+              exec._id === data.executionId ? completeExecution : exec
+            )
+          );
+        } catch (error) {
+          console.error("Failed to fetch completed execution:", error);
+          // Fallback to refreshing all data
+          loadData();
+        }
+
         setLiveExecution((prev: any) =>
-          prev && prev.id === data.executionId ? { ...prev, status: data.status } : prev
+          prev && prev.id === data.executionId
+            ? { ...prev, status: data.status }
+            : prev
         );
       },
     });
@@ -163,6 +252,33 @@ export default function AgentDetailPage() {
     return () => {
       if (unsubscribe) unsubscribe();
     };
+  }, [agent?._id]);
+
+  // Periodic refresh of executions to stay in sync
+  useEffect(() => {
+    if (!agent?._id) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const executionsData = await api.getExecutions({
+          agentId: agent._id,
+          limit: 5,
+        });
+        setExecutions(
+          (executionsData.executions || []).map((exec) => ({
+            ...exec,
+            events: exec.events || [],
+            turns: exec.turns || [],
+            state: exec.state || {},
+          }))
+        );
+        setLastExecutionUpdate(Date.now());
+      } catch (error) {
+        console.error("Failed to refresh executions:", error);
+      }
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
   }, [agent?._id]);
 
   const handleSaveInstructions = async () => {
@@ -176,7 +292,7 @@ export default function AgentDetailPage() {
   };
 
   const handleToggleStatus = async () => {
-    const newStatus = agent.status === 'active' ? 'paused' : 'active';
+    const newStatus = agent.status === "active" ? "paused" : "active";
     await api.updateAgent(agent._id, { status: newStatus });
     setAgent({ ...agent, status: newStatus });
   };
@@ -186,7 +302,7 @@ export default function AgentDetailPage() {
     setRunning(true);
     try {
       await api.runAgent(agent._id, { task: taskInput });
-      setTaskInput('');
+      setTaskInput("");
       // Refresh executions after a delay
       setTimeout(loadData, 1000);
       setTimeout(loadData, 3000);
@@ -206,41 +322,41 @@ export default function AgentDetailPage() {
     );
   }
 
-  const scheduleTriggers = triggers.filter((t: any) => t.type === 'schedule');
-  const webhookTriggers = triggers.filter((t: any) => t.type === 'webhook');
+  const scheduleTriggers = triggers.filter((t: any) => t.type === "schedule");
+  const webhookTriggers = triggers.filter((t: any) => t.type === "webhook");
 
   const dayLabels: { value: number; label: string; full: string }[] = [
-    { value: 0, label: 'Sun', full: 'Sunday' },
-    { value: 1, label: 'Mon', full: 'Monday' },
-    { value: 2, label: 'Tue', full: 'Tuesday' },
-    { value: 3, label: 'Wed', full: 'Wednesday' },
-    { value: 4, label: 'Thu', full: 'Thursday' },
-    { value: 5, label: 'Fri', full: 'Friday' },
-    { value: 6, label: 'Sat', full: 'Saturday' },
+    { value: 0, label: "Sun", full: "Sunday" },
+    { value: 1, label: "Mon", full: "Monday" },
+    { value: 2, label: "Tue", full: "Tuesday" },
+    { value: 3, label: "Wed", full: "Wednesday" },
+    { value: 4, label: "Thu", full: "Thursday" },
+    { value: 5, label: "Fri", full: "Friday" },
+    { value: 6, label: "Sat", full: "Saturday" },
   ];
 
-  const to24Hour = (hour: number, ampm: 'AM' | 'PM') => {
+  const to24Hour = (hour: number, ampm: "AM" | "PM") => {
     const h = Math.max(1, Math.min(12, hour));
-    if (ampm === 'AM') return h === 12 ? 0 : h;
+    if (ampm === "AM") return h === 12 ? 0 : h;
     return h === 12 ? 12 : h + 12;
   };
 
-  const from24Hour = (hour24: number): { hour: number; ampm: 'AM' | 'PM' } => {
+  const from24Hour = (hour24: number): { hour: number; ampm: "AM" | "PM" } => {
     const h = Math.max(0, Math.min(23, hour24));
-    if (h === 0) return { hour: 12, ampm: 'AM' };
-    if (h === 12) return { hour: 12, ampm: 'PM' };
-    if (h > 12) return { hour: h - 12, ampm: 'PM' };
-    return { hour: h, ampm: 'AM' };
+    if (h === 0) return { hour: 12, ampm: "AM" };
+    if (h === 12) return { hour: 12, ampm: "PM" };
+    if (h > 12) return { hour: h - 12, ampm: "PM" };
+    return { hour: h, ampm: "AM" };
   };
 
   const buildCron = () => {
     const hour24 = to24Hour(scheduleHour, scheduleAmPm);
-    if (scheduleFrequency === 'daily') return `0 ${hour24} * * *`;
+    if (scheduleFrequency === "daily") return `0 ${hour24} * * *`;
     return `0 ${hour24} * * ${scheduleDayOfWeek}`;
   };
 
   const cronToLabel = (cron?: string) => {
-    if (!cron) return 'Schedule';
+    if (!cron) return "Schedule";
 
     const daily = /^0\s+(\d{1,2})\s+\*\s+\*\s+\*$/.exec(cron.trim());
     if (daily) {
@@ -254,7 +370,7 @@ export default function AgentDetailPage() {
       const hour24 = parseInt(weekly[1], 10);
       const dow = parseInt(weekly[2], 10);
       const t = from24Hour(hour24);
-      const day = dayLabels.find((d) => d.value === dow)?.full || 'day';
+      const day = dayLabels.find((d) => d.value === dow)?.full || "day";
       return `Weekly on ${day} at ${t.hour}:00 ${t.ampm}`;
     }
 
@@ -262,29 +378,49 @@ export default function AgentDetailPage() {
   };
 
   const webhookSourceToLabel = (source?: string) => {
-    if (!source) return 'Webhook event';
-    const match = webhookEvents.find((e: any) => e.source === source || e.id === source);
+    if (!source) return "Webhook event";
+    const match = webhookEvents.find(
+      (e: any) => e.source === source || e.id === source
+    );
     return match?.label || source;
   };
 
   const webhookSourceToDescription = (source?: string) => {
-    if (!source) return '';
-    const match = webhookEvents.find((e: any) => e.source === source || e.id === source);
-    return match?.description || '';
+    if (!source) return "";
+    const match = webhookEvents.find(
+      (e: any) => e.source === source || e.id === source
+    );
+    return match?.description || "";
   };
 
   const handleCreateSelectedTriggers = async () => {
     if (!agent?._id || savingTriggers) return;
     const selectedCron = buildCron();
-    const selectedEvent = webhookEvents.find((e: any) => e.id === selectedWebhookEventId);
+    const selectedEvent = webhookEvents.find(
+      (e: any) => e.id === selectedWebhookEventId
+    );
     const selectedSource = selectedEvent?.source || selectedEvent?.id;
 
     const creates: Promise<any>[] = [];
     if (scheduleEnabled && selectedCron) {
-      creates.push(api.createTrigger({ agentId: agent._id, type: 'schedule', cronExpression: selectedCron, enabled: true }));
+      creates.push(
+        api.createTrigger({
+          agentId: agent._id,
+          type: "schedule",
+          cronExpression: selectedCron,
+          enabled: true,
+        })
+      );
     }
     if (webhookEnabled && selectedSource) {
-      creates.push(api.createTrigger({ agentId: agent._id, type: 'webhook', config: { source: selectedSource }, enabled: true }));
+      creates.push(
+        api.createTrigger({
+          agentId: agent._id,
+          type: "webhook",
+          config: { source: selectedSource },
+          enabled: true,
+        })
+      );
     }
 
     if (creates.length === 0) return;
@@ -328,50 +464,63 @@ export default function AgentDetailPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-20">
-
       {/* Back & Header */}
       <div>
-        <Link href="/dashboard/agents" className="text-sm text-white/40 hover:text-white mb-4 flex items-center gap-1 transition-colors">
+        <Link
+          href="/dashboard/agents"
+          className="text-sm text-white/40 hover:text-white mb-4 flex items-center gap-1 transition-colors"
+        >
           <CaretLeft /> Back to Agents
         </Link>
 
         <div className="flex flex-col items-start justify-between">
           <div>
             <div className="flex justify-between items-center gap-3">
-              <h1 className="md:text-3xl text-2xl font-semibold text-white tracking-tight">{agent.name}</h1>
-              <div className={`px-2 py-0.5 rounded-full text-xs font-medium border ${agent.status === 'active'
-                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                }`}>
-                {agent.status === 'active' ? 'Active' : 'Paused'}
+              <h1 className="md:text-3xl text-2xl font-semibold text-white tracking-tight">
+                {agent.name}
+              </h1>
+              <div
+                className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
+                  agent.status === "active"
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                    : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+                }`}
+              >
+                {agent.status === "active" ? "Active" : "Paused"}
               </div>
             </div>
-            <p className="text-white/40 mt-0.5 max-w-xl">{agent.description || "No description provided."}</p>
+            <p className="text-white/40 mt-0.5 max-w-xl">
+              {agent.description || "No description provided."}
+            </p>
           </div>
 
           <div className="flex gap-2">
-            <Button
-              className="rounded-full mt-4"
-              onClick={handleToggleStatus}
-            >
-              {agent.status === 'active' ? <Pause weight="fill" className="mr-2" /> : <Play weight="fill" className="mr-2" />}
-              {agent.status === 'active' ? 'Pause Agent' : 'Resume Agent'}
+            <Button className="rounded-full mt-4" onClick={handleToggleStatus}>
+              {agent.status === "active" ? (
+                <Pause weight="fill" className="mr-2" />
+              ) : (
+                <Play weight="fill" className="mr-2" />
+              )}
+              {agent.status === "active" ? "Pause Agent" : "Resume Agent"}
             </Button>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
         {/* Left Column */}
         <div className="lg:col-span-6 space-y-8">
-
           {/* Instructions */}
           <section>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium text-white/80">Instructions</h2>
+              <h2 className="text-lg font-medium text-white/80">
+                Instructions
+              </h2>
               {!isEditing && (
-                <button onClick={() => setIsEditing(true)} className="text-xs text-white/40 hover:text-white flex items-center gap-1">
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="text-xs text-white/40 hover:text-white flex items-center gap-1"
+                >
                   <PencilSimple /> Edit
                 </button>
               )}
@@ -387,8 +536,16 @@ export default function AgentDetailPage() {
                     className="bg-black/20 font-mono text-sm border-white/10"
                   />
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>Cancel</Button>
-                    <Button size="sm" onClick={handleSaveInstructions}>Save</Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditing(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={handleSaveInstructions}>
+                      Save
+                    </Button>
                   </div>
                 </div>
               ) : (
@@ -408,15 +565,21 @@ export default function AgentDetailPage() {
             <Card className="p-5 bg-white/5 border border-[#333] rounded-2xl mb-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <div className="text-sm font-medium text-white/80">Add triggers</div>
-                  <div className="text-xs text-white/30">Choose how this agent should start running.</div>
+                  <div className="text-sm font-medium text-white/80">
+                    Add triggers
+                  </div>
+                  <div className="text-xs text-white/30">
+                    Choose how this agent should start running.
+                  </div>
                 </div>
                 <Button
                   onClick={handleCreateSelectedTriggers}
-                  disabled={savingTriggers || (!scheduleEnabled && !webhookEnabled)}
+                  disabled={
+                    savingTriggers || (!scheduleEnabled && !webhookEnabled)
+                  }
                   className="rounded-full"
                 >
-                  {savingTriggers ? 'Saving…' : 'Add selected'}
+                  {savingTriggers ? "Saving…" : "Add selected"}
                 </Button>
               </div>
 
@@ -424,16 +587,28 @@ export default function AgentDetailPage() {
                 <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm font-medium text-white/80">Schedule</div>
-                      <div className="text-xs text-white/30">Run automatically on a cadence.</div>
+                      <div className="text-sm font-medium text-white/80">
+                        Schedule
+                      </div>
+                      <div className="text-xs text-white/30">
+                        Run automatically on a cadence.
+                      </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setScheduleEnabled(!scheduleEnabled)}
-                      className={`w-12 h-6 rounded-full flex items-center px-1 transition-colors ${scheduleEnabled ? 'bg-emerald-500/20' : 'bg-white/10'}`}
+                      className={`w-12 h-6 rounded-full flex items-center px-1 transition-colors ${
+                        scheduleEnabled ? "bg-emerald-500/20" : "bg-white/10"
+                      }`}
                       aria-label="Toggle schedule trigger"
                     >
-                      <div className={`w-4 h-4 rounded-full transition-all ${scheduleEnabled ? 'bg-emerald-400 ml-auto' : 'bg-white/20'}`} />
+                      <div
+                        className={`w-4 h-4 rounded-full transition-all ${
+                          scheduleEnabled
+                            ? "bg-emerald-400 ml-auto"
+                            : "bg-white/20"
+                        }`}
+                      />
                     </button>
                   </div>
                   {scheduleEnabled && (
@@ -441,29 +616,29 @@ export default function AgentDetailPage() {
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
-                          onClick={() => setScheduleFrequency('daily')}
+                          onClick={() => setScheduleFrequency("daily")}
                           className={`px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${
-                            scheduleFrequency === 'daily'
-                              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-                              : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
+                            scheduleFrequency === "daily"
+                              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                              : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
                           }`}
                         >
                           Daily
                         </button>
                         <button
                           type="button"
-                          onClick={() => setScheduleFrequency('weekly')}
+                          onClick={() => setScheduleFrequency("weekly")}
                           className={`px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${
-                            scheduleFrequency === 'weekly'
-                              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-                              : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
+                            scheduleFrequency === "weekly"
+                              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                              : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
                           }`}
                         >
                           Weekly
                         </button>
                       </div>
 
-                      {scheduleFrequency === 'weekly' && (
+                      {scheduleFrequency === "weekly" && (
                         <div className="grid grid-cols-7 gap-1">
                           {dayLabels.map((d) => (
                             <button
@@ -472,8 +647,8 @@ export default function AgentDetailPage() {
                               onClick={() => setScheduleDayOfWeek(d.value)}
                               className={`px-2 py-2 rounded-xl border text-[11px] font-medium transition-colors ${
                                 scheduleDayOfWeek === d.value
-                                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-                                  : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
+                                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                                  : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
                               }`}
                             >
                               {d.label}
@@ -486,35 +661,39 @@ export default function AgentDetailPage() {
                         <div className="text-xs text-white/30">Time</div>
                         <select
                           value={scheduleHour}
-                          onChange={(e) => setScheduleHour(parseInt(e.target.value, 10))}
+                          onChange={(e) =>
+                            setScheduleHour(parseInt(e.target.value, 10))
+                          }
                           className="bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-white/80"
                         >
                           {Array.from({ length: 12 }).map((_, i) => {
                             const h = i + 1;
                             return (
-                              <option key={h} value={h}>{h}:00</option>
+                              <option key={h} value={h}>
+                                {h}:00
+                              </option>
                             );
                           })}
                         </select>
                         <div className="flex gap-1">
                           <button
                             type="button"
-                            onClick={() => setScheduleAmPm('AM')}
+                            onClick={() => setScheduleAmPm("AM")}
                             className={`px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${
-                              scheduleAmPm === 'AM'
-                                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-                                : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
+                              scheduleAmPm === "AM"
+                                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                                : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
                             }`}
                           >
                             AM
                           </button>
                           <button
                             type="button"
-                            onClick={() => setScheduleAmPm('PM')}
+                            onClick={() => setScheduleAmPm("PM")}
                             className={`px-3 py-2 rounded-xl border text-xs font-medium transition-colors ${
-                              scheduleAmPm === 'PM'
-                                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
-                                : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
+                              scheduleAmPm === "PM"
+                                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+                                : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
                             }`}
                           >
                             PM
@@ -523,7 +702,15 @@ export default function AgentDetailPage() {
                       </div>
 
                       <div className="text-[11px] text-white/30">
-                        Will run: {scheduleFrequency === 'daily' ? 'Every day' : `Weekly on ${dayLabels.find(d => d.value === scheduleDayOfWeek)?.label || 'day'}`} at {scheduleHour}:00 {scheduleAmPm}
+                        Will run:{" "}
+                        {scheduleFrequency === "daily"
+                          ? "Every day"
+                          : `Weekly on ${
+                              dayLabels.find(
+                                (d) => d.value === scheduleDayOfWeek
+                              )?.label || "day"
+                            }`}{" "}
+                        at {scheduleHour}:00 {scheduleAmPm}
                       </div>
                     </div>
                   )}
@@ -532,36 +719,66 @@ export default function AgentDetailPage() {
                 <div className="p-4 rounded-2xl bg-black/20 border border-white/5">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm font-medium text-white/80">Webhook event</div>
-                      <div className="text-xs text-white/30">Run when an external event happens.</div>
+                      <div className="text-sm font-medium text-white/80">
+                        Webhook event
+                      </div>
+                      <div className="text-xs text-white/30">
+                        Run when an external event happens.
+                      </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setWebhookEnabled(!webhookEnabled)}
-                      className={`w-12 h-6 rounded-full flex items-center px-1 transition-colors ${webhookEnabled ? 'bg-emerald-500/20' : 'bg-white/10'}`}
+                      className={`w-12 h-6 rounded-full flex items-center px-1 transition-colors ${
+                        webhookEnabled ? "bg-emerald-500/20" : "bg-white/10"
+                      }`}
                       aria-label="Toggle webhook trigger"
                     >
-                      <div className={`w-4 h-4 rounded-full transition-all ${webhookEnabled ? 'bg-emerald-400 ml-auto' : 'bg-white/20'}`} />
+                      <div
+                        className={`w-4 h-4 rounded-full transition-all ${
+                          webhookEnabled
+                            ? "bg-emerald-400 ml-auto"
+                            : "bg-white/20"
+                        }`}
+                      />
                     </button>
                   </div>
 
                   {webhookEnabled && (
                     <div className="mt-3 grid grid-cols-1 gap-2 max-h-56 overflow-y-auto">
-                      {(webhookEvents.length ? webhookEvents : [{ id: 'github.push', label: 'New commit pushed', description: 'Triggers when code is pushed to a repository.' }]).map((ev: any) => (
+                      {(webhookEvents.length
+                        ? webhookEvents
+                        : [
+                            {
+                              id: "github.push",
+                              label: "New commit pushed",
+                              description:
+                                "Triggers when code is pushed to a repository.",
+                            },
+                          ]
+                      ).map((ev: any) => (
                         <button
                           key={ev.id}
                           type="button"
                           onClick={() => setSelectedWebhookEventId(ev.id)}
                           className={`text-left px-3 py-2 rounded-xl border transition-colors ${
                             selectedWebhookEventId === ev.id
-                              ? 'border-emerald-500/30 bg-emerald-500/10'
-                              : 'border-white/10 bg-white/5 hover:bg-white/10'
+                              ? "border-emerald-500/30 bg-emerald-500/10"
+                              : "border-white/10 bg-white/5 hover:bg-white/10"
                           }`}
                         >
-                          <div className={`text-xs font-medium ${selectedWebhookEventId === ev.id ? 'text-emerald-200' : 'text-white/80'}`}>
+                          <div
+                            className={`text-xs font-medium ${
+                              selectedWebhookEventId === ev.id
+                                ? "text-emerald-200"
+                                : "text-white/80"
+                            }`}
+                          >
                             {ev.label || ev.id}
                           </div>
-                          <div className="text-[11px] text-white/30 line-clamp-2">{ev.description || ''}</div>
+                          <div className="text-[11px] text-white/30 line-clamp-2">
+                            {ev.description || ""}
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -572,27 +789,45 @@ export default function AgentDetailPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="p-5 bg-white/5 border border-white/5 rounded-2xl">
-                <div className="text-xs uppercase tracking-widest text-white/30 mb-2">Schedules</div>
+                <div className="text-xs uppercase tracking-widest text-white/30 mb-2">
+                  Schedules
+                </div>
                 {scheduleTriggers.length === 0 ? (
-                  <div className="text-sm text-white/30">No schedule triggers yet.</div>
+                  <div className="text-sm text-white/30">
+                    No schedule triggers yet.
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     {scheduleTriggers.map((t: any) => (
-                      <div key={t._id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-black/20 border border-white/5">
+                      <div
+                        key={t._id}
+                        className="flex items-center justify-between gap-3 p-3 rounded-xl bg-black/20 border border-white/5"
+                      >
                         <div className="min-w-0">
-                          <div className="text-sm text-white/80 truncate">{cronToLabel(t.cronExpression || t.config?.cron)}</div>
+                          <div className="text-sm text-white/80 truncate">
+                            {cronToLabel(t.cronExpression || t.config?.cron)}
+                          </div>
                           <div className="text-[11px] text-white/30">
-                            {t.enabled ? 'Enabled' : 'Disabled'}
-                            {t.lastTriggeredAt ? ` • Last: ${safeFormatDistanceToNow(t.lastTriggeredAt, { addSuffix: true })}` : ''}
+                            {t.enabled ? "Enabled" : "Disabled"}
+                            {t.lastTriggeredAt
+                              ? ` • Last: ${safeFormatDistanceToNow(
+                                  t.lastTriggeredAt,
+                                  { addSuffix: true }
+                                )}`
+                              : ""}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => handleToggleTrigger(t)}
-                            className={`text-[10px] px-2 py-0.5 rounded-full border ${t.enabled ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10' : 'border-white/10 text-white/30 bg-white/5'}`}
+                            className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                              t.enabled
+                                ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10"
+                                : "border-white/10 text-white/30 bg-white/5"
+                            }`}
                           >
-                            {t.enabled ? 'ON' : 'OFF'}
+                            {t.enabled ? "ON" : "OFF"}
                           </button>
                           <button
                             type="button"
@@ -609,17 +844,31 @@ export default function AgentDetailPage() {
               </Card>
 
               <Card className="p-5 bg-white/5 border border-white/5 rounded-2xl">
-                <div className="text-xs uppercase tracking-widest text-white/30 mb-2">Webhooks</div>
+                <div className="text-xs uppercase tracking-widest text-white/30 mb-2">
+                  Webhooks
+                </div>
                 {webhookTriggers.length === 0 ? (
-                  <div className="text-sm text-white/30">No webhook triggers yet.</div>
+                  <div className="text-sm text-white/30">
+                    No webhook triggers yet.
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     {webhookTriggers.map((t: any) => {
-                      const match = webhooks.find((w: any) => w.webhookPath === (t.webhookPath || t.config?.webhookPath));
-                      const url = match?.url || match?.relativeUrl || t.webhookUrl;
-                      const source = (t.source || t.config?.source) as string | undefined;
+                      const match = webhooks.find(
+                        (w: any) =>
+                          w.webhookPath ===
+                          (t.webhookPath || t.config?.webhookPath)
+                      );
+                      const url =
+                        match?.url || match?.relativeUrl || t.webhookUrl;
+                      const source = (t.source || t.config?.source) as
+                        | string
+                        | undefined;
                       return (
-                        <div key={t._id} className="p-3 rounded-xl bg-black/20 border border-white/5">
+                        <div
+                          key={t._id}
+                          className="p-3 rounded-xl bg-black/20 border border-white/5"
+                        >
                           <div className="flex items-center justify-between gap-3">
                             <div className="text-sm text-white/80 truncate">
                               {webhookSourceToLabel(source)}
@@ -628,9 +877,13 @@ export default function AgentDetailPage() {
                               <button
                                 type="button"
                                 onClick={() => handleToggleTrigger(t)}
-                                className={`text-[10px] px-2 py-0.5 rounded-full border ${t.enabled ? 'border-emerald-500/30 text-emerald-300 bg-emerald-500/10' : 'border-white/10 text-white/30 bg-white/5'}`}
+                                className={`text-[10px] px-2 py-0.5 rounded-full border ${
+                                  t.enabled
+                                    ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10"
+                                    : "border-white/10 text-white/30 bg-white/5"
+                                }`}
                               >
-                                {t.enabled ? 'ON' : 'OFF'}
+                                {t.enabled ? "ON" : "OFF"}
                               </button>
                               <button
                                 type="button"
@@ -647,7 +900,7 @@ export default function AgentDetailPage() {
                             </div>
                           )}
                           <div className="mt-2 text-[11px] text-white/30 break-all font-mono">
-                            {url || '—'}
+                            {url || "—"}
                           </div>
                           {url && (
                             <div className="mt-2 flex justify-end">
@@ -672,7 +925,9 @@ export default function AgentDetailPage() {
           {/* Live Run (socket-driven) */}
           {liveExecution && (
             <section>
-              <h2 className="text-lg font-medium text-white/80 mb-2">Live run</h2>
+              <h2 className="text-lg font-medium text-white/80 mb-2">
+                Live run
+              </h2>
               <Card className="p-4 bg-black/40 border border-emerald-500/30 rounded-2xl">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-white/80">
@@ -689,18 +944,21 @@ export default function AgentDetailPage() {
                       <span>{a.type}</span>
                       <span className="text-[10px]">
                         {a.status}
-                        {a.durationMs ? ` • ${(a.durationMs / 1000).toFixed(1)}s` : ''}
+                        {a.durationMs
+                          ? ` • ${(a.durationMs / 1000).toFixed(1)}s`
+                          : ""}
                       </span>
                     </div>
                   ))}
                   {!liveExecution.actions?.length && (
-                    <p className="text-white/30 text-xs">Waiting for first action…</p>
+                    <p className="text-white/30 text-xs">
+                      Waiting for first action…
+                    </p>
                   )}
                 </div>
               </Card>
             </section>
           )}
-
         </div>
 
         {/* Right Column - Chat Interface */}
@@ -714,9 +972,16 @@ export default function AgentDetailPage() {
             {/* Progress Header for Live Execution */}
             {liveExecution && (
               <ProgressHeader
-                completed={liveExecution.actions.filter((a: any) => a.status === 'success').length}
+                completed={
+                  liveExecution.actions.filter(
+                    (a: any) => a.status === "success"
+                  ).length
+                }
                 total={liveExecution.actions.length || 1}
-                currentTask={liveExecution.actions.find((a: any) => a.status === 'running')?.type}
+                currentTask={
+                  liveExecution.actions.find((a: any) => a.status === "running")
+                    ?.type
+                }
               />
             )}
 
@@ -736,23 +1001,33 @@ export default function AgentDetailPage() {
                     <TimelineStep
                       key={idx}
                       icon={
-                        action.type?.includes('search') ? <File size={16} className="text-white/60" /> :
-                        action.type?.includes('code') ? <Code size={16} className="text-white/60" /> :
-                        action.type?.includes('thought') ? <Brain size={16} className="text-white/60" /> :
-                        <DotsThree size={16} className="text-white/60" />
+                        action.type?.includes("search") ? (
+                          <File size={16} className="text-white/60" />
+                        ) : action.type?.includes("code") ? (
+                          <Code size={16} className="text-white/60" />
+                        ) : action.type?.includes("thought") ? (
+                          <Brain size={16} className="text-white/60" />
+                        ) : (
+                          <DotsThree size={16} className="text-white/60" />
+                        )
                       }
                       title={
-                        action.type?.includes('search') ? `Exploring ${action.type.split(' ').pop() || 'files'}` :
-                        action.type?.includes('code') ? 'Modifying code' :
-                        action.type?.includes('thought') ? 'Thinking through approach' :
-                        action.type || 'Processing'
+                        action.type?.includes("search")
+                          ? `Exploring ${
+                              action.type.split(" ").pop() || "files"
+                            }`
+                          : action.type?.includes("code")
+                          ? "Modifying code"
+                          : action.type?.includes("thought")
+                          ? "Thinking through approach"
+                          : action.type || "Processing"
                       }
                       subtitle={action.type}
                       duration={action.durationMs}
                       status={action.status}
                     >
                       {/* Mock code diff for demonstration - in real app, this would come from the execution data */}
-                      {action.type?.includes('code') && (
+                      {action.type?.includes("code") && (
                         <CodeDiffView
                           filename="scraper.ts"
                           additions={46}
@@ -804,27 +1079,161 @@ export default function AgentDetailPage() {
                 </div>
               )}
 
-              {/* Previous executions as collapsed timeline items */}
-              {executions.slice(0, 5).reverse().map((exec: any) => (
-                <TimelineStep
-                  key={exec._id}
-                  icon={<CheckCircle size={16} className="text-emerald-400" weight="fill" />}
-                  title={exec.name || 'Manual Run'}
-                  subtitle={`${exec.actionsExecuted?.length || 0} actions completed`}
-                  duration={exec.startedAt && exec.finishedAt ?
-                    new Date(exec.finishedAt).getTime() - new Date(exec.startedAt).getTime() : undefined}
-                  status={exec.status === 'success' ? 'success' : exec.status === 'failed' ? 'failed' : undefined}
-                />
-              ))}
+              {/* Previous executions as detailed conversation view */}
+              {executions
+                .slice(0, 5)
+                .reverse()
+                .map((exec: any) => (
+                  <div key={exec._id} className="mb-4">
+                    <div className="flex items-center gap-3 mb-2">
+                      <CheckCircle
+                        size={16}
+                        className="text-emerald-400"
+                        weight="fill"
+                      />
+                      <div>
+                        <div className="text-sm font-medium text-white">
+                          {exec.name || "Manual Run"}
+                        </div>
+                        <div className="text-xs text-white/40">
+                          {exec.startedAt &&
+                            safeFormatDistanceToNow(exec.startedAt, {
+                              addSuffix: true,
+                            })}
+                          {exec.startedAt && exec.finishedAt && (
+                            <span className="ml-2">
+                              (
+                              {(
+                                (new Date(exec.finishedAt).getTime() -
+                                  new Date(exec.startedAt).getTime()) /
+                                1000
+                              ).toFixed(1)}
+                              s)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Execution conversation */}
+                    <div className="ml-7 space-y-3">
+                      {exec.events?.map((event: any, index: number) => (
+                        <div
+                          key={event.id || index}
+                          className="bg-black/10 rounded-lg p-3 border border-[#333]/30"
+                        >
+                          {/* Event header */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <div
+                              className={`w-2 h-2 rounded-full ${
+                                event.author === "Research_Assistant"
+                                  ? "bg-blue-400"
+                                  : event.author?.includes("function")
+                                  ? "bg-purple-400"
+                                  : "bg-green-400"
+                              }`}
+                            />
+                            <span className="text-xs font-medium text-white/60">
+                              {event.author === "Research_Assistant"
+                                ? "AI Agent"
+                                : event.author?.includes("function")
+                                ? "Tool Result"
+                                : "User"}
+                            </span>
+                            <span className="text-xs text-white/30 ml-auto">
+                              {event.timestamp &&
+                                new Date(event.timestamp).toLocaleTimeString()}
+                            </span>
+                          </div>
+
+                          {/* Event content */}
+                          <div className="space-y-2">
+                            {event.content?.parts?.map(
+                              (part: any, partIndex: number) => (
+                                <div key={partIndex}>
+                                  {part.text && (
+                                    <div className="text-sm text-white/80 whitespace-pre-wrap">
+                                      {part.text}
+                                    </div>
+                                  )}
+
+                                  {part.functionCall && (
+                                    <div className="bg-purple-500/10 border border-purple-500/20 rounded p-2">
+                                      <div className="text-xs text-purple-300 font-medium mb-1">
+                                        🔧 Tool Call: {part.functionCall.name}
+                                      </div>
+                                      <div className="text-xs text-white/60 font-mono">
+                                        {JSON.stringify(
+                                          part.functionCall.args,
+                                          null,
+                                          2
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {part.functionResponse && (
+                                    <div className="bg-green-500/10 border border-green-500/20 rounded p-2">
+                                      <div className="text-xs text-green-300 font-medium mb-1">
+                                        ✅ Tool Result
+                                      </div>
+                                      <div className="text-xs text-white/60 max-h-32 overflow-y-auto">
+                                        {part.functionResponse.name && (
+                                          <div className="font-medium text-green-300 mb-1">
+                                            {part.functionResponse.name}
+                                          </div>
+                                        )}
+                                        <div className="font-mono whitespace-pre-wrap">
+                                          {typeof part.functionResponse
+                                            .response === "string"
+                                            ? part.functionResponse.response
+                                            : JSON.stringify(
+                                                part.functionResponse.response,
+                                                null,
+                                                2
+                                              )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            )}
+
+                            {/* Usage metadata */}
+                            {event.usageMetadata && (
+                              <div className="text-xs text-white/30 mt-2 pt-2 border-t border-[#333]/30">
+                                Tokens:{" "}
+                                {event.usageMetadata.promptTokenCount || 0} →{" "}
+                                {event.usageMetadata.candidatesTokenCount || 0}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Fallback to basic actions if no events */}
+                      {!exec.events?.length &&
+                        exec.actionsExecuted?.length > 0 && (
+                          <div className="text-xs text-white/40 ml-7">
+                            {exec.actionsExecuted.length} actions executed
+                          </div>
+                        )}
+                    </div>
+                  </div>
+                ))}
 
               {executions.length === 0 && !liveExecution && (
                 <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-60">
                   <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-[#333]">
                     <Robot size={24} className="text-white/30" />
                   </div>
-                  <h4 className="text-lg font-medium text-white/60 mb-2">No tasks run yet</h4>
+                  <h4 className="text-lg font-medium text-white/60 mb-2">
+                    No tasks run yet
+                  </h4>
                   <p className="text-white/40 text-sm max-w-xs">
-                    Start a conversation with your agent by describing a task below.
+                    Start a conversation with your agent by describing a task
+                    below.
                   </p>
                 </div>
               )}
@@ -834,20 +1243,20 @@ export default function AgentDetailPage() {
             <div className="space-y-3">
               {/* Model Selector */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+                {/* <div className="flex items-center gap-2">
                   <select className="bg-black/40 border border-[#333] rounded-lg px-3 py-1.5 text-xs text-white/80 focus:outline-none focus:border-white/30">
                     <option value="grok-code">Grok Code</option>
                     <option value="claude">Claude</option>
                     <option value="gpt-4">GPT-4</option>
                   </select>
                   <div className="text-xs text-white/40">Model</div>
-                </div>
+                </div> */}
 
                 {running && (
                   <Button
                     onClick={() => {
                       // TODO: Implement stop functionality
-                      console.log('Stop execution');
+                      console.log("Stop execution");
                     }}
                     variant="ghost"
                     size="sm"
@@ -864,11 +1273,15 @@ export default function AgentDetailPage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-blue-500/20 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
                 <div className="relative bg-black/60 backdrop-blur-xl border border-[#333] rounded-2xl p-1.5 shadow-2xl flex items-end gap-2 transition-all group-focus-within:border-white/20 group-focus-within:ring-1 group-focus-within:ring-white/10">
                   <Textarea
-                    placeholder={running ? "Ask a follow-up question..." : "Describe a task for this agent..."}
+                    placeholder={
+                      running
+                        ? "Ask a follow-up question..."
+                        : "Describe a task for this agent..."
+                    }
                     value={taskInput}
                     onChange={(e) => setTaskInput(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                      if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         handleRun();
                       }
@@ -881,8 +1294,8 @@ export default function AgentDetailPage() {
                     disabled={!taskInput.trim() || running}
                     className={`h-10 w-10 p-0 rounded-xl transition-all flex-shrink-0 ${
                       taskInput.trim()
-                        ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                        : 'bg-white/5 text-white/20'
+                        ? "bg-blue-600 hover:bg-blue-500 text-white"
+                        : "bg-white/5 text-white/20"
                     }`}
                   >
                     {running ? (
@@ -893,36 +1306,61 @@ export default function AgentDetailPage() {
                   </Button>
                 </div>
                 <p className="text-xs text-white/30 text-center mt-2">
-                  Press Enter to send • Agent will use available tools to complete tasks
+                  Press Enter to send • Agent will use available tools to
+                  complete tasks
                 </p>
               </div>
             </div>
           </Card>
-
-          
         </div>
-
       </div>
 
       {/* Execution History */}
       <section className="pt-8 border-t border-white/5 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-medium text-white/80">Execution History</h2>
+          <h2 className="text-lg font-medium text-white/80">
+            Execution History
+          </h2>
+          <button
+            onClick={async () => {
+              try {
+                const executionsData = await api.getExecutions({
+                  agentId: agent._id,
+                  limit: 5,
+                });
+                setExecutions(
+                  (executionsData.executions || []).map((exec) => ({
+                    ...exec,
+                    events: exec.events || [],
+                    turns: exec.turns || [],
+                    state: exec.state || {},
+                  }))
+                );
+                setLastExecutionUpdate(Date.now());
+              } catch (error) {
+                console.error("Failed to refresh executions:", error);
+              }
+            }}
+            className="flex items-center gap-2 text-xs text-white/40 hover:text-white/60 transition-colors"
+          >
+            <ArrowClockwise size={14} />
+            Refresh
+          </button>
           {executions.length > 0 && (
             <div className="flex gap-4 text-xs text-white/40">
               <span>
                 Runs: <span className="text-white/80">{executions.length}</span>
               </span>
               <span>
-                Success:{' '} 
+                Success:{" "}
                 <span className="text-emerald-400">
-                  {executions.filter((e: any) => e.status === 'success').length}
+                  {executions.filter((e: any) => e.status === "success").length}
                 </span>
               </span>
               <span>
-                Failed:{' '}
+                Failed:{" "}
                 <span className="text-red-400">
-                  {executions.filter((e: any) => e.status === 'failed').length}
+                  {executions.filter((e: any) => e.status === "failed").length}
                 </span>
               </span>
             </div>
@@ -931,15 +1369,18 @@ export default function AgentDetailPage() {
 
         <div className="bg-black/20 border border-[#333] rounded-2xl overflow-hidden">
           {executions.length === 0 ? (
-            <div className="p-8 text-center text-white/20">No history available.</div>
+            <div className="p-8 text-center text-white/20">
+              No history available.
+            </div>
           ) : (
             <div className="divide-y divide-[#333]/50">
               {executions.map((exec: any) => {
                 const started = exec.startedAt || exec.createdAt;
                 const finished = exec.finishedAt;
-                const durationMs = started && finished
-                  ? new Date(finished).getTime() - new Date(started).getTime()
-                  : undefined;
+                const durationMs =
+                  started && finished
+                    ? new Date(finished).getTime() - new Date(started).getTime()
+                    : undefined;
                 const actionsCount = exec.actionsExecuted?.length ?? 0;
 
                 return (
@@ -955,20 +1396,22 @@ export default function AgentDetailPage() {
                       </div>
                       <div>
                         <div className="text-sm font-medium text-white">
-                          {exec.name || 'Manual Run'}
+                          {exec.name || "Manual Run"}
                         </div>
                         <div className="text-xs text-white/40">
                           {started &&
-                            safeFormatDistanceToNow(started, { addSuffix: true })}
+                            safeFormatDistanceToNow(started, {
+                              addSuffix: true,
+                            })}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 text-xs text-white/40">
                       <span className="font-mono">
-                        {durationMs ? `${(durationMs / 1000).toFixed(1)}s` : ''}
+                        {durationMs ? `${(durationMs / 1000).toFixed(1)}s` : ""}
                       </span>
                       <span>{actionsCount} actions</span>
-                      {typeof exec.creditsUsed === 'number' && (
+                      {typeof exec.creditsUsed === "number" && (
                         <span>{exec.creditsUsed} credits</span>
                       )}
                       <CaretLeft className="rotate-180 text-white/20 group-hover:text-white/60 transition-colors" />
@@ -980,7 +1423,6 @@ export default function AgentDetailPage() {
           )}
         </div>
       </section>
-
     </div>
   );
 }
@@ -996,13 +1438,13 @@ function TimelineStep({
   metadata,
   children,
   isExpanded = false,
-  onToggleExpand
+  onToggleExpand,
 }: {
   icon: React.ReactNode;
   title: string;
   subtitle?: string;
   duration?: number;
-  status?: 'running' | 'success' | 'failed';
+  status?: "running" | "success" | "failed";
   timestamp?: number;
   metadata?: any;
   children?: React.ReactNode;
@@ -1024,16 +1466,26 @@ function TimelineStep({
   return (
     <div className="flex gap-3 group">
       <div className="flex flex-col items-center">
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-          status === 'running' ? 'bg-blue-500/20 border border-blue-500/30' :
-          status === 'success' ? 'bg-emerald-500/20 border border-emerald-500/30' :
-          status === 'failed' ? 'bg-red-500/20 border border-red-500/30' :
-          'bg-white/10 border border-white/10'
-        }`}>
-          {status === 'running' ? <Spinner size={16} className="text-blue-400 animate-spin" /> :
-           status === 'success' ? <Check size={16} className="text-emerald-400" /> :
-           status === 'failed' ? <X size={16} className="text-red-400" /> :
-           icon}
+        <div
+          className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+            status === "running"
+              ? "bg-blue-500/20 border border-blue-500/30"
+              : status === "success"
+              ? "bg-emerald-500/20 border border-emerald-500/30"
+              : status === "failed"
+              ? "bg-red-500/20 border border-red-500/30"
+              : "bg-white/10 border border-white/10"
+          }`}
+        >
+          {status === "running" ? (
+            <Spinner size={16} className="text-blue-400 animate-spin" />
+          ) : status === "success" ? (
+            <Check size={16} className="text-emerald-400" />
+          ) : status === "failed" ? (
+            <X size={16} className="text-red-400" />
+          ) : (
+            icon
+          )}
         </div>
         <div className="w-px h-full bg-white/10 mt-2" />
       </div>
@@ -1057,20 +1509,21 @@ function TimelineStep({
                 onClick={handleToggle}
                 className="text-xs text-white/40 hover:text-white/60 transition-colors"
               >
-                <CaretUpDown size={12} className={`transform transition-transform ${expanded ? 'rotate-180' : ''}`} />
+                <CaretUpDown
+                  size={12}
+                  className={`transform transition-transform ${
+                    expanded ? "rotate-180" : ""
+                  }`}
+                />
               </button>
             )}
           </div>
         </div>
-        {subtitle && (
-          <div className="text-xs text-white/60">{subtitle}</div>
-        )}
+        {subtitle && <div className="text-xs text-white/60">{subtitle}</div>}
 
         {expanded && (
           <div className="space-y-3 mt-3">
-            {metadata && (
-              <MetadataDisplay metadata={metadata} />
-            )}
+            {metadata && <MetadataDisplay metadata={metadata} />}
             {children}
           </div>
         )}
@@ -1081,10 +1534,14 @@ function TimelineStep({
 
 function MetadataDisplay({ metadata }: { metadata: any }) {
   const renderValue = (value: any, key?: string): React.ReactNode => {
-    if (value === null || value === undefined) return <span className="text-white/30">null</span>;
-    if (typeof value === 'string') return <span className="text-emerald-300">"{value}"</span>;
-    if (typeof value === 'number') return <span className="text-blue-300">{value}</span>;
-    if (typeof value === 'boolean') return <span className="text-purple-300">{value.toString()}</span>;
+    if (value === null || value === undefined)
+      return <span className="text-white/30">null</span>;
+    if (typeof value === "string")
+      return <span className="text-emerald-300">"{value}"</span>;
+    if (typeof value === "number")
+      return <span className="text-blue-300">{value}</span>;
+    if (typeof value === "boolean")
+      return <span className="text-purple-300">{value.toString()}</span>;
     if (Array.isArray(value)) {
       return (
         <div className="ml-4">
@@ -1092,25 +1549,29 @@ function MetadataDisplay({ metadata }: { metadata: any }) {
           {value.map((item, idx) => (
             <div key={idx} className="ml-2">
               {renderValue(item)}
-              {idx < value.length - 1 && <span className="text-white/40">,</span>}
+              {idx < value.length - 1 && (
+                <span className="text-white/40">,</span>
+              )}
             </div>
           ))}
           <div className="text-white/60">]</div>
         </div>
       );
     }
-    if (typeof value === 'object') {
+    if (typeof value === "object") {
       return (
         <div className="ml-4 border-l border-white/10 pl-2">
-          <div className="text-white/60">{'{'}</div>
+          <div className="text-white/60">{"{"}</div>
           {Object.entries(value).map(([k, v], idx) => (
             <div key={k} className="ml-2">
               <span className="text-cyan-300">"{k}"</span>
               <span className="text-white/40">:</span> {renderValue(v, k)}
-              {idx < Object.entries(value).length - 1 && <span className="text-white/40">,</span>}
+              {idx < Object.entries(value).length - 1 && (
+                <span className="text-white/40">,</span>
+              )}
             </div>
           ))}
-          <div className="text-white/60">{'}'}</div>
+          <div className="text-white/60">{"}"}</div>
         </div>
       );
     }
@@ -1120,9 +1581,7 @@ function MetadataDisplay({ metadata }: { metadata: any }) {
   return (
     <div className="bg-black/30 rounded-lg border border-white/10 p-3 font-mono text-xs overflow-x-auto max-h-96 overflow-y-auto">
       <div className="text-white/60 mb-2">Metadata:</div>
-      <div className="text-white/80">
-        {renderValue(metadata)}
-      </div>
+      <div className="text-white/80">{renderValue(metadata)}</div>
     </div>
   );
 }
@@ -1133,7 +1592,9 @@ function FunctionCallDisplay({ functionCall }: { functionCall: any }) {
       <div className="flex items-center gap-2 mb-2">
         <Code size={14} className="text-blue-400" />
         <span className="text-sm font-medium text-blue-300">Function Call</span>
-        <span className="text-xs text-white/40 font-mono">{functionCall.id}</span>
+        <span className="text-xs text-white/40 font-mono">
+          {functionCall.id}
+        </span>
       </div>
       <div className="space-y-1 text-xs">
         <div>
@@ -1151,13 +1612,21 @@ function FunctionCallDisplay({ functionCall }: { functionCall: any }) {
   );
 }
 
-function FunctionResponseDisplay({ functionResponse }: { functionResponse: any }) {
+function FunctionResponseDisplay({
+  functionResponse,
+}: {
+  functionResponse: any;
+}) {
   return (
     <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">
       <div className="flex items-center gap-2 mb-2">
         <CheckCircle size={14} className="text-emerald-400" />
-        <span className="text-sm font-medium text-emerald-300">Function Response</span>
-        <span className="text-xs text-white/40 font-mono">{functionResponse.id}</span>
+        <span className="text-sm font-medium text-emerald-300">
+          Function Response
+        </span>
+        <span className="text-xs text-white/40 font-mono">
+          {functionResponse.id}
+        </span>
       </div>
       <div className="text-xs">
         <span className="text-white/60">Name:</span>
@@ -1178,37 +1647,52 @@ function UsageMetadataDisplay({ usageMetadata }: { usageMetadata: any }) {
     <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3">
       <div className="flex items-center gap-2 mb-2">
         <Brain size={14} className="text-purple-400" />
-        <span className="text-sm font-medium text-purple-300">Usage Statistics</span>
+        <span className="text-sm font-medium text-purple-300">
+          Usage Statistics
+        </span>
       </div>
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div>
           <span className="text-white/60">Prompt Tokens:</span>
-          <span className="text-blue-300 ml-2">{usageMetadata.promptTokenCount}</span>
+          <span className="text-blue-300 ml-2">
+            {usageMetadata.promptTokenCount}
+          </span>
         </div>
         <div>
           <span className="text-white/60">Candidates Tokens:</span>
-          <span className="text-emerald-300 ml-2">{usageMetadata.candidatesTokenCount}</span>
+          <span className="text-emerald-300 ml-2">
+            {usageMetadata.candidatesTokenCount}
+          </span>
         </div>
         <div>
           <span className="text-white/60">Total Tokens:</span>
-          <span className="text-purple-300 ml-2">{usageMetadata.totalTokenCount}</span>
+          <span className="text-purple-300 ml-2">
+            {usageMetadata.totalTokenCount}
+          </span>
         </div>
         <div>
           <span className="text-white/60">Finish Reason:</span>
-          <span className="text-yellow-300 ml-2">{usageMetadata.finishReason || 'N/A'}</span>
+          <span className="text-yellow-300 ml-2">
+            {usageMetadata.finishReason || "N/A"}
+          </span>
         </div>
       </div>
     </div>
   );
 }
 
-function CodeDiffView({ filename, additions, deletions, diff }: {
+function CodeDiffView({
+  filename,
+  additions,
+  deletions,
+  diff,
+}: {
   filename: string;
   additions: number;
   deletions: number;
   diff: string;
 }) {
-  const lines = diff.split('\n');
+  const lines = diff.split("\n");
 
   return (
     <div className="mt-3 rounded-lg border border-[#333] bg-black/40 overflow-hidden">
@@ -1230,16 +1714,18 @@ function CodeDiffView({ filename, additions, deletions, diff }: {
       <div className="max-h-64 overflow-y-auto">
         <pre className="text-xs font-mono leading-relaxed">
           {lines.map((line, idx) => {
-            const isAddition = line.startsWith('+');
-            const isDeletion = line.startsWith('-');
+            const isAddition = line.startsWith("+");
+            const isDeletion = line.startsWith("-");
 
             return (
               <div
                 key={idx}
                 className={`px-3 py-0.5 ${
-                  isAddition ? 'bg-emerald-500/10 text-emerald-300' :
-                  isDeletion ? 'bg-red-500/10 text-red-300' :
-                  'text-white/60'
+                  isAddition
+                    ? "bg-emerald-500/10 text-emerald-300"
+                    : isDeletion
+                    ? "bg-red-500/10 text-red-300"
+                    : "text-white/60"
                 }`}
               >
                 {line}
@@ -1252,7 +1738,11 @@ function CodeDiffView({ filename, additions, deletions, diff }: {
   );
 }
 
-function ProgressHeader({ completed, total, currentTask }: {
+function ProgressHeader({
+  completed,
+  total,
+  currentTask,
+}: {
   completed: number;
   total: number;
   currentTask?: string;
@@ -1265,9 +1755,7 @@ function ProgressHeader({ completed, total, currentTask }: {
         <div className="text-sm font-medium text-white/90">
           {completed} of {total} To-dos Completed
         </div>
-        <div className="text-xs text-white/60">
-          {Math.round(progress)}%
-        </div>
+        <div className="text-xs text-white/60">{Math.round(progress)}%</div>
       </div>
 
       <div className="w-full bg-white/10 rounded-full h-2 mb-2">
@@ -1288,8 +1776,17 @@ function ProgressHeader({ completed, total, currentTask }: {
 }
 
 function StatusIcon({ status }: { status: string }) {
-  if (status === 'completed' || status === 'success') return <CheckCircle size={20} className="text-emerald-400" weight="fill" />;
-  if (status === 'failed' || status === 'error') return <XCircle size={20} className="text-red-400" weight="fill" />;
-  if (status === 'running') return <Lightning size={20} className="text-blue-400 animate-pulse" weight="fill" />;
+  if (status === "completed" || status === "success")
+    return <CheckCircle size={20} className="text-emerald-400" weight="fill" />;
+  if (status === "failed" || status === "error")
+    return <XCircle size={20} className="text-red-400" weight="fill" />;
+  if (status === "running")
+    return (
+      <Lightning
+        size={20}
+        className="text-blue-400 animate-pulse"
+        weight="fill"
+      />
+    );
   return <Clock size={20} className="text-white/20" weight="fill" />;
 }
