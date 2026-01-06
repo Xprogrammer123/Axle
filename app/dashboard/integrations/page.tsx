@@ -14,15 +14,15 @@ const ALL_PROVIDERS = [
     category: "Development",
     description: "Access repositories, manage issues, and track commits.",
   },
+  // {
+  //   name: "Slack",
+  //   provider: "slack",
+  //   icon: "/slack.svg",
+  //   category: "Communication",
+  //   description: "Send messages and monitor channels.",
+  // },
   {
-    name: "Slack",
-    provider: "slack",
-    icon: "/slack.svg",
-    category: "Communication",
-    description: "Send messages and monitor channels.",
-  },
-  {
-    name: "Google Drive",
+    name: "Google",
     provider: "google",
     icon: "/google.svg",
     category: "Productivity",
@@ -92,7 +92,7 @@ export default function IntegrationsPage() {
             Integrations
           </h1>
           <p className="text-white/40 mt-1">
-            Connect the tools your agents will use to act.
+            Connect the apps your agents will use to act.
           </p>
           {health?.summary && (
             <p className="text-white/20 text-xs mt-3">

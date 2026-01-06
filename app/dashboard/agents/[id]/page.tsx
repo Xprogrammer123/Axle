@@ -15,7 +15,18 @@ import {
   Robot,
   PencilSimple,
   FloppyDisk,
-  X
+  X,
+  Brain,
+  File,
+  FileText,
+  Code,
+  Square,
+  CaretUpDown,
+  DotsThree,
+  Check,
+  Spinner,
+  GitBranch,
+  ChatCircle
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -353,7 +364,7 @@ export default function AgentDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         {/* Left Column */}
-        <div className="lg:col-span-8 space-y-8">
+        <div className="lg:col-span-6 space-y-8">
 
           {/* Instructions */}
           <section>
@@ -394,7 +405,7 @@ export default function AgentDetailPage() {
               <h2 className="text-lg font-medium text-white/80">Triggers</h2>
             </div>
 
-            <Card className="p-5 bg-white/5 border border-white/5 rounded-2xl mb-4">
+            <Card className="p-5 bg-white/5 border border-[#333] rounded-2xl mb-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <div className="text-sm font-medium text-white/80">Add triggers</div>
@@ -692,32 +703,199 @@ export default function AgentDetailPage() {
 
         </div>
 
-        {/* Right Column */}
-        <div className="lg:col-span-4 space-y-6">
-          <Card className="p-6 bg-white/3 border-2 border-white/3 rounded-2xl top-6">
-            <div className="flex items-center gap-2 mb-4 text-base">
+        {/* Right Column - Chat Interface */}
+        <div className="lg:col-span-6 space-y-6">
+          <Card className="p-6 bg-gradient-to-b from-white/5 to-white/3 border border-[#333] rounded-2xl h-[600px] flex flex-col">
+            <div className="flex items-center gap-2 mb-6 text-base">
               <Lightning weight="fill" size={20} />
-              <h3 className="font-medium">Run Task</h3>
+              <h3 className="font-medium">Agent Chat</h3>
             </div>
 
-            <div className="space-y-4">
-              <Textarea
-                placeholder="Describe a task for this agent..."
-                rows={4}
-                value={taskInput}
-                onChange={(e) => setTaskInput(e.target.value)}
-                className="bg-black/40 border-black/60 resize-none text-sm"
+            {/* Progress Header for Live Execution */}
+            {liveExecution && (
+              <ProgressHeader
+                completed={liveExecution.actions.filter((a: any) => a.status === 'success').length}
+                total={liveExecution.actions.length || 1}
+                currentTask={liveExecution.actions.find((a: any) => a.status === 'running')?.type}
               />
-              <Button
-                className="w-full bg-base text-white rounded-full py-3"
-                onClick={handleRun}
-                disabled={!taskInput.trim() || running}
-              >
-                {running ? 'Starting...' : 'Run Agent'}
-              </Button>
-              <p className="text-xs text-white/30 text-center">
-                Agent will use available tools to run the task.
-              </p>
+            )}
+
+            {/* Chat Messages Area - Timeline View */}
+            <div className="flex-1 overflow-y-auto space-y-1 mb-4 custom-scrollbar">
+              {liveExecution && (
+                <div className="space-y-1">
+                  {/* Live execution timeline */}
+                  <TimelineStep
+                    icon={<Robot size={16} className="text-white/80" />}
+                    title="Agent started execution"
+                    subtitle={liveExecution.id?.slice(-6)}
+                    status="running"
+                  />
+
+                  {liveExecution.actions.map((action: any, idx: number) => (
+                    <TimelineStep
+                      key={idx}
+                      icon={
+                        action.type?.includes('search') ? <File size={16} className="text-white/60" /> :
+                        action.type?.includes('code') ? <Code size={16} className="text-white/60" /> :
+                        action.type?.includes('thought') ? <Brain size={16} className="text-white/60" /> :
+                        <DotsThree size={16} className="text-white/60" />
+                      }
+                      title={
+                        action.type?.includes('search') ? `Exploring ${action.type.split(' ').pop() || 'files'}` :
+                        action.type?.includes('code') ? 'Modifying code' :
+                        action.type?.includes('thought') ? 'Thinking through approach' :
+                        action.type || 'Processing'
+                      }
+                      subtitle={action.type}
+                      duration={action.durationMs}
+                      status={action.status}
+                    >
+                      {/* Mock code diff for demonstration - in real app, this would come from the execution data */}
+                      {action.type?.includes('code') && (
+                        <CodeDiffView
+                          filename="scraper.ts"
+                          additions={46}
+                          deletions={39}
+                          diff={`@@ -15,7 +15,7 @@ import { chromium } from 'playwright';
+ import { chromium } from 'playwright-core';
+ 
+ export class WebScraper {
+-  private browser: Browser | null = null;
++  private browser: Browser | null = null;
++  private timeout: number = 30000;
+ 
+   async scrape(url: string): Promise<ScrapedData> {
+     try {
+       this.browser = await chromium.launch();
+-      const page = await this.browser.newPage();
++      const page = await this.browser.newPage({ timeout: this.timeout });
+       await page.goto(url);
+       const content = await page.content();
+       return { url, content, timestamp: new Date() };
+     } catch (error) {
+-      console.error('Scraping failed:', error);
++      console.error('Scraping failed:', error.message);
+       throw error;
+     } finally {
+       await this.browser?.close();
+@@ -35,6 +36,8 @@ export class WebScraper {
+       await this.browser?.close();
+     }
+   }
++
++  // New method for batch scraping
++  async scrapeMultiple(urls: string[]): Promise<ScrapedData[]> {
++    return Promise.all(urls.map(url => this.scrape(url)));
++  }
+ }`}
+                        />
+                      )}
+                    </TimelineStep>
+                  ))}
+
+                  {!liveExecution.actions?.length && (
+                    <TimelineStep
+                      icon={<Clock size={16} className="text-white/40" />}
+                      title="Waiting for first action..."
+                      status="running"
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* Previous executions as collapsed timeline items */}
+              {executions.slice(0, 5).reverse().map((exec: any) => (
+                <TimelineStep
+                  key={exec._id}
+                  icon={<CheckCircle size={16} className="text-emerald-400" weight="fill" />}
+                  title={exec.name || 'Manual Run'}
+                  subtitle={`${exec.actionsExecuted?.length || 0} actions completed`}
+                  duration={exec.startedAt && exec.finishedAt ?
+                    new Date(exec.finishedAt).getTime() - new Date(exec.startedAt).getTime() : undefined}
+                  status={exec.status === 'success' ? 'success' : exec.status === 'failed' ? 'failed' : undefined}
+                />
+              ))}
+
+              {executions.length === 0 && !liveExecution && (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-60">
+                  <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 border border-[#333]">
+                    <Robot size={24} className="text-white/30" />
+                  </div>
+                  <h4 className="text-lg font-medium text-white/60 mb-2">No tasks run yet</h4>
+                  <p className="text-white/40 text-sm max-w-xs">
+                    Start a conversation with your agent by describing a task below.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Chat Input */}
+            <div className="space-y-3">
+              {/* Model Selector */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <select className="bg-black/40 border border-[#333] rounded-lg px-3 py-1.5 text-xs text-white/80 focus:outline-none focus:border-white/30">
+                    <option value="grok-code">Grok Code</option>
+                    <option value="claude">Claude</option>
+                    <option value="gpt-4">GPT-4</option>
+                  </select>
+                  <div className="text-xs text-white/40">Model</div>
+                </div>
+
+                {running && (
+                  <Button
+                    onClick={() => {
+                      // TODO: Implement stop functionality
+                      console.log('Stop execution');
+                    }}
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-white/60 hover:text-white hover:bg-white/10 rounded-lg px-3 py-1.5 h-auto"
+                  >
+                    <Square size={12} className="mr-1.5" weight="fill" />
+                    Stop
+                  </Button>
+                )}
+              </div>
+
+              {/* Input Area */}
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-blue-500/20 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
+                <div className="relative bg-black/60 backdrop-blur-xl border border-[#333] rounded-2xl p-1.5 shadow-2xl flex items-end gap-2 transition-all group-focus-within:border-white/20 group-focus-within:ring-1 group-focus-within:ring-white/10">
+                  <Textarea
+                    placeholder={running ? "Ask a follow-up question..." : "Describe a task for this agent..."}
+                    value={taskInput}
+                    onChange={(e) => setTaskInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleRun();
+                      }
+                    }}
+                    rows={3}
+                    className="bg-transparent border-none text-white placeholder:text-white/30 resize-none focus-visible:ring-0 text-sm shadow-none flex-1 min-h-[60px] max-h-[120px]"
+                  />
+                  <Button
+                    onClick={handleRun}
+                    disabled={!taskInput.trim() || running}
+                    className={`h-10 w-10 p-0 rounded-xl transition-all flex-shrink-0 ${
+                      taskInput.trim()
+                        ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                        : 'bg-white/5 text-white/20'
+                    }`}
+                  >
+                    {running ? (
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <Lightning size={16} />
+                    )}
+                  </Button>
+                </div>
+                <p className="text-xs text-white/30 text-center mt-2">
+                  Press Enter to send • Agent will use available tools to complete tasks
+                </p>
+              </div>
             </div>
           </Card>
 
@@ -751,11 +929,11 @@ export default function AgentDetailPage() {
           )}
         </div>
 
-        <div className="bg-white/5 border border-white/5 rounded-2xl overflow-hidden">
+        <div className="bg-black/20 border border-[#333] rounded-2xl overflow-hidden">
           {executions.length === 0 ? (
             <div className="p-8 text-center text-white/20">No history available.</div>
           ) : (
-            <div className="divide-y divide-white/5">
+            <div className="divide-y divide-[#333]/50">
               {executions.map((exec: any) => {
                 const started = exec.startedAt || exec.createdAt;
                 const finished = exec.finishedAt;
@@ -771,7 +949,10 @@ export default function AgentDetailPage() {
                     className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors group"
                   >
                     <div className="flex items-center gap-4">
-                      <StatusIcon status={exec.status} />
+                      <div className="flex flex-col items-center">
+                        <StatusIcon status={exec.status} />
+                        <div className="w-px h-6 bg-[#333]/50 mt-1" />
+                      </div>
                       <div>
                         <div className="text-sm font-medium text-white">
                           {exec.name || 'Manual Run'}
@@ -800,6 +981,135 @@ export default function AgentDetailPage() {
         </div>
       </section>
 
+    </div>
+  );
+}
+
+// Timeline Step Components
+function TimelineStep({ icon, title, subtitle, duration, status, children }: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle?: string;
+  duration?: number;
+  status?: 'running' | 'success' | 'failed';
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="flex gap-3 group">
+      <div className="flex flex-col items-center">
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+          status === 'running' ? 'bg-blue-500/20 border border-blue-500/30' :
+          status === 'success' ? 'bg-emerald-500/20 border border-emerald-500/30' :
+          status === 'failed' ? 'bg-red-500/20 border border-red-500/30' :
+          'bg-white/10 border border-white/10'
+        }`}>
+          {status === 'running' ? <Spinner size={16} className="text-blue-400 animate-spin" /> :
+           status === 'success' ? <Check size={16} className="text-emerald-400" /> :
+           status === 'failed' ? <X size={16} className="text-red-400" /> :
+           icon}
+        </div>
+        <div className="w-px h-full bg-white/10 mt-2" />
+      </div>
+
+      <div className="flex-1 space-y-2 pb-6">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-medium text-white/90">{title}</div>
+          {duration && (
+            <div className="text-xs text-white/40 font-mono">
+              {(duration / 1000).toFixed(1)}s
+            </div>
+          )}
+        </div>
+        {subtitle && (
+          <div className="text-xs text-white/60">{subtitle}</div>
+        )}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function CodeDiffView({ filename, additions, deletions, diff }: {
+  filename: string;
+  additions: number;
+  deletions: number;
+  diff: string;
+}) {
+  const lines = diff.split('\n');
+
+  return (
+    <div className="mt-3 rounded-lg border border-[#333] bg-black/40 overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 bg-white/5 border-b border-[#333]">
+        <div className="flex items-center gap-2">
+          <FileText size={14} className="text-white/40" />
+          <span className="text-xs font-mono text-white/80">{filename}</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs">
+          {additions > 0 && (
+            <span className="text-emerald-400 font-mono">+{additions}</span>
+          )}
+          {deletions > 0 && (
+            <span className="text-red-400 font-mono">-{deletions}</span>
+          )}
+        </div>
+      </div>
+
+      <div className="max-h-64 overflow-y-auto">
+        <pre className="text-xs font-mono leading-relaxed">
+          {lines.map((line, idx) => {
+            const isAddition = line.startsWith('+');
+            const isDeletion = line.startsWith('-');
+
+            return (
+              <div
+                key={idx}
+                className={`px-3 py-0.5 ${
+                  isAddition ? 'bg-emerald-500/10 text-emerald-300' :
+                  isDeletion ? 'bg-red-500/10 text-red-300' :
+                  'text-white/60'
+                }`}
+              >
+                {line}
+              </div>
+            );
+          })}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+function ProgressHeader({ completed, total, currentTask }: {
+  completed: number;
+  total: number;
+  currentTask?: string;
+}) {
+  const progress = (completed / total) * 100;
+
+  return (
+    <div className="rounded-lg border border-[#333] bg-gradient-to-r from-blue-500/10 to-purple-500/10 p-4 mb-4">
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-sm font-medium text-white/90">
+          {completed} of {total} To-dos Completed
+        </div>
+        <div className="text-xs text-white/60">
+          {Math.round(progress)}%
+        </div>
+      </div>
+
+      <div className="w-full bg-white/10 rounded-full h-2 mb-2">
+        <div
+          className="bg-gradient-to-r from-blue-400 to-purple-400 h-2 rounded-full transition-all duration-500"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      {currentTask && (
+        <div className="text-xs text-white/70 flex items-center gap-2">
+          <Spinner size={12} className="animate-spin" />
+          {currentTask}
+        </div>
+      )}
     </div>
   );
 }
