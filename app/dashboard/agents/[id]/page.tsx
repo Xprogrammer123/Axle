@@ -986,14 +986,41 @@ export default function AgentDetailPage() {
 }
 
 // Timeline Step Components
-function TimelineStep({ icon, title, subtitle, duration, status, children }: {
+function TimelineStep({
+  icon,
+  title,
+  subtitle,
+  duration,
+  status,
+  timestamp,
+  metadata,
+  children,
+  isExpanded = false,
+  onToggleExpand
+}: {
   icon: React.ReactNode;
   title: string;
   subtitle?: string;
   duration?: number;
   status?: 'running' | 'success' | 'failed';
+  timestamp?: number;
+  metadata?: any;
   children?: React.ReactNode;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }) {
+  const [localExpanded, setLocalExpanded] = useState(isExpanded);
+
+  const handleToggle = () => {
+    if (onToggleExpand) {
+      onToggleExpand();
+    } else {
+      setLocalExpanded(!localExpanded);
+    }
+  };
+
+  const expanded = onToggleExpand ? isExpanded : localExpanded;
+
   return (
     <div className="flex gap-3 group">
       <div className="flex flex-col items-center">
@@ -1014,16 +1041,162 @@ function TimelineStep({ icon, title, subtitle, duration, status, children }: {
       <div className="flex-1 space-y-2 pb-6">
         <div className="flex items-center justify-between">
           <div className="text-sm font-medium text-white/90">{title}</div>
-          {duration && (
-            <div className="text-xs text-white/40 font-mono">
-              {(duration / 1000).toFixed(1)}s
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {timestamp && (
+              <div className="text-xs text-white/40 font-mono">
+                {new Date(timestamp).toLocaleTimeString()}
+              </div>
+            )}
+            {duration && (
+              <div className="text-xs text-white/40 font-mono">
+                {(duration / 1000).toFixed(1)}s
+              </div>
+            )}
+            {(metadata || children) && (
+              <button
+                onClick={handleToggle}
+                className="text-xs text-white/40 hover:text-white/60 transition-colors"
+              >
+                <CaretUpDown size={12} className={`transform transition-transform ${expanded ? 'rotate-180' : ''}`} />
+              </button>
+            )}
+          </div>
         </div>
         {subtitle && (
           <div className="text-xs text-white/60">{subtitle}</div>
         )}
-        {children}
+
+        {expanded && (
+          <div className="space-y-3 mt-3">
+            {metadata && (
+              <MetadataDisplay metadata={metadata} />
+            )}
+            {children}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MetadataDisplay({ metadata }: { metadata: any }) {
+  const renderValue = (value: any, key?: string): React.ReactNode => {
+    if (value === null || value === undefined) return <span className="text-white/30">null</span>;
+    if (typeof value === 'string') return <span className="text-emerald-300">"{value}"</span>;
+    if (typeof value === 'number') return <span className="text-blue-300">{value}</span>;
+    if (typeof value === 'boolean') return <span className="text-purple-300">{value.toString()}</span>;
+    if (Array.isArray(value)) {
+      return (
+        <div className="ml-4">
+          <div className="text-white/60">[</div>
+          {value.map((item, idx) => (
+            <div key={idx} className="ml-2">
+              {renderValue(item)}
+              {idx < value.length - 1 && <span className="text-white/40">,</span>}
+            </div>
+          ))}
+          <div className="text-white/60">]</div>
+        </div>
+      );
+    }
+    if (typeof value === 'object') {
+      return (
+        <div className="ml-4 border-l border-white/10 pl-2">
+          <div className="text-white/60">{'{'}</div>
+          {Object.entries(value).map(([k, v], idx) => (
+            <div key={k} className="ml-2">
+              <span className="text-cyan-300">"{k}"</span>
+              <span className="text-white/40">:</span> {renderValue(v, k)}
+              {idx < Object.entries(value).length - 1 && <span className="text-white/40">,</span>}
+            </div>
+          ))}
+          <div className="text-white/60">{'}'}</div>
+        </div>
+      );
+    }
+    return <span className="text-white/70">{String(value)}</span>;
+  };
+
+  return (
+    <div className="bg-black/30 rounded-lg border border-white/10 p-3 font-mono text-xs overflow-x-auto max-h-96 overflow-y-auto">
+      <div className="text-white/60 mb-2">Metadata:</div>
+      <div className="text-white/80">
+        {renderValue(metadata)}
+      </div>
+    </div>
+  );
+}
+
+function FunctionCallDisplay({ functionCall }: { functionCall: any }) {
+  return (
+    <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+      <div className="flex items-center gap-2 mb-2">
+        <Code size={14} className="text-blue-400" />
+        <span className="text-sm font-medium text-blue-300">Function Call</span>
+        <span className="text-xs text-white/40 font-mono">{functionCall.id}</span>
+      </div>
+      <div className="space-y-1 text-xs">
+        <div>
+          <span className="text-white/60">Name:</span>
+          <span className="text-cyan-300 ml-2">{functionCall.name}</span>
+        </div>
+        {functionCall.args && (
+          <div>
+            <span className="text-white/60">Args:</span>
+            <MetadataDisplay metadata={functionCall.args} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FunctionResponseDisplay({ functionResponse }: { functionResponse: any }) {
+  return (
+    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">
+      <div className="flex items-center gap-2 mb-2">
+        <CheckCircle size={14} className="text-emerald-400" />
+        <span className="text-sm font-medium text-emerald-300">Function Response</span>
+        <span className="text-xs text-white/40 font-mono">{functionResponse.id}</span>
+      </div>
+      <div className="text-xs">
+        <span className="text-white/60">Name:</span>
+        <span className="text-cyan-300 ml-2">{functionResponse.name}</span>
+      </div>
+      {functionResponse.response && (
+        <div className="mt-2">
+          <span className="text-white/60">Response:</span>
+          <MetadataDisplay metadata={functionResponse.response} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function UsageMetadataDisplay({ usageMetadata }: { usageMetadata: any }) {
+  return (
+    <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3">
+      <div className="flex items-center gap-2 mb-2">
+        <Brain size={14} className="text-purple-400" />
+        <span className="text-sm font-medium text-purple-300">Usage Statistics</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <span className="text-white/60">Prompt Tokens:</span>
+          <span className="text-blue-300 ml-2">{usageMetadata.promptTokenCount}</span>
+        </div>
+        <div>
+          <span className="text-white/60">Candidates Tokens:</span>
+          <span className="text-emerald-300 ml-2">{usageMetadata.candidatesTokenCount}</span>
+        </div>
+        <div>
+          <span className="text-white/60">Total Tokens:</span>
+          <span className="text-purple-300 ml-2">{usageMetadata.totalTokenCount}</span>
+        </div>
+        <div>
+          <span className="text-white/60">Finish Reason:</span>
+          <span className="text-yellow-300 ml-2">{usageMetadata.finishReason || 'N/A'}</span>
+        </div>
       </div>
     </div>
   );
