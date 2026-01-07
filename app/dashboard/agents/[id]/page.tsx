@@ -1178,9 +1178,9 @@ export default function AgentDetailPage() {
                                         ✅ Tool Result
                                       </div>
                                       <div className="text-xs text-white/60 max-h-32 overflow-y-auto">
-                                        {part.functionResponse.name && (
+                                        {part.functionResponse?.name && (
                                           <div className="font-medium text-green-300 mb-1">
-                                            {part.functionResponse.name}
+                                            {part.functionResponse?.name}
                                           </div>
                                         )}
                                         <div className="font-mono whitespace-pre-wrap">
