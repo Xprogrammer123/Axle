@@ -7,9 +7,10 @@
   font-family: Satoshi;
   src: url("/PlusJakartaSans-VariableFont_wght.ttf");
 }
+
 @font-face {
-  font-family: Unbounded;
-  src: url("/Unbounded-VariableFont_wght.ttf");
+  font-family: Instru;
+  src: url("/InstrumentSerif-Italic.ttf");
 }
 
 @theme {
@@ -19,12 +20,17 @@
   --color-base-hover: #36B46095;
 }
 
-*{
+* {
   font-family: "Satoshi", sans-serif;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.5px;
+  box-sizing: 0;
 }
 
-
+.serif {
+  font-family: "Instru", sans-serif;
+  font-style: italic;
+  letter-spacing: -0.5px;
+}
 
 body {
   background: #191919;
@@ -39,22 +45,25 @@ body {
 *::-webkit-scrollbar {
   display: none;
 }
+
 * {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .loader-light {
   width: 20px;
   aspect-ratio: 1;
   border-radius: 100%;
-  background: radial-gradient(farthest-side, var(--color-base) 80%, #0000) top/4px 4px
-      no-repeat,
+  background: radial-gradient(farthest-side, var(--color-base) 80%, #0000) top/4px 4px no-repeat,
     conic-gradient(#0000 30%, var(--color-base));
   -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - 3px), #000 0);
   mask: radial-gradient(farthest-side, #0000 calc(100% - 3px), #000 0);
   animation: l13 0.6s infinite linear;
 }
+
 @keyframes l13 {
   100% {
     transform: rotate(1turn);
@@ -103,7 +112,7 @@ body {
 
 
 
-*{
+* {
   font-family: "Satoshi", sans-serif;
   letter-spacing: -0.6px;
 }
@@ -117,7 +126,148 @@ body {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
 .scrollbar-none {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+/* Fast animations for tool calls and streaming */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 2s linear infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-from-top {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-from-left {
+  from {
+    transform: translateX(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-from-bottom {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes zoom-in {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.slide-in-from-top-2 {
+  animation: slide-in-from-top 0.3s ease-out;
+}
+
+.slide-in-from-left-2 {
+  animation: slide-in-from-left 0.3s ease-out;
+}
+
+.slide-in-from-bottom-2 {
+  animation: slide-in-from-bottom 0.3s ease-out;
+}
+
+.zoom-in {
+  animation: zoom-in 0.2s ease-out;
+}
+
+@keyframes slide-in-from-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.slide-in-from-right-2 {
+  animation: slide-in-from-right 0.3s ease-out;
+}
+
+/* Enhanced pulse animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(54, 180, 96, 0.4);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 0 8px rgba(54, 180, 96, 0);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Smooth scale animations */
+@keyframes scale-in {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.scale-in {
+  animation: scale-in 0.2s ease-out;
 }

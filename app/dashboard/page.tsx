@@ -18,6 +18,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [execTimelines, setExecTimelines] = useState<Record<string, any>>({});
+  const [execLogs, setExecLogs] = useState<Record<string, string[]>>({});
   const unsubRef = useRef<Map<string, () => void>>(new Map());
   const router = useRouter();
 
@@ -84,6 +85,12 @@ export default function DashboardPage() {
             };
             return next;
           });
+
+          setExecLogs((prev) => {
+            const next = { ...prev };
+            if (!next[data.executionId]) next[data.executionId] = [];
+            return next;
+          });
         },
         onActionStarted: (data: any) => {
           setExecTimelines((prev) => {
@@ -140,6 +147,21 @@ export default function DashboardPage() {
                 finishedAt: new Date().toISOString(),
               },
             };
+          });
+        },
+
+        onExecutionEvent: (data: any) => {
+          const evt = data?.event;
+          const executionId = data?.executionId;
+          if (!executionId) return;
+          if (evt?.type !== 'axle_log' || typeof evt?.line !== 'string') return;
+
+          setExecLogs((prev) => {
+            const next = { ...prev };
+            const existing = next[executionId] || [];
+            const appended = [...existing, evt.line];
+            next[executionId] = appended.length > 120 ? appended.slice(-120) : appended;
+            return next;
           });
         },
       });
@@ -240,12 +262,13 @@ export default function DashboardPage() {
           {/* Live Tracker */}
           <div className="bg-black/20 h-80 flex flex-col gap-4 border border-black/40 overflow-hidden rounded-3xl p-6 lg:w-[32%]">
             <h3 className="text-lg font-semibold flex items-center justify-between">
-              Live Tracker
+              Deployment Logs
               <span className="text-xs text-white/40">
                 {activeExecutions.length} running
               </span>
             </h3>
-            <div className="h-full w-full flex flex-col gap-2 overflow-y-auto">
+
+            <div className="h-full w-full flex flex-col gap-3 overflow-y-auto">
               {loading ? (
                 <div className="page-loader" style={{ minHeight: 120 }}>
                   <div className="loader-light" />
@@ -261,47 +284,61 @@ export default function DashboardPage() {
                     There are no running agents right now. Kick off a run from the Agents page.
                   </p>
                 </div>
-              ) : activeExecutions.map((exec: any) => {
-                const timeline = execTimelines?.[exec._id];
-                const steps = timeline?.actions || [];
-                return (
-                  <Link
-                    key={exec._id}
-                    href={`/dashboard/executions/${exec._id}`}
-                    className="p-3 rounded-xl bg-background border border-white/5 hover:border-white/20 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium truncate">
-                          {exec.agentName || (exec.agentId as any)?.name || 'Agent'}
-                        </div>
-                        <div className="text-xs text-white/40">
-                          {triggerLabel(exec.triggerType)}
-                          {exec.triggerSource ? ` • ${String(exec.triggerSource)}` : ''}
-                          {typeof exec.duration === 'number' ? ` • ${exec.duration}s` : ''}
-                        </div>
-
-                        {steps.length ? (
-                          <div className="mt-2 space-y-1">
-                            {steps.slice(-3).map((a: any, idx: number) => (
-                              <div key={idx} className="flex items-center justify-between text-[11px] text-white/50">
-                                <span className="truncate pr-2">{a.label || a.type}</span>
-                                <span className="shrink-0">
-                                  {a.status}
-                                  {a.durationMs ? ` • ${(a.durationMs / 1000).toFixed(1)}s` : ''}
-                                </span>
-                              </div>
-                            ))}
+              ) : (
+                activeExecutions.map((exec: any) => {
+                  const lines = execLogs?.[exec._id] || [];
+                  return (
+                    <Link
+                      key={exec._id}
+                      href={`/dashboard/executions/${exec._id}`}
+                      className="rounded-2xl bg-black border border-white/10 overflow-hidden hover:border-white/20 transition-colors"
+                    >
+                      <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium truncate text-white/90">
+                            {exec.agentName || (exec.agentId as any)?.name || 'Agent'}
                           </div>
+                          <div className="text-[11px] text-white/40">
+                            {triggerLabel(exec.triggerType)}
+                            {typeof exec.duration === 'number' ? ` • ${exec.duration}s` : ''}
+                          </div>
+                        </div>
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      </div>
+
+                      <div
+                        className="px-4 py-3 max-h-[170px] overflow-y-auto text-[11px] whitespace-pre-wrap"
+                        style={{ fontFamily: 'JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}
+                      >
+                        {lines.length ? (
+                          lines.slice(-16).map((l: string, idx: number) => (
+                            <div
+                              key={idx}
+                              className={
+                                l.startsWith('[ERROR]')
+                                  ? 'text-red-400'
+                                  : l.startsWith('[BILLING]')
+                                    ? 'text-fuchsia-300/90'
+                                    : l.startsWith('[MEM]')
+                                      ? 'text-amber-200/90'
+                                      : l.startsWith('[RESEARCH]')
+                                        ? 'text-cyan-300/90'
+                                        : l.startsWith('[DEBUG]')
+                                          ? 'text-sky-300/80'
+                                          : 'text-emerald-300/90'
+                              }
+                            >
+                              {l}
+                            </div>
+                          ))
                         ) : (
-                          <div className="mt-2 text-[11px] text-white/30">Waiting for steps…</div>
+                          <div className="text-white/30">Waiting for logs…</div>
                         )}
                       </div>
-                      <span className="w-2 h-2 mt-1 rounded-full bg-emerald-400 animate-pulse" />
-                    </div>
-                  </Link>
-                );
-              })}
+                    </Link>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
@@ -339,7 +376,7 @@ export default function DashboardPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2 h-fit rounded-xl bg-white/5 border border-white/10 w-fit">
-                    <SparkleIcon size={22} className="text-base" weight="fill" />
+                      <SparkleIcon size={22} className="text-base" weight="fill" />
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">{agent.name}</span>
@@ -348,11 +385,10 @@ export default function DashboardPage() {
                       </span>
                     </div>
                   </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wide ${
-                    agent.status === 'active'
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wide ${agent.status === 'active'
                       ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
                       : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/30'
-                  }`}>
+                    }`}>
                     {agent.status}
                   </span>
                 </Link>

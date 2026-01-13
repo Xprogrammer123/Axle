@@ -20,6 +20,7 @@ export interface Agent {
   };
   integrations: string[];
   actions: string[];
+  memory?: Record<string, any>;
   createdAt: string;
   lastRunAt?: string;
 }

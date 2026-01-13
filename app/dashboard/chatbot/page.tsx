@@ -27,14 +27,43 @@ export default function ChatbotPage() {
     setSending(true);
 
     try {
-      // Use backend God Agent via /chatbot/message
-      const res: any = await api.sendMessage(value);
-      const assistant = res?.message || {
+      // Streaming via SSE
+      const assistantMsg: any = {
         role: 'assistant',
-        content: 'I processed your request.',
+        content: '',
+        isStreaming: true,
       };
+      setMessages((prev) => [...prev, assistantMsg]);
 
-      setMessages(prev => [...prev, assistant]);
+      await api.streamMessage(value, (event: any) => {
+        if (event.type === 'text_delta') {
+          assistantMsg.content += event.data;
+          setMessages((prev) => {
+            const next = [...prev];
+            next[next.length - 1] = { ...assistantMsg };
+            return next;
+          });
+        }
+
+        if (event.type === 'done') {
+          assistantMsg.isStreaming = false;
+          setMessages((prev) => {
+            const next = [...prev];
+            next[next.length - 1] = { ...assistantMsg };
+            return next;
+          });
+        }
+
+        if (event.type === 'error') {
+          assistantMsg.isStreaming = false;
+          assistantMsg.content += `\n\nError: ${event.data}`;
+          setMessages((prev) => {
+            const next = [...prev];
+            next[next.length - 1] = { ...assistantMsg };
+            return next;
+          });
+        }
+      });
     } catch (err) {
       console.error(err);
       setMessages(prev => [
@@ -71,11 +100,10 @@ export default function ChatbotPage() {
                 </div>
               )}
               <div
-                className={`max-w-[70%] px-4 py-3 rounded-lg ${
-                  msg.role === 'user'
+                className={`max-w-[70%] px-4 py-3 rounded-lg ${msg.role === 'user'
                     ? 'bg-[#36B460] text-white'
                     : 'bg-muted'
-                }`}
+                  }`}
               >
                 {msg.content}
               </div>

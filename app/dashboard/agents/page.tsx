@@ -130,52 +130,52 @@ export default function AgentsPage() {
           >
             <Link href={`/dashboard/agents/${agent._id}`} className="block group">
               <Card hover className="h-full bg-black/30 border border-black/50 transition-all p-6 rounded-4xl flex flex-col justify-between">
-              <div>
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 bg-base/5 rounded-full text-white/80 group-hover:text-white group-hover:scale-110 transition-all">
-                    <Image src="/Sparkle.svg" alt="Sparkle" width={48} height={48} className="size-6" />
+                <div>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-3 bg-base/5 rounded-full text-white/80 group-hover:text-white group-hover:scale-110 transition-all">
+                      <Image src="/Sparkle.svg" alt="Sparkle" width={48} height={48} className="size-6" />
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium border ${agent.status === 'active'
+                      ? 'bg-base/10 text-base border-base/20'
+                      : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                      }`}>
+                      {agent.status === 'active' ? 'Active' : 'Paused'}
+                    </div>
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-xs font-medium border ${agent.status === 'active'
-                    ? 'bg-base/10 text-base border-base/20'
-                    : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                    }`}>
-                    {agent.status === 'active' ? 'Active' : 'Paused'}
-                  </div>
+
+                  <h3 className="text-lg font-semibold text-white mb-2">{agent.name}</h3>
+                  <p className="text-sm text-white/50 line-clamp-2 h-10 ml-0.5">
+                    {agent.instructions || "No description provided."}
+                  </p>
                 </div>
 
-                <h3 className="text-lg font-semibold text-white mb-2">{agent.name}</h3>
-                <p className="text-sm text-white/50 line-clamp-2 h-10 ml-0.5">
-                  {agent.instructions || "No description provided."}
-                </p>
-              </div>
+                <div className="mt-6 pt-4 border-t border-white/5 flex flex-col w-full justify-between">
+                  <span className="text-xs text-white/30">
+                    {agent.lastRunAt ? `Ran ${safeFormatDistanceToNow(agent.lastRunAt, { addSuffix: true })}` : 'Never ran'}
+                  </span>
 
-              <div className="mt-6 pt-4 border-t border-white/5 flex flex-col w-full justify-between">
-                <span className="text-xs text-white/30">
-                  {agent.lastRunAt ? `Ran ${safeFormatDistanceToNow(agent.lastRunAt, { addSuffix: true })}` : 'Never ran'}
-                </span>
-
-                <div className="flex mt-4 gap-2 w-full">
-                  <Button
-                    onClick={(e) => handleRun(e, agent._id)}
-                    className="p-2.5 px-3.5 rounded-full bg-base/10 text-white/80 hover:text-white transition-colors"
-                    title="Run now"
-                    loading={runningId === agent._id}
-                  >
-                    <RefreshCw size={16} weight="fill" />
-                  </Button>
-                  <Button
-                    onClick={(e) => handleDeleteAgent(e, agent._id)}
-                    className="p-2.5 px-3.5 hover:bg-red-500/5 rounded-full bg-red-500/10 text-red-200 hover:text-red-100 border border-red-500/20"
-                    title="Delete"
-                    loading={deletingId === agent._id}
-                  >
-                    <Trash size={16} weight="fill" />
-                  </Button>
-                  <Link href={`/dashboard/agents/${agent._id}`} className="p-2.5 items-center justify-center flex font-semibold bg-base rounded-full text-white w-full transition-colors">
-                    View Agent
-                  </Link>
+                  <div className="flex mt-4 gap-2 w-full">
+                    <Button
+                      onClick={(e) => handleRun(e, agent._id)}
+                      className="p-2.5 px-3.5 rounded-full bg-base/10 text-white/80 hover:text-white transition-colors"
+                      title="Run now"
+                      loading={runningId === agent._id}
+                    >
+                      <RefreshCw size={16} weight="fill" />
+                    </Button>
+                    <Button
+                      onClick={(e) => handleDeleteAgent(e, agent._id)}
+                      className="p-2.5 px-3.5 hover:bg-red-500/5 rounded-full bg-red-500/10 text-red-200 hover:text-red-100 border border-red-500/20"
+                      title="Delete"
+                      loading={deletingId === agent._id}
+                    >
+                      <Trash size={16} weight="fill" />
+                    </Button>
+                    <Link href={`/dashboard/agents/${agent._id}`} className="p-2.5 items-center justify-center flex font-semibold bg-base rounded-full text-white w-full transition-colors">
+                      View Agent
+                    </Link>
+                  </div>
                 </div>
-              </div>
               </Card>
             </Link>
           </motion.div>

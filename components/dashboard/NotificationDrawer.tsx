@@ -187,9 +187,12 @@ export function NotificationDrawer({ isOpen, onClose, notifications, onDismissAl
                                                     {notif.actionUrl ? (
                                                         <Button
                                                             className="w-full rounded-lg h-9 text-sm"
-                                                            onClick={() => window.open(notif.actionUrl, '_blank')}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                window.open(notif.actionUrl, '_blank', 'noopener,noreferrer');
+                                                            }}
                                                         >
-                                                            {notif.action || "View Details"}
+                                                            {notif.action || "View"}
                                                         </Button>
                                                     ) : (
                                                         <Button disabled className="w-full rounded-lg h-9 text-sm">No Action Available</Button>
@@ -206,21 +209,21 @@ export function NotificationDrawer({ isOpen, onClose, notifications, onDismissAl
 
                 {/* Bottom Actions Bar */}
                 <div className="p-4 border-t border-white/5 bg-[#0A0A0A]/90 backdrop-blur-xl">
-                        {/* <div className="flex items-center gap-2">
+                    {/* <div className="flex items-center gap-2">
                             <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                             </span>
                             <span className="text-[10px] text-white/40 font-semibold uppercase tracking-wider">Assistant Ready</span>
                         </div> */}
-                        <div className="flex w-full">
-                            <Button
-                                className="w-full rounded-full text-sm font-semibold px-3"
-                                onClick={() => onDismissAll?.()}
-                            >
-                                Dismiss All
-                            </Button>
-                        </div>
+                    <div className="flex w-full">
+                        <Button
+                            className="w-full rounded-full text-sm font-semibold px-3"
+                            onClick={() => onDismissAll?.()}
+                        >
+                            Dismiss All
+                        </Button>
+                    </div>
                 </div>
             </motion.div>
         </div>

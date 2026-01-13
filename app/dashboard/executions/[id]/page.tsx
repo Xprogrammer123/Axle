@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { AnimatePresence, motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 import {
   CaretLeft,
   CheckCircle,
@@ -27,7 +29,14 @@ export default function ExecutionDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showTechnical, setShowTechnical] = useState(false);
   const [liveEvents, setLiveEvents] = useState<any[]>([]);
+  const [axleLogs, setAxleLogs] = useState<any[]>([]);
   const [retrying, setRetrying] = useState(false);
+  const [printedCount, setPrintedCount] = useState(0);
+  const terminalRef = useRef<HTMLDivElement | null>(null);
+
+  const [resultUi, setResultUi] = useState<any | null>(null);
+  const [resultGenerating, setResultGenerating] = useState(false);
+  const [showResultView, setShowResultView] = useState(false);
 
   async function loadExecution() {
     try {
@@ -91,6 +100,17 @@ export default function ExecutionDetailPage() {
           await loadExecution();
         }
       },
+      onExecutionEvent: (data) => {
+        if (data.executionId !== execution._id) return;
+        const evt = data.event;
+        if (evt?.type === 'axle_log' && typeof evt.line === 'string') {
+          setAxleLogs((prev) => {
+            const next = [...prev, evt];
+            // cap to avoid unbounded growth
+            return next.length > 200 ? next.slice(-200) : next;
+          });
+        }
+      },
     });
 
     // Polling fallback if socket not connected or status still running
@@ -105,6 +125,268 @@ export default function ExecutionDetailPage() {
     };
   }, [execution?._id, execution?.agentId, execution?.status]);
 
+  const duration = execution?.startedAt && execution?.finishedAt
+    ? (new Date(execution.finishedAt).getTime() - new Date(execution.startedAt).getTime()) / 1000
+    : 0;
+
+  const agent = execution && typeof execution.agentId !== 'string' ? execution.agentId : null;
+
+  const terminalLines = useMemo(() => {
+    if (!execution) return [];
+    const lines: string[] = [];
+    const nowIso = new Date().toISOString();
+
+    const persona =
+      agent?.persona ||
+      agent?.description ||
+      (typeof agent?.instructions === 'string' && agent.instructions.trim()
+        ? agent.instructions.trim().split('\n')[0]
+        : undefined) ||
+      'n/a';
+
+    const scopesArr: string[] = Array.isArray(agent?.actions)
+      ? agent.actions
+      : Array.isArray(agent?.integrations)
+        ? agent.integrations
+        : [];
+
+    const scopes = scopesArr.length ? scopesArr.join(', ') : 'n/a';
+    const modelVersion = agent?.brain?.model || agent?.model || (execution as any)?.model || 'n/a';
+
+    lines.push(`[INFO] ${nowIso} Booting Deployment Terminal…`);
+    lines.push(`[INFO] ${nowIso} Agent Detail: Persona=${persona}`);
+    lines.push(`[INFO] ${nowIso} Agent Detail: Scopes=${scopes}`);
+    lines.push(`[INFO] ${nowIso} Agent Detail: Model=${modelVersion}`);
+
+    lines.push(`[DEBUG] ${nowIso} Hydrating execution context (id=${String(execution._id).slice(-6)})`);
+    lines.push(`[DEBUG] ${nowIso} Establishing event stream via Socket.io…`);
+
+    // Live axle logs from the worker (MEM/TOOL/BILLING)
+    for (const evt of axleLogs) {
+      if (typeof evt?.line === 'string') {
+        lines.push(evt.line);
+      }
+    }
+
+    if (execution.status === 'pending') {
+      lines.push(`[INFO] ${nowIso} Status=pending. Waiting for worker allocation…`);
+    }
+
+    if (execution.status === 'running') {
+      lines.push(`[INFO] ${nowIso} Status=running. Initializing runtime…`);
+      lines.push(`[DEBUG] ${nowIso} Loading integrations…`);
+      lines.push(`[DEBUG] ${nowIso} Warming up model session…`);
+    }
+
+    for (const e of liveEvents) {
+      if (e.type === 'started') {
+        lines.push(`[INFO] ${nowIso} Execution started (id=${String(e.executionId).slice(-6)})`);
+      }
+      if (e.type === 'action_started') {
+        lines.push(`[DEBUG] ${nowIso} Action started: ${e.actionType}`);
+      }
+      if (e.type === 'action_completed') {
+        const status = e.success ? 'OK' : 'FAIL';
+        const dur = e.durationMs ? ` (${(e.durationMs / 1000).toFixed(1)}s)` : '';
+        lines.push(`[INFO] ${nowIso} Action completed: ${e.actionType} => ${status}${dur}`);
+      }
+      if (e.type === 'completed') {
+        lines.push(`[INFO] ${nowIso} Execution completed: ${e.status}`);
+      }
+    }
+
+    if (Array.isArray(execution.actionsExecuted) && execution.actionsExecuted.length > 0) {
+      for (const action of execution.actionsExecuted) {
+        const actionName = action.humanReadableStep || action.type;
+        const dur = action.durationMs ? ` ${(action.durationMs / 1000).toFixed(1)}s` : '';
+        if (action.error) {
+          lines.push(`[ERROR] ${nowIso} ${actionName} failed${dur} :: ${action.error}`);
+        } else {
+          lines.push(`[INFO] ${nowIso} ${actionName} success${dur}`);
+        }
+
+        if (showTechnical) {
+          try {
+            lines.push(`[TRACE] ${nowIso} params=${JSON.stringify(action.params ?? {})}`);
+          } catch {
+            lines.push(`[TRACE] ${nowIso} params=[unserializable]`);
+          }
+          try {
+            lines.push(`[TRACE] ${nowIso} result=${JSON.stringify(action.result ?? {})}`);
+          } catch {
+            lines.push(`[TRACE] ${nowIso} result=[unserializable]`);
+          }
+        }
+      }
+    } else {
+      lines.push(`[INFO] ${nowIso} Awaiting first action…`);
+    }
+
+    if (execution.status === 'success' || execution.status === 'completed') {
+      lines.push(`[INFO] ${nowIso} Deployment finished successfully.`);
+    }
+
+    if (execution.status === 'failed' || execution.status === 'error') {
+      lines.push(`[ERROR] ${nowIso} Deployment failed. See error details in Outcome/Reasoning.`);
+    }
+
+    // De-dupe while preserving order to reduce noise when state refreshes.
+    const seen = new Set<string>();
+    return lines.filter((l) => {
+      if (seen.has(l)) return false;
+      seen.add(l);
+      return true;
+    });
+  }, [agent, axleLogs, execution, liveEvents, showTechnical]);
+
+  const logsComplete = printedCount >= terminalLines.length;
+  const executionFinished = !!execution && (execution.status === 'success' || execution.status === 'failed' || execution.status === 'completed');
+
+  // Stream a generative UI spec once logs are fully printed.
+  useEffect(() => {
+    if (!executionFinished) return;
+    if (!logsComplete) return;
+    if (resultGenerating || resultUi) return;
+
+    let cancelled = false;
+
+    const run = async () => {
+      setResultGenerating(true);
+      try {
+        const res = await fetch('/api/execution-result', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ execution }),
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to generate result UI (HTTP ${res.status})`);
+        }
+
+        if (!res.body) {
+          const text = await res.text();
+          try {
+            const parsed = JSON.parse(text);
+            if (!cancelled) setResultUi(parsed);
+          } catch {
+            if (!cancelled) setResultUi({
+              message: 'Execution completed.',
+              actions: [],
+              markdownSummary: execution?.outputPayload?.result || execution?.outputPayload?.summary || 'No summary available.',
+            });
+          }
+          return;
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          // Best-effort incremental parse (streamObject emits a JSON object progressively).
+          try {
+            const maybe = JSON.parse(buffer);
+            if (!cancelled) setResultUi(maybe);
+          } catch {
+            // ignore until we have valid JSON
+          }
+        }
+
+        // Final parse
+        try {
+          const finalParsed = JSON.parse(buffer);
+          if (!cancelled) setResultUi(finalParsed);
+        } catch {
+          if (!cancelled) {
+            setResultUi({
+              message: 'Execution completed.',
+              actions: [],
+              markdownSummary: execution?.outputPayload?.result || execution?.outputPayload?.summary || 'No summary available.',
+            });
+          }
+        }
+
+        if (!cancelled) {
+          // Smooth fade into result view after we have UI spec.
+          setTimeout(() => {
+            if (!cancelled) setShowResultView(true);
+          }, 350);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (!cancelled) setResultGenerating(false);
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [execution, executionFinished, logsComplete, resultGenerating, resultUi]);
+
+  const handleAction = (action: any) => {
+    if (!action) return;
+    if (action.type === 'open_url' && action.url) {
+      window.open(action.url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    if (action.type === 'bulk_open_urls' && Array.isArray(action.urls)) {
+      for (const u of action.urls) {
+        window.open(u, '_blank', 'noopener,noreferrer');
+      }
+      return;
+    }
+    if (action.type === 'bulk_github_star') {
+      // Placeholder until we wire an authenticated bulk star endpoint.
+      console.warn('bulk_github_star not wired yet', action);
+    }
+  };
+
+  // Reset printing when execution changes.
+  useEffect(() => {
+    setPrintedCount(0);
+  }, [execution?._id]);
+
+  // Fast, technical log printing.
+  useEffect(() => {
+    if (!terminalLines.length) return;
+
+    let cancelled = false;
+    let timer: any;
+
+    const tick = () => {
+      setPrintedCount((prev) => {
+        if (cancelled) return prev;
+        if (prev >= terminalLines.length) return prev;
+        return prev + 1;
+      });
+    };
+
+    // Keep printing until we catch up to the latest lines.
+    if (printedCount < terminalLines.length) {
+      timer = setInterval(tick, 45);
+    }
+
+    return () => {
+      cancelled = true;
+      if (timer) clearInterval(timer);
+    };
+  }, [printedCount, terminalLines]);
+
+  // Auto-scroll to bottom as new lines print.
+  useEffect(() => {
+    const el = terminalRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [printedCount]);
+
+  // Render loading state AFTER hooks so hook order stays consistent.
   if (loading || !execution) {
     return (
       <div className="page-loader">
@@ -113,10 +395,6 @@ export default function ExecutionDetailPage() {
       </div>
     );
   }
-
-  const duration = execution.startedAt && execution.finishedAt
-    ? (new Date(execution.finishedAt).getTime() - new Date(execution.startedAt).getTime()) / 1000
-    : 0;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20">
@@ -233,7 +511,7 @@ export default function ExecutionDetailPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-white/60">
                 <ListBullets size={20} weight="duotone" />
-                <h2 className="text-lg font-medium">Activity Log</h2>
+                <h2 className="text-lg font-medium">Deployment Terminal</h2>
               </div>
               <button
                 onClick={() => setShowTechnical(!showTechnical)}
@@ -243,101 +521,138 @@ export default function ExecutionDetailPage() {
               </button>
             </div>
 
-            <div className="space-y-4">
-              {(!execution.actionsExecuted || execution.actionsExecuted.length === 0) ? (
-                <div className="p-12 text-center text-white/10 border border-dashed border-white/5 rounded-2xl">
-                  Waiting for actions to begin...
-                </div>
-              ) : (
-                execution.actionsExecuted.map((action: any, i: number) => (
-                  <div key={i} className="group">
-                    <div className="flex gap-4">
-                      <div className="flex flex-col items-center">
-                        <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 ${action.error ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-base/5 border-white/10 text-white/40'
-                          }`}>
-                          {i + 1}
-                        </div>
-                        {i < execution.actionsExecuted.length - 1 && (
-                          <div className="w-px h-full bg-base/5 my-1" />
-                        )}
+            <AnimatePresence mode="wait" initial={false}>
+              {!showResultView ? (
+                <motion.div
+                  key="terminal"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <Card className="p-0 bg-black border border-white/10 rounded-2xl overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                      <div className="flex items-center gap-3">
+                        <span className="inline-flex items-center gap-2 text-[11px] text-white/70" style={{ fontFamily: 'JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}>
+                          <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                          axle@deploy
+                        </span>
+                        <span className="text-[11px] text-white/30" style={{ fontFamily: 'JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}>
+                          exec:{String(execution._id).slice(-6)}
+                        </span>
                       </div>
+                      <span className="text-[11px] text-white/40" style={{ fontFamily: 'JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}>
+                        status={execution.status}
+                      </span>
+                    </div>
 
-                      <div className="flex-1 pb-6">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-white/80">
-                            {action.humanReadableStep || action.type}
-                          </span>
-                          <span className="text-xs text-white/20 font-mono">
-                            {action.durationMs ? `${(action.durationMs / 1000).toFixed(1)}s` : ''}
-                          </span>
+                    <div
+                      ref={terminalRef}
+                      className="px-4 py-3 max-h-[440px] overflow-y-auto"
+                      style={{ fontFamily: 'JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace' }}
+                    >
+                      <div className="space-y-1">
+                        <AnimatePresence initial={false}>
+                          {terminalLines.slice(0, printedCount).map((line, idx) => (
+                            <motion.div
+                              key={`${idx}-${line}`}
+                              initial={{ opacity: 0, y: 6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.12, ease: 'easeOut' }}
+                              className="text-[11px] leading-relaxed whitespace-pre-wrap"
+                            >
+                              <span
+                                className={
+                                  line.startsWith('[ERROR]')
+                                    ? 'text-red-400'
+                                    : line.startsWith('[BILLING]')
+                                      ? 'text-fuchsia-300/90'
+                                      : line.startsWith('[MEM]')
+                                        ? 'text-amber-200/90'
+                                        : line.startsWith('[RESEARCH]')
+                                          ? 'text-cyan-300/90'
+                                          : line.startsWith('[TRACE]')
+                                            ? 'text-white/30'
+                                            : line.startsWith('[DEBUG]')
+                                              ? 'text-sky-300/80'
+                                              : 'text-emerald-300/90'
+                                }
+                              >
+                                {line}
+                              </span>
+                            </motion.div>
+                          ))}
+                        </AnimatePresence>
+
+                        <div className="text-[11px] text-white/40">
+                          <span className="select-none">$</span>
+                          <span className="ml-2 inline-block w-2 h-[14px] bg-white/40 align-middle animate-pulse" />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+
+                  {/* Structured markdown summary under terminal once logs reach 100% */}
+                  {executionFinished && logsComplete && (
+                    <div className="mt-4">
+                      <Card className="p-5 bg-base/[0.03] border-white/5 rounded-2xl">
+                        <div className="text-xs text-white/40 mb-3">Execution Summary</div>
+                        <div className="prose prose-invert prose-sm max-w-none text-white/80">
+                          <ReactMarkdown>
+                            {resultUi?.markdownSummary ||
+                              execution?.outputPayload?.summary ||
+                              execution?.outputPayload?.result ||
+                              execution?.reasoning ||
+                              'No summary available.'}
+                          </ReactMarkdown>
+                        </div>
+                        {resultGenerating && (
+                          <div className="mt-3 text-[11px] text-white/30">Generating result view…</div>
+                        )}
+                      </Card>
+                    </div>
+                  )}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="result"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.35 }}
+                >
+                  <Card className="p-6 bg-gradient-to-b from-white/5 to-white/3 border border-[#333] rounded-2xl">
+                    <div className="text-xs text-white/40 mb-3">Conversational Result</div>
+
+                    <div className="flex gap-3 items-start">
+                      <div className="w-8 h-8 rounded-full bg-[#36B460]/10 flex items-center justify-center flex-shrink-0">
+                        <Lightning size={16} className="text-[#36B460]" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="inline-block px-4 py-3 rounded-2xl bg-black/40 border border-white/10 text-sm text-white/80">
+                          {resultUi?.message || 'Execution completed.'}
                         </div>
 
-                        {action.error ? (
-                          <p className="text-sm text-red-400/80 mb-2">{action.error}</p>
-                        ) : action.resultSummary ? (
-                          <p className="text-sm text-white/40 leading-relaxed mb-2">{action.resultSummary}</p>
-                        ) : null}
-
-                        {/* Artifact Link if any */}
-                        {action.result?.webViewLink && (
-                          <a
-                            href={action.result.webViewLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs text-blue-400 hover:bg-blue-500/20 transition-all mt-1"
-                          >
-                            <ArrowSquareOut size={14} />
-                            View Output
-                          </a>
-                        )}
-
-                        {action.outputValidation && (
-                          <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-white/60">
-                            <span className={`px-2 py-0.5 rounded-full border ${
-                              action.outputValidation.valid
-                                ? 'border-emerald-400/40 text-emerald-300'
-                                : 'border-amber-400/40 text-amber-200'
-                            }`}>
-                              Schema {action.outputValidation.valid ? 'valid' : 'needs attention'}
-                            </span>
-                            {Array.isArray(action.toolsCalled) && action.toolsCalled.length > 0 && (
-                              <span className="px-2 py-0.5 rounded-full border border-white/10">
-                                Tools: {action.toolsCalled.join(', ')}
-                              </span>
-                            )}
-                            {typeof action.verified === 'boolean' && (
-                              <span className="px-2 py-0.5 rounded-full border border-white/10">
-                                Verified: {action.verified ? 'yes' : 'no'}
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        {showTechnical && (
-                          <div className="mt-4 p-4 bg-black/40 rounded-xl border border-white/5 overflow-hidden space-y-2">
-                            <pre className="text-[10px] text-white/20 font-mono overflow-x-auto">
-                              {JSON.stringify(action.params, null, 2)}
-                            </pre>
-                            <div className="h-px bg-base/5" />
-                            <pre className="text-[10px] text-emerald-500/30 font-mono overflow-x-auto">
-                              {JSON.stringify(action.result, null, 2)}
-                            </pre>
-                            {action.outputValidation && (
-                              <>
-                                <div className="h-px bg-base/5" />
-                                <pre className="text-[10px] text-amber-300/60 font-mono overflow-x-auto">
-                                  {JSON.stringify(action.outputValidation, null, 2)}
-                                </pre>
-                              </>
-                            )}
+                        {Array.isArray(resultUi?.actions) && resultUi.actions.length > 0 && (
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {resultUi.actions.slice(0, 6).map((a: any) => (
+                              <Button
+                                key={a.id}
+                                className="rounded-full text-sm px-4"
+                                onClick={() => handleAction(a)}
+                              >
+                                {a.label}
+                              </Button>
+                            ))}
                           </div>
                         )}
                       </div>
                     </div>
-                  </div>
-                ))
+                  </Card>
+                </motion.div>
               )}
-            </div>
+            </AnimatePresence>
           </section>
 
         </div>
