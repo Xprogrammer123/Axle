@@ -111,7 +111,7 @@ export const AgentInput: React.FC<AgentInputProps> = ({
               if (!githubConnected) return; // Don't open if GitHub not connected
               setIsRepoDropdownOpen(!isRepoDropdownOpen);
             }}
-            className={`bg-black/20 border-3 items-center w-fit p-3 border-white/2.5 rounded-full flex gap-6 transition-colors ${
+            className={`bg-black/20 hidden border-3 items-center w-fit p-3 border-white/2.5 rounded-full md:flex gap-6 transition-colors ${
               githubConnected
                 ? "hover:bg-black/30 cursor-pointer"
                 : "opacity-50 cursor-not-allowed"
