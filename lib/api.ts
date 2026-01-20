@@ -172,6 +172,30 @@ class ApiClient {
     }
   }
 
+  async forgotPassword(email: string) {
+    return this.request<{ success: boolean }>("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async resetPassword(token: string, password: string) {
+    return this.request<{ success: boolean }>("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ token, password }),
+    });
+  }
+
+  // Google OAuth authentication
+  async getGoogleAuthUrl() {
+    return this.request<{ authUrl: string }>("/auth/google");
+  }
+
+  async loginWithGoogle() {
+    const { authUrl } = await this.getGoogleAuthUrl();
+    window.location.href = authUrl;
+  }
+
   // Agents - FIXED
   async getAgents() {
     return this.request<{ agents: any[] }>("/agents");

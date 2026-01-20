@@ -42,6 +42,7 @@ class SocketClient {
       onExecutionStarted?: (data: any) => void;
       onActionStarted?: (data: any) => void;
       onActionCompleted?: (data: any) => void;
+      onStatus?: (data: any) => void;
       onExecutionCompleted?: (data: any) => void;
       onExecutionEvent?: (data: any) => void;
       onPlan?: (data: any) => void;
@@ -59,6 +60,7 @@ class SocketClient {
 
     const events = [
       { name: "execution:started", callback: callbacks.onExecutionStarted },
+      { name: "execution:status", callback: callbacks.onStatus },
       {
         name: "execution:action",
         callback: (data: any) => {
