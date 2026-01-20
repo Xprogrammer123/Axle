@@ -17,6 +17,7 @@ import {
 } from "@phosphor-icons/react";
 import { Button } from "@/components-beta/Button";
 import { MarqueeDemo } from "../components-beta/Testimonials";
+import { Footer } from "@/components-beta/Footer";
 import { useState } from "react";
 
 const faqs = [
@@ -586,57 +587,57 @@ export default function Home() {
         </div>
       </section>
       <section className="min-h-screen py-10 w-screen">
-  <div className="flex-1 px-4 md:px-12 py-16 md:py-20 flex flex-col lg:flex-row justify-start items-start gap-6 lg:gap-12">
-    {/* Left */}
-    <div className="w-full lg:flex-1 flex flex-col justify-center items-start gap-3">
-      <div className="w-full flex serif flex-col text-accent font-sans text-4xl tracking-tight">
-        Common questions.
-      </div>
-      <div className="w-full text-dark/50 text-base font-normal font-sans">
-        Everything you need to know about building and running agents with Axle.
-      </div>
-    </div>
+        <div className="flex-1 px-4 md:px-12 py-16 md:py-20 flex flex-col lg:flex-row justify-start items-start gap-6 lg:gap-12">
+          {/* Left */}
+          <div className="w-full lg:flex-1 flex flex-col justify-center items-start gap-3">
+            <div className="w-full flex serif flex-col text-accent font-sans text-4xl tracking-tight">
+              Common questions.
+            </div>
+            <div className="w-full text-dark/50 text-base font-normal font-sans">
+              Everything you need to know about building and running agents with Axle.
+            </div>
+          </div>
 
-    {/* Right */}
-    {/* Right */}
-        <div className="lg:flex-1">
-          {faqs.map((faq, index) => {
-            const isOpen = openIndex === index
+          {/* Right */}
+          {/* Right */}
+          <div className="lg:flex-1">
+            {faqs.map((faq, index) => {
+              const isOpen = openIndex === index
 
-            return (
-              <div
-                key={index}
-                className="border-b border-[rgba(73,66,61,0.16)]"
-              >
-                <button
-                  onClick={() =>
-                    setOpenIndex(isOpen ? null : index)
-                  }
-                  className="w-full px-5 py-[18px] flex justify-between items-center text-left hover:bg-[rgba(73,66,61,0.02)] transition"
-                >
-                  <span className="text-dark font-medium">
-                    {faq.question}
-                  </span>
-
-                  <CaretDownIcon className="text-dark" open={isOpen} />
-                </button>
-
+              return (
                 <div
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    isOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
-                  }`}
+                  key={index}
+                  className="border-b border-[rgba(73,66,61,0.16)]"
                 >
-                  <p className="px-5 pb-[18px] text-sm text-dark/50 leading-6">
-                    {faq.answer}
-                  </p>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-  </div>
-</section>
+                  <button
+                    onClick={() =>
+                      setOpenIndex(isOpen ? null : index)
+                    }
+                    className="w-full px-5 py-[18px] flex justify-between items-center text-left hover:bg-[rgba(73,66,61,0.02)] transition"
+                  >
+                    <span className="text-dark font-medium">
+                      {faq.question}
+                    </span>
 
+                    <CaretDownIcon className="text-dark" open={isOpen} />
+                  </button>
+
+                  <div
+                    className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
+                      }`}
+                  >
+                    <p className="px-5 pb-[18px] text-sm text-dark/50 leading-6">
+                      {faq.answer}
+                    </p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      <Footer />
     </main>
   );
 }

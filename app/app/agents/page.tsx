@@ -78,11 +78,11 @@ export default function AgentsPage() {
     return (
       <div className="p-7 flex flex-col justify-center items-center h-[70%] w-full mx-auto space-y-8">
         <div className="page-loader animate-pulse" style={{ minHeight: 140 }}>
-         <div className="bg-white shadow-lg/3 shadow-dark rounded-full p-3">
-         <Logo size={36}/>  
+          <div className="bg-white shadow-lg/3 shadow-dark rounded-full p-3">
+            <Logo size={36} />
+          </div>
         </div>
-        </div>
-    </div>
+      </div>
     );
   }
 
@@ -95,11 +95,11 @@ export default function AgentsPage() {
         className="flex flex-col md:flex-row md:items-end gap-4 md:gap-5 justify-between"
       >
         <div className="bg-dark/4 p-2.5 flex gap-2 items-center rounded-full w-full md:w-[85%]">
-        <MagnifyingGlassIcon size={18} className="text-dark/35 flex-shrink-0" />
-        <input type="text" className="w-full bg-transparent outline-0 text-sm md:text-base" placeholder="Search agents, descriptions..." />
+          <MagnifyingGlassIcon size={18} className="text-dark/35 flex-shrink-0" />
+          <input type="text" className="w-full bg-transparent outline-0 text-sm" placeholder="Search agents, descriptions..." />
         </div>
         <Link href="/app/agents/new">
-          <Button className="cursor-pointer py-2 px-4 md:py-3 md:px-6 rounded-full text-sm md:text-base w-full md:w-auto">
+          <Button className="cursor-pointer py-2 px-4 md:py-3 md:px-6 rounded-full text-sm w-full md:w-auto">
             <Plus weight="bold" className="size-4" />
             New Agent
           </Button>
@@ -144,7 +144,7 @@ export default function AgentsPage() {
                 <div className="mt-6 pt-4 border-t border-dark/5 flex flex-col w-full justify-between">
                   <div className="flex mt-4 gap-2 w-full">
                     <Link href={`/app/agents/${agent._id}`} className="w-full">
-                      <Button className="w-full py-2.5 md:py-3.5 text-sm md:text-base">View Agent</Button>
+                      <Button className="w-full py-2.5 md:py-3.5 text-sm">View Agent</Button>
                     </Link>
                     <Button
                       onClick={(e) => handleDeleteAgent(e, agent._id)}

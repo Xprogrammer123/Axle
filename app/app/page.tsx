@@ -129,11 +129,11 @@ const Page = () => {
     return (
       <div className="p-7 flex flex-col justify-center items-center h-[70%] w-full mx-auto space-y-8">
         <div className="page-loader animate-pulse" style={{ minHeight: 140 }}>
-         <div className="bg-white shadow-lg/3 shadow-dark rounded-full p-3">
-         <Logo size={36}/>  
+          <div className="bg-white shadow-lg/3 shadow-dark rounded-full p-3">
+            <Logo size={36} />
+          </div>
         </div>
-        </div>
-    </div>
+      </div>
     );
   }
 
@@ -161,7 +161,7 @@ const Page = () => {
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="p-2 bg-white/60 rounded-full">
-                      <OpenAiLogoIcon className="size-7"/>
+                      <OpenAiLogoIcon className="size-7" />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <h3 className="text-dark/75 font-semibold truncate">
@@ -192,7 +192,7 @@ const Page = () => {
           </div>
           <div className="bg-white/50 w-full h-32 md:h-36 rounded-3xl p-3.5 flex flex-col justify-between">
             <textarea
-              className="resize-none placeholder:text-dark/35 p-1 w-full h-20 md:h-24 outline-none bg-transparent text-sm md:text-base"
+              className="resize-none placeholder:text-dark/35 p-1 w-full h-20 md:h-24 outline-none bg-transparent text-sm"
               placeholder="Talk to me..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -224,11 +224,10 @@ const Page = () => {
                           setSelectedAgentId(a._id);
                           setAgentDropdownOpen(false);
                         }}
-                        className={`w-full text-left text-sm p-2 rounded-xl transition-colors ${
-                          selectedAgentId === a._id
+                        className={`w-full text-left text-sm p-2 rounded-xl transition-colors ${selectedAgentId === a._id
                             ? "bg-dark/5 text-dark"
                             : "text-dark/70 hover:text-dark hover:bg-dark/5"
-                        }`}
+                          }`}
                       >
                         <p className="font-medium">{a.name}</p>
                         {(a.description || a.instructions) && (
@@ -276,15 +275,15 @@ const Page = () => {
                 provider === "github"
                   ? "/beta/github.svg"
                   : provider === "twitter"
-                  ? "/twitter.svg"
-                  : "/google.svg";
+                    ? "/twitter.svg"
+                    : "/google.svg";
 
               const label =
                 provider === "github"
                   ? "GitHub"
                   : provider === "twitter"
-                  ? "X (Twitter)"
-                  : "Google";
+                    ? "X (Twitter)"
+                    : "Google";
 
               return (
                 <div
@@ -345,7 +344,7 @@ const Page = () => {
                       <ChatsCircleIcon size={16} className="md:w-[18px] md:h-[18px]" />
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <h3 className="text-dark/75 font-semibold truncate text-sm md:text-base">
+                      <h3 className="text-dark/75 font-semibold truncate text-sm">
                         {t.title || "Untitled conversation"}
                       </h3>
                       <p className="text-xs text-dark/40 truncate">

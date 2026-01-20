@@ -97,7 +97,7 @@ export const AgentInput: React.FC<AgentInputProps> = ({
   return (
     <div className="bg-white rounded-3xl flex flex-col justify-between p-4 md:p-5 h-32 md:h-36 m-3 md:m-4">
       <textarea
-        className="h-12 md:h-14 resize-none bg-transparent outline-0 ring-transparent border-0 text-dark placeholder:text-dark/50 text-sm md:text-base"
+        className="h-12 md:h-14 resize-none bg-transparent outline-0 ring-transparent border-0 text-dark placeholder:text-dark/50 text-sm"
         placeholder="Ask anything..."
         value={message}
         onChange={(e) => setMessage(e.target.value)}
@@ -112,8 +112,8 @@ export const AgentInput: React.FC<AgentInputProps> = ({
               setIsRepoDropdownOpen(!isRepoDropdownOpen);
             }}
             className={`bg-black/3 border-3 items-center w-fit p-2 md:p-3 border-dark/2.5 rounded-full flex gap-2 md:gap-6 transition-colors ${githubConnected
-                ? "hover:bg-black/3 cursor-pointer"
-                : "opacity-50 cursor-not-allowed"
+              ? "hover:bg-black/3 cursor-pointer"
+              : "opacity-50 cursor-not-allowed"
               }`}
             title={
               !githubConnected ? "GitHub integration not connected" : undefined
@@ -161,8 +161,8 @@ export const AgentInput: React.FC<AgentInputProps> = ({
                         setIsRepoDropdownOpen(false);
                       }}
                       className={`w-full text-left text-sm p-2 rounded-lg transition-colors ${selectedRepo?.id === repo.id
-                          ? "bg-dark/10 text-dark"
-                          : "text-dark/70 hover:text-dark hover:bg-dark/5"
+                        ? "bg-dark/10 text-dark"
+                        : "text-dark/70 hover:text-dark hover:bg-dark/5"
                         }`}
                     >
                       <p className="font-medium truncate">{repo.full_name}</p>
