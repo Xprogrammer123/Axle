@@ -75,7 +75,7 @@ const Page = () => {
           Sign Up
         </Button>
 
-        <div className="my-5 h-px w-80 bg-dark/10 rounded-full"></div>
+        {/* <div className="my-5 h-px w-80 bg-dark/10 rounded-full"></div>
 
         <Button
           type="button"
@@ -90,7 +90,7 @@ const Page = () => {
             className="size-5"
           />{" "}
           Continue with Google
-        </Button>
+        </Button> */}
       </form>
       <p className="text-dark/75 font-medium mt-5">Already have an account? <Link className="font-semibold text-accent" href="/auth/login">Login</Link></p>
     </div>
