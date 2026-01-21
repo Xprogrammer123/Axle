@@ -138,7 +138,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = memo(({
         <motion.span
           className="inline-block w-2 h-4 bg-white/20 ml-1 align-middle rounded-sm"
           animate={{ opacity: [1, 0] }}
-          transition={{ duration: 0.8, repeat: Infinity }}
+          transition={{ duration: 1.0, repeat: Infinity }}
         />
       )}
     </div>
