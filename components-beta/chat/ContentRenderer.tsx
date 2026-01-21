@@ -22,7 +22,7 @@ const CopyButton = ({ text }: { text: string }) => {
   return (
     <button
       onClick={handleCopy}
-      className="text-xs text-white/50 hover:text-white transition-colors flex items-center gap-1"
+      className="text-xs text-dark/50 hover:text-dark transition-colors flex items-center gap-1"
     >
       {copied ? (
         <>
@@ -52,23 +52,23 @@ export const ContentRenderer: React.FC<ContentRendererProps> = memo(
       <div className={`markdown-content w-full ${isStreaming ? "streaming" : ""}`}>
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
-          className="space-y-4 text-[15px] leading-relaxed text-white break-words"
+          className="space-y-4 text-[15px] leading-relaxed text-dark break-words"
           components={{
             h1: ({ children }) => (
-              <h1 className="text-xl font-bold mt-6 mb-3 text-white first:mt-0">{children}</h1>
+              <h1 className="text-xl font-bold mt-6 mb-3 text-dark first:mt-0">{children}</h1>
             ),
             h2: ({ children }) => (
-              <h2 className="text-lg font-bold mt-5 mb-2 text-white">{children}</h2>
+              <h2 className="text-lg font-bold mt-5 mb-2 text-dark">{children}</h2>
             ),
             h3: ({ children }) => (
-              <h3 className="text-base font-semibold mt-4 mb-2 text-white">{children}</h3>
+              <h3 className="text-base font-semibold mt-4 mb-2 text-dark">{children}</h3>
             ),
-            p: ({ children }) => <p className="leading-7 mb-4 last:mb-0 text-white/90">{children}</p>,
+            p: ({ children }) => <p className="leading-7 mb-4 last:mb-0 text-dark/90">{children}</p>,
             ul: ({ children }) => (
-              <ul className="list-disc pl-4 space-y-1 mb-4 text-white/90">{children}</ul>
+              <ul className="list-disc pl-4 space-y-1 mb-4 text-dark/90">{children}</ul>
             ),
             ol: ({ children }) => (
-              <ol className="list-decimal pl-4 space-y-1 mb-4 text-white/90">{children}</ol>
+              <ol className="list-decimal pl-4 space-y-1 mb-4 text-dark/90">{children}</ol>
             ),
             li: ({ children }) => <li className="pl-1">{children}</li>,
             a: ({ href, children }) => (
@@ -88,7 +88,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = memo(
               if (isInline) {
                 return (
                   <code
-                    className="bg-white/10 px-1.5 py-0.5 rounded text-[13px] font-mono text-white/90 border border-white/5"
+                    className="bg-white/10 px-1.5 py-0.5 rounded text-[13px] font-mono text-dark/90 border border-white/5"
                     {...props}
                   >
                     {children}
@@ -102,7 +102,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = memo(
               return (
                 <div className="rounded-xl overflow-hidden my-4 border border-white/10 bg-[#1e1e1e] shadow-sm group">
                   <div className="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-white/5">
-                    <span className="text-xs text-white/50 font-mono lowercase select-none">{language}</span>
+                    <span className="text-xs text-dark/50 font-mono lowercase select-none">{language}</span>
                     <CopyButton text={codeString} />
                   </div>
                   <div className="overflow-x-auto p-4">
@@ -114,7 +114,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = memo(
               );
             },
             blockquote: ({ children }) => (
-              <blockquote className="border-l-4 border-white/10 pl-4 py-1 my-4 italic text-white/70 bg-white/[0.02] rounded-r-lg">
+              <blockquote className="border-l-4 border-white/10 pl-4 py-1 my-4 italic text-dark/70 bg-white/[0.02] rounded-r-lg">
                 {children}
               </blockquote>
             ),
@@ -124,8 +124,8 @@ export const ContentRenderer: React.FC<ContentRendererProps> = memo(
               </div>
             ),
             thead: ({ children }) => <thead className="bg-white/5">{children}</thead>,
-            th: ({ children }) => <th className="px-3 py-2 text-left font-semibold text-white/80">{children}</th>,
-            td: ({ children }) => <td className="px-3 py-2 border-t border-white/5 text-white/70">{children}</td>,
+            th: ({ children }) => <th className="px-3 py-2 text-left font-semibold text-dark/80">{children}</th>,
+            td: ({ children }) => <td className="px-3 py-2 border-t border-white/5 text-dark/70">{children}</td>,
             hr: () => <hr className="my-6 border-white/10" />,
           }}
         >
