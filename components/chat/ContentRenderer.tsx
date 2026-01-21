@@ -43,11 +43,17 @@ export const ContentRenderer: React.FC<ContentRendererProps> = memo(({
   isStreaming = false,
 }) => {
 
-  const normalizeMarkdown = (text: string) =>
-  text.replace(
-    /([^\n])\n(\s*[-*+]\s+)/g,
-    "$1\n\n$2"
-  );
+  const normalizeMarkdown = (text: string) => {
+  return text
+    // Force paragraph breaks after sentences before lists
+    .replace(/([.!?])\s*(\* |- )/g, "$1\n\n$2")
+
+    // Ensure lists always start after blank line
+    .replace(/([^\n])\n(\s*[-*+]\s+)/g, "$1\n\n$2")
+
+    // Collapse 3+ newlines → 2
+    .replace(/\n{3,}/g, "\n\n");
+};
 
   return (
     <div className={`markdown-content w-full ${isStreaming ? "streaming" : ""}`}>
