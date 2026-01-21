@@ -515,7 +515,7 @@ export function NotificationDrawer({
                                                             notif.actionButtons.slice(0, 2).map((actionBtn, idx) => (
                                                                 <Button
                                                                     key={idx}
-                                                                    className="flex-1 h-8 text-xs"
+                                                                    className="flex-1 h-8 bg-dark text-white text-xs"
                                                                     variant={idx === 0 ? "default" : "outline"}
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
@@ -530,7 +530,7 @@ export function NotificationDrawer({
                                                             ))
                                                         ) : notif.actionUrl ? (
                                                         <Button
-                                                                className="w-full h-8 text-xs"
+                                                                className="w-full h-8 text-xs bg-accent"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 window.open(notif.actionUrl, '_blank', 'noopener,noreferrer');
