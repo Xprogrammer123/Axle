@@ -18,6 +18,9 @@ const CopyButton = ({ text }: { text: string }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  
+
+
   return (
     <button
       onClick={handleCopy}
@@ -39,6 +42,13 @@ export const ContentRenderer: React.FC<ContentRendererProps> = memo(({
   type = "text",
   isStreaming = false,
 }) => {
+
+  const normalizeMarkdown = (text: string) =>
+  text.replace(
+    /([^\n])\n(\s*[-*+]\s+)/g,
+    "$1\n\n$2"
+  );
+
   return (
     <div className={`markdown-content w-full ${isStreaming ? "streaming" : ""}`}>
       <ReactMarkdown
@@ -121,7 +131,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = memo(({
           hr: () => <hr className="my-6 border-white/10" />
         }}
       >
-        {content}
+        {normalizeMarkdown(content)}
       </ReactMarkdown>
 
       {isStreaming && (
