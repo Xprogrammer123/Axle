@@ -15,13 +15,13 @@ const ALL_PROVIDERS = [
     category: "Development",
     description: "Access repositories, manage issues, and track commits.",
   },
-  // {
-  //   name: "Slack",
-  //   provider: "slack",
-  //   icon: "/slack.svg",
-  //   category: "Communication",
-  //   description: "Send messages and monitor channels.",
-  // },
+  {
+    name: "Slack",
+    provider: "slack",
+    icon: "/slack.svg",
+    category: "Communication",
+    description: "Send messages and monitor channels.",
+  },
   {
     name: "Google",
     provider: "google",
