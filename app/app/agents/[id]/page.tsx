@@ -5,6 +5,7 @@ import {
   DotsThreeVerticalIcon,
   ClockIcon,
   ChatsCircleIcon,
+  SlidersHorizontalIcon,
 } from "@phosphor-icons/react";
 import { AgentInput } from "@/components-beta/AgentInput";
 import { MessageBubble } from "@/components-beta/chat/MessageBubble";
@@ -22,9 +23,9 @@ interface ChatMessage {
   timestamp: Date;
   executionId?: string;
   contentType?: "text" | "code" | "research" | "report";
-  streamingContent?: string; // For streaming text animation
-  thinking?: string; // Agent reasoning/thinking text
-  workingStatus?: string; // Inline "what I'm doing" status from execution:status
+  streamingContent?: string;
+  thinking?: string;
+  workingStatus?: string;
   activeToolCalls?: Array<{
     type: string;
     description: string;
@@ -32,7 +33,7 @@ interface ChatMessage {
     status?: "running" | "success" | "failed";
     result?: unknown;
     durationMs?: number;
-  }>; // For inline tool text during execution
+  }>;
   completedToolCalls?: Array<{
     type: string;
     description: string;
@@ -40,7 +41,7 @@ interface ChatMessage {
     status?: "running" | "success" | "failed";
     result?: unknown;
     durationMs?: number;
-  }>; // For tool cards after completion
+  }>;
 }
 
 const detectContentType = (
@@ -73,6 +74,8 @@ interface Agent {
   _id: string;
   name: string;
   description?: string;
+  instructions?: string;
+  status?: string;
 }
 
 interface ThreadSummary {
@@ -137,7 +140,6 @@ const Page = () => {
     }
   }, [agentId]);
 
-  // Helper to get tool descriptions - declared early
   const getToolDescription = React.useCallback(
     (toolName: string, params?: Record<string, unknown>): string => {
       const toolLower = toolName.toLowerCase();
@@ -154,9 +156,8 @@ const Page = () => {
       if (toolLower.includes("github")) {
         if (toolLower.includes("issue")) {
           const title = params?.title as string;
-          return `Creating issue${
-            title ? `: ${title.substring(0, 30)}...` : "..."
-          }`;
+          return `Creating issue${title ? `: ${title.substring(0, 30)}...` : "..."
+            }`;
         }
         if (toolLower.includes("repo")) {
           const name = params?.name as string;
@@ -187,7 +188,6 @@ const Page = () => {
         return "Reading data...";
       }
 
-      // Generic fallback
       return `${toolName.replace(/_/g, " ")}...`;
     },
     [],
@@ -198,7 +198,6 @@ const Page = () => {
       try {
         const execution = await api.getExecution(executionId);
 
-        // Update the last assistant message with execution data
         setMessages((prev) => {
           const newMessages = [...prev];
           const lastAssistantIndex = newMessages.length - 1;
@@ -209,32 +208,22 @@ const Page = () => {
           ) {
             const lastMessage = newMessages[lastAssistantIndex];
 
-            // Clean UI - no thoughts or tool calls displayed
-
-            // Update content - always update if execution has aiResponse
             if (execution.aiResponse) {
               lastMessage.content = execution.aiResponse;
               lastMessage.contentType = detectContentType(execution.aiResponse);
-              // Clear streaming when final content arrives, but keep tool calls for a moment
               lastMessage.streamingContent = undefined;
-              // Don't clear tool calls immediately - let them fade naturally
             } else if (execution.outputPayload?.result) {
-              // Fallback to outputPayload.result if aiResponse is not set
               lastMessage.content = execution.outputPayload.result;
               lastMessage.contentType = detectContentType(
                 execution.outputPayload.result,
               );
-              // Clear streaming when final content arrives
               lastMessage.streamingContent = undefined;
             } else if (execution.status === "failed" && execution.error) {
-              // Show natural language error when no response content is present
               lastMessage.content = execution.error;
               lastMessage.contentType = "text";
-              // Clear streaming on error
               lastMessage.streamingContent = undefined;
             }
 
-            // After final content, fade out tool calls after a delay
             if (
               execution.status === "success" &&
               lastMessage.content &&
@@ -249,17 +238,14 @@ const Page = () => {
                   }
                   return updated;
                 });
-              }, 3000); // Keep tool calls visible for 3 seconds after message
+              }, 3000);
             }
 
-            // Update status based on execution status
             if (execution.status === "running") {
-              // Keep showing loading
             } else if (
               execution.status === "success" ||
               execution.status === "failed"
             ) {
-              // Stop polling when done
               if (pollingIntervalRef.current) {
                 clearInterval(pollingIntervalRef.current);
                 pollingIntervalRef.current = null;
@@ -271,9 +257,7 @@ const Page = () => {
           return newMessages;
         });
 
-        // Stop polling if execution is complete, but ensure we update the UI first
         if (execution.status === "success" || execution.status === "failed") {
-          // Force update the messages one more time to ensure we have the latest data
           setMessages((prev) => {
             const newMessages = [...prev];
             const lastAssistantIndex = newMessages.length - 1;
@@ -306,7 +290,6 @@ const Page = () => {
           }
           setLoading(false);
 
-          // Save messages to thread and generate name
           if (
             currentThreadId &&
             (execution.status === "success" || execution.status === "failed")
@@ -321,19 +304,16 @@ const Page = () => {
                       content: m.content || "",
                     }));
 
-                  // Save to thread asynchronously
                   (async () => {
                     try {
                       const thread = await api.getThread(currentThreadId!);
                       if (thread.thread) {
-                        // Generate thread name if it doesn't have one
                         let threadTitle = thread.thread.title;
                         if (!threadTitle && allMessages.length >= 2) {
                           const firstUserMsg = allMessages.find(
                             (m) => m.role === "user",
                           );
                           if (firstUserMsg) {
-                            // Simple heuristic: use first few words of first message
                             const words = firstUserMsg.content
                               .split(" ")
                               .slice(0, 5);
@@ -386,7 +366,6 @@ const Page = () => {
           errorMessage.includes("Invalid agent ID") ||
           errorMessage.includes("400")
         ) {
-          // Invalid ID format - could show error message to user
           setAgent(null);
         }
       }
@@ -408,7 +387,6 @@ const Page = () => {
     loadThreadIntoChat(qpThreadId);
   }, [searchParams, loadThreadIntoChat]);
 
-  // Setup socket listeners for real-time updates
   useEffect(() => {
     if (!agentId) return;
 
@@ -439,7 +417,6 @@ const Page = () => {
         });
       },
       onActionStarted: (data) => {
-        // Add tool call indicator when action starts - use tool cards
         console.log("[SOCKET] Action started:", data);
         if (data.executionId && data.type) {
           setMessages((prev) => {
@@ -454,7 +431,6 @@ const Page = () => {
               }
               const params = data.params || data.functionCall?.args || {};
               const toolDescription = getToolDescription(data.type, params);
-              // Check if already exists
               const existingIndex = newMessages[
                 lastAssistantIndex
               ].activeToolCalls!.findIndex((tc) => tc.type === data.type);
@@ -471,7 +447,6 @@ const Page = () => {
                   newMessages[lastAssistantIndex].activeToolCalls,
                 );
               } else {
-                // Update existing
                 newMessages[lastAssistantIndex].activeToolCalls![
                   existingIndex
                 ].status = "running";
@@ -482,7 +457,6 @@ const Page = () => {
         }
       },
       onActionCompleted: (data) => {
-        // Move tool from active to completed when action completes
         if (data.executionId && data.type) {
           setMessages((prev) => {
             const newMessages = [...prev];
@@ -493,7 +467,6 @@ const Page = () => {
             ) {
               const lastMessage = newMessages[lastAssistantIndex];
 
-              // Remove from activeToolCalls and move to completedToolCalls
               if (lastMessage.activeToolCalls) {
                 const toolIndex = lastMessage.activeToolCalls.findIndex(
                   (tc) => tc.type === data.type,
@@ -510,7 +483,6 @@ const Page = () => {
                       typeof result === "object" &&
                       result.success === false);
 
-                  // Move to completedToolCalls
                   if (!lastMessage.completedToolCalls) {
                     lastMessage.completedToolCalls = [];
                   }
@@ -521,7 +493,6 @@ const Page = () => {
                     durationMs: data.durationMs,
                   });
 
-                  // Remove from active
                   lastMessage.activeToolCalls = lastMessage.activeToolCalls.filter(
                     (tc) => tc.type !== data.type,
                   );
@@ -531,8 +502,6 @@ const Page = () => {
             return newMessages;
           });
 
-          // Persist tool output into thread metadata as a tool message so the next run can use it.
-          // Fire-and-forget: should not block UI.
           if (currentThreadId) {
             setTimeout(async () => {
               try {
@@ -555,12 +524,10 @@ const Page = () => {
                 const truncate = (text: string, maxChars: number) =>
                   text.length <= maxChars
                     ? text
-                    : `${text.slice(0, maxChars)}\n...<truncated ${
-                        text.length - maxChars
-                      } chars>`;
+                    : `${text.slice(0, maxChars)}\n...<truncated ${text.length - maxChars
+                    } chars>`;
 
                 const compactResult = (() => {
-                  // Prefer keeping clear error shape if present.
                   if (
                     result &&
                     typeof result === "object" &&
@@ -608,7 +575,6 @@ const Page = () => {
         }
       },
       onPlanDelta: (data) => {
-        // Handle reasoning/thinking deltas
         if (data.executionId && data.delta) {
           setMessages((prev) => {
             const newMessages = [...prev];
@@ -617,8 +583,6 @@ const Page = () => {
               lastAssistantIndex >= 0 &&
               newMessages[lastAssistantIndex].role === "assistant"
             ) {
-              // Check if this is reasoning/thinking (from execution:reasoning_delta)
-              // The event name itself indicates reasoning_delta
               const isReasoning =
                 data.type === "reasoning" ||
                 (data as any).eventType === "reasoning_delta" ||
@@ -630,7 +594,6 @@ const Page = () => {
                 newMessages[lastAssistantIndex].thinking =
                   currentThinking + data.delta;
               } else {
-                // Regular text streaming
                 const currentStreaming =
                   newMessages[lastAssistantIndex].streamingContent || "";
                 newMessages[lastAssistantIndex].streamingContent =
@@ -642,7 +605,6 @@ const Page = () => {
         }
       },
       onExecutionCompleted: (data) => {
-        // Final update when execution completes
         if (data.executionId) {
           currentExecutionIdRef.current = null;
           setLoading(false);
@@ -650,7 +612,6 @@ const Page = () => {
             clearInterval(pollingIntervalRef.current);
             pollingIntervalRef.current = null;
           }
-          // Clear streaming content but keep tool calls visible for a bit
           setMessages((prev) => {
             const newMessages = [...prev];
             const lastAssistantIndex = newMessages.length - 1;
@@ -660,11 +621,9 @@ const Page = () => {
             ) {
               newMessages[lastAssistantIndex].streamingContent = undefined;
               newMessages[lastAssistantIndex].workingStatus = undefined;
-              // Keep tool calls visible, they'll fade out naturally or be cleared by polling
             }
             return newMessages;
           });
-          // Final poll to ensure we have all data
           pollExecution(data.executionId);
         }
       },
@@ -680,8 +639,24 @@ const Page = () => {
     };
   }, [agentId, getToolDescription, pollExecution]);
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
+  };
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Smart auto-scroll
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const isNearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+
+    // Always scroll on initial load or if user is near bottom
+    if (isNearBottom || messages.length <= 1) {
+      scrollToBottom();
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -707,7 +682,6 @@ const Page = () => {
   ) => {
     if (!message.trim() || loading) return;
 
-    // Create thread if this is the first message
     let threadId = currentThreadId;
     if (!threadId) {
       try {
@@ -727,7 +701,6 @@ const Page = () => {
       }
     }
 
-    // Add user message
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: "user",
@@ -736,7 +709,6 @@ const Page = () => {
     };
     setMessages((prev) => [...prev, userMessage]);
 
-    // Save user message to thread (async, don't block)
     if (threadId) {
       setTimeout(async () => {
         try {
@@ -748,7 +720,6 @@ const Page = () => {
                 content: m.content || "",
               }));
 
-            // Save to thread asynchronously
             (async () => {
               try {
                 await api.updateThread(threadId!, {
@@ -772,7 +743,6 @@ const Page = () => {
       }, 100);
     }
 
-    // Add placeholder assistant message
     const assistantMessage: ChatMessage = {
       id: (Date.now() + 1).toString(),
       role: "assistant",
@@ -784,10 +754,8 @@ const Page = () => {
     setLoading(true);
 
     try {
-      // Prepare payload - include repo context in message if repo is selected
       let contextualMessage = message;
       if (githubRepo) {
-        // Add repo context to help agent understand which repo to use
         contextualMessage = `${message}\n\n[Context: Working with repository ${githubRepo.owner}/${githubRepo.repo}]`;
       }
 
@@ -806,7 +774,6 @@ const Page = () => {
             )
             .map((m) => ({ role: m.role, content: m.content }));
         } catch (e) {
-          // Fall back to local UI state if thread fetch fails
           baseHistory = messages
             .filter((m) => m.role === "user" || m.role === "assistant")
             .map((m) => ({ role: m.role, content: m.content || "" }));
@@ -829,22 +796,19 @@ const Page = () => {
         payload.githubRepo = githubRepo;
       }
 
-      // Send to agent
       const result = await api.runAgent(agentId, payload);
 
       if (result.success && result.executionId) {
         assistantMessage.executionId = result.executionId;
 
-        // Start polling for execution updates
         if (pollingIntervalRef.current) {
           clearInterval(pollingIntervalRef.current);
         }
 
         pollingIntervalRef.current = setInterval(() => {
           pollExecution(result.executionId);
-        }, 2000); // Poll every 2 seconds
+        }, 2000);
 
-        // Initial poll
         pollExecution(result.executionId);
       } else {
         setLoading(false);
@@ -878,138 +842,107 @@ const Page = () => {
   }, []);
 
   return (
-    <div className="flex md:max-w-300 mx-auto h-full overflow-y-auto py-5 w-full">
-      <div className="bg-dark/2 flex flex-col justify-between w-full mx-4 md:mx-0 overflow-hidden border border-dark/6 md:w-2/3 h-120 md:h-162 rounded-4xl">
-        <div className="bg-dark/3 flex justify-between items-center w-full p-5">
+    <div className="flex max-w-[1400px] pt-0 mx-auto h-full md:rounded-l-lg overflow-hidden bg-gray-50 dark:bg-[#0f0f0f]">
+      {/* Main Chat Container */}
+      <div className="flex-1 flex flex-col h-full">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 md:mt-0 mt-14 py-4 bg-white md:dark:bg-white/3 dark:bg-white/0 border-b border-gray-200 dark:border-white/5">
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold">
-              {agent?.name || (agent === null ? "Agent Name" : "Loading...")}
+            <h1 className="text-base font-medium text-gray-900 dark:text-white">
+              {agent?.name || (agent === null ? "Assistant" : "Loading...")}
             </h1>
             <button
               onClick={() => setIsHistoryOpen(true)}
-              className="p-2 cursor-pointer hover:bg-dark/5 rounded-lg transition-colors"
+              className="p-2 hover:bg-dark/5 dark:hover:bg-white/5 rounded-lg transition-colors md:hidden"
               title="View history"
             >
-              <ClockIcon className="text-dark/70 text-lg" />
+              <ClockIcon weight="bold" className="text-dark dark:text-white text-lg" />
             </button>
-            {loading && currentExecutionIdRef.current && (
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1">
-                  <span
-                    className="inline-block w-2 h-2 bg-[#36B460] rounded-full animate-pulse"
-                    style={{ animationDelay: "0ms" }}
-                  />
-                  <span
-                    className="inline-block w-2 h-2 bg-[#36B460] rounded-full animate-pulse"
-                    style={{ animationDelay: "150ms" }}
-                  />
-                  <span
-                    className="inline-block w-2 h-2 bg-[#36B460] rounded-full animate-pulse"
-                    style={{ animationDelay: "300ms" }}
-                  />
-                </div>
-                <button
-                  onClick={async () => {
-                    if (currentExecutionIdRef.current) {
-                      try {
-                        await api.cancelExecution(
-                          currentExecutionIdRef.current,
-                        );
-                        setLoading(false);
-                        currentExecutionIdRef.current = null;
-                        if (pollingIntervalRef.current) {
-                          clearInterval(pollingIntervalRef.current);
-                          pollingIntervalRef.current = null;
-                        }
-                        // Update last message to show cancellation
-                        setMessages((prev) => {
-                          const updated = [...prev];
-                          const lastIdx = updated.length - 1;
-                          if (
-                            lastIdx >= 0 &&
-                            updated[lastIdx].role === "assistant"
-                          ) {
-                            updated[lastIdx].content =
-                              "Execution cancelled by user.";
-                          }
-                          return updated;
-                        });
-                      } catch (error) {
-                        console.error("Failed to cancel execution:", error);
-                      }
-                    }
-                  }}
-                  className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-medium rounded-lg transition-colors"
-                >
-                  Stop
-                </button>
-              </div>
-            )}
           </div>
+
           <button
             onClick={() => setIsEditModalOpen(true)}
-            className="bg-dark/5 hover:bg-dark/7 cursor-pointer rounded-full p-3 transition-colors"
-            title="Edit agent"
+            className="p-2 hover:bg-dark/5 dark:hover:bg-white/5 cursor-pointer rounded-lg transition-colors"
+            title="Options"
           >
-            <DotsThreeVerticalIcon className="text-lg text-dark" />
+            <SlidersHorizontalIcon className="text-dark/80 dark:text-white/80 text-xl" />
           </button>
         </div>
-        <div className="flex gap-4 md:gap-5 h-full overflow-y-scroll p-4 md:p-6 flex-col">
-          {messages.length === 0 && (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-dark/50">
-                Start a conversation with your agent...
-              </p>
-            </div>
-          )}
-          {messages.map((message, index) => (
-            <div key={message.id} className="mb-4">
-              {message.role === "user" ? (
-                <MessageBubble message={message.content} isUser={true} />
-              ) : (
-                <AgentMessageCard
-                  message={message.content}
-                  contentType={
-                    message.contentType || detectContentType(message.content)
-                  }
-                  isLoading={loading && index === messages.length - 1}
-                  streamingContent={message.streamingContent}
-                  thinking={message.thinking}
-                  workingStatus={message.workingStatus}
-                  activeToolCalls={message.activeToolCalls}
-                  completedToolCalls={message.completedToolCalls}
-                />
-              )}
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
+
+        {/* Messages Container */}
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto px-6 py-6 scroll-smooth"
+        >
+          <div className="md:px-6 mx-auto space-y-6">
+            {messages.length === 0 && (
+              <div className="flex flex-col items-center py-35 justify-center h-full">
+                <p className="text-dark/50 dark:text-white/50 md:text-lg mb-3 font-medium">
+                  27th January, 2026
+                </p>
+                <h2 className="font-bold text-2xl md:text-4xl bg-clip-text bg-linear-to-b text-transparent from-dark/50 dark:from-white/50 dark:to-white py-1 to-dark">
+                  Good Afternoon, Tayo!
+                </h2>
+                <p className="text-dark/50 text-sm dark:text-white/50 md:text-md font-medium">How can I help you today?</p>
+              </div>
+            )}
+            {messages.map((message, index) => (
+              <div key={message.id}>
+                {message.role === "user" ? (
+                  <MessageBubble message={message.content} isUser={true} />
+                ) : (
+                  <AgentMessageCard
+                    message={message.content}
+                    contentType={
+                      message.contentType || detectContentType(message.content)
+                    }
+                    isLoading={loading && index === messages.length - 1}
+                    streamingContent={message.streamingContent}
+                    thinking={message.thinking}
+                    workingStatus={message.workingStatus}
+                    activeToolCalls={message.activeToolCalls}
+                    completedToolCalls={message.completedToolCalls}
+                  />
+                )}
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
         </div>
-        <div className="">
-          <AgentInput onSend={handleSendMessage} disabled={loading} />
+
+        {/* Input Container */}
+        <div className="border-t border-gray-200 dark:border-white/5">
+          <div className="">
+            <AgentInput onSend={handleSendMessage} disabled={loading} />
+          </div>
         </div>
       </div>
-      <div className="md:w-1/3 w-0 hidden px-5 md:flex flex-col gap-4 h-162">
-        <div className="bg-dark/2 p-5 flex flex-col justify-between overflow-hidden border border-dark/6 w-full h-full rounded-4xl">
-          <h2 className="text-dark font-semibold text-xl">
+
+      {/* Sidebar */}
+      <div className="hidden md:flex w-80 bg-white dark:bg-white/3 border-l border-gray-200 dark:border-white/5 flex-col h-full">
+        <div className="p-4 border-b border-gray-200 dark:border-white/5">
+          <h2 className="text-sm py-[7px] font-semibold text-gray-900 dark:text-white">
             Agent Chat History
           </h2>
-          <div className="flex flex-col overflow-y-auto mt-4 gap-1.5 w-full">
+        </div>
+        <div className="flex-1 overflow-y-auto p-3">
+          <div className="space-y-1">
             {recentThreadsLoading ? (
-              <div className="flex items-center justify-center py-6">
+              <div className="flex items-center justify-center py-8">
                 <div className="flex gap-1">
-                  <span className="inline-block w-2 h-2 bg-dark/30 rounded-full animate-pulse" />
+                  <span className="inline-block w-1.5 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse" />
                   <span
-                    className="inline-block w-2 h-2 bg-dark/30 rounded-full animate-pulse"
+                    className="inline-block w-1.5 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse"
                     style={{ animationDelay: "150ms" }}
                   />
                   <span
-                    className="inline-block w-2 h-2 bg-dark/30 rounded-full animate-pulse"
+                    className="inline-block w-1.5 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full animate-pulse"
                     style={{ animationDelay: "300ms" }}
                   />
                 </div>
               </div>
             ) : recentThreads.length === 0 ? (
-              <div className="text-dark/50 text-sm py-6 text-center">
+              <div className="text-gray-400 dark:text-gray-600 text-xs py-8 text-center">
                 No conversations yet
               </div>
             ) : (
@@ -1017,14 +950,18 @@ const Page = () => {
                 <button
                   key={t._id}
                   onClick={() => loadThreadIntoChat(t._id)}
-                  className="bg-dark/4 hover:bg-dark/6 w-full p-2.5 rounded-2xl flex gap-2 items-center text-left transition-colors"
+                  className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/3 cursor-pointer transition-colors group"
                 >
-                  <div className="p-2 bg-accent text-white rounded-full">
-                    <ChatsCircleIcon />
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex-shrink-0 w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
+                      <ChatsCircleIcon className="text-white text-base" weight="fill" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                        {t.title || "Recent GitHub Activity Report"}
+                      </p>
+                    </div>
                   </div>
-                  <h2 className="text-dark font-medium line-clamp-1">
-                    {t.title || "Untitled conversation"}
-                  </h2>
                 </button>
               ))
             )}
@@ -1032,7 +969,6 @@ const Page = () => {
         </div>
       </div>
 
-      {/* History Sidebar */}
       <HistorySidebar
         agentId={agentId}
         isOpen={isHistoryOpen}
@@ -1042,13 +978,11 @@ const Page = () => {
         }}
       />
 
-      {/* Edit Agent Modal */}
       <EditAgentModal
         agent={agent}
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onUpdate={async () => {
-          // Refresh agent data
           try {
             const data = await api.getAgent(agentId);
             setAgent(data.agent);

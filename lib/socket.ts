@@ -113,6 +113,54 @@ class SocketClient {
   getSocket() {
     return this.socket;
   }
+
+  /**
+   * Emit a tool action from a UI card (e.g., send email, post tweet, merge PR)
+   */
+  emitToolAction(executionId: string, action: string, data: any) {
+    if (!this.socket) {
+      console.warn("Socket not connected");
+      return;
+    }
+
+    this.socket.emit("tool_action", {
+      executionId,
+      action,
+      data,
+    });
+  }
+
+  /**
+   * Approve a pending tool execution
+   */
+  emitApproval(approvalId: string) {
+    if (!this.socket) {
+      console.warn("Socket not connected");
+      return;
+    }
+
+    this.socket.emit("approval_response", {
+      approvalId,
+      approved: true,
+    });
+  }
+
+  /**
+   * Reject a pending tool execution
+   */
+  emitRejection(approvalId: string, reason?: string) {
+    if (!this.socket) {
+      console.warn("Socket not connected");
+      return;
+    }
+
+    this.socket.emit("approval_response", {
+      approvalId,
+      approved: false,
+      reason,
+    });
+  }
 }
 
 export const socketClient = new SocketClient();
+

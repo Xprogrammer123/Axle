@@ -95,9 +95,9 @@ export const AgentInput: React.FC<AgentInputProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-3xl flex flex-col justify-between p-4 md:p-5 h-32 md:h-36 m-3 md:m-4">
+    <div className="bg-white dark:bg-white/3 rounded-0 flex flex-col justify-between p-4 md:p-5 h-32 md:h-36">
       <textarea
-        className="h-12 md:h-14 resize-none bg-transparent outline-0 ring-transparent border-0 text-dark placeholder:text-dark/50 text-sm"
+        className="h-12 md:h-14 resize-none bg-transparent outline-0 ring-transparent border-0 text-dark placeholder:text-dark/50 dark:text-white dark:placeholder:text-white/50 text-sm"
         placeholder="Ask anything..."
         value={message}
         onChange={(e) => setMessage(e.target.value)}
@@ -111,15 +111,15 @@ export const AgentInput: React.FC<AgentInputProps> = ({
               if (!githubConnected) return; // Don't open if GitHub not connected
               setIsRepoDropdownOpen(!isRepoDropdownOpen);
             }}
-            className={`bg-black/3 border-3 items-center w-fit p-2 md:p-3 border-dark/2.5 rounded-full flex gap-2 md:gap-6 transition-colors ${githubConnected
-              ? "hover:bg-black/3 cursor-pointer"
+            className={`bg-black/3 dark:bg-white/3 border-3 items-center w-fit p-2 md:p-3 border-dark/2.5 rounded-full flex gap-2 md:gap-2 transition-colors ${githubConnected
+              ? "hover:bg-black/3 dark:hover:bg-white/3 cursor-pointer"
               : "opacity-50 cursor-not-allowed"
               }`}
             title={
               !githubConnected ? "GitHub integration not connected" : undefined
             }
           >
-            <GithubLogoIcon className="text-dark/50 text-base md:text-lg flex-shrink-0" />
+            <GithubLogoIcon className="text-dark/50 dark:text-white/50 text-base md:text-lg flex-shrink-0" />
             <p className="text-xs md:text-sm font-medium truncate max-w-[120px] md:max-w-none">
               {!githubConnected
                 ? "GitHub"
@@ -129,7 +129,7 @@ export const AgentInput: React.FC<AgentInputProps> = ({
             </p>
             {githubConnected && (
               <CaretDownIcon
-                className={`text-base md:text-lg text-dark/50 transition-transform flex-shrink-0 ${isRepoDropdownOpen ? "rotate-180" : ""
+                className={`text-base md:text-lg ml-4 text-dark/50 dark:text-white/50 transition-transform flex-shrink-0 ${isRepoDropdownOpen ? "rotate-180" : ""
                   }`}
               />
             )}
@@ -137,9 +137,9 @@ export const AgentInput: React.FC<AgentInputProps> = ({
           {isRepoDropdownOpen && githubConnected && (
             <div className="absolute bottom-full backdrop-blur-xl w-64 md:w-72 mb-2 left-0 bg-white/3 border border-dark/5 shadow-lg shadow-dark/2 rounded-2xl p-2 max-h-48 overflow-y-auto z-50">
               {loadingRepos ? (
-                <p className="text-dark/50 text-sm p-3">Loading repos...</p>
+                <p className="text-dark/50 dark:text-white/50 text-sm p-3">Loading repos...</p>
               ) : repos.length === 0 ? (
-                <p className="text-dark/50 text-sm p-3">
+                <p className="text-dark/50 dark:text-white/50 text-sm p-3">
                   No repositories found
                 </p>
               ) : (
@@ -188,7 +188,7 @@ export const AgentInput: React.FC<AgentInputProps> = ({
               <div className="loader-light" />
             </div>
           ) : (
-            <ArrowUpRight className="text-base md:text-lg font-semibold text-white" />
+            <ArrowUpRight className="text-base md:text-md font-semibold text-white" />
           )}
         </Button>
       </div>

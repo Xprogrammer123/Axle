@@ -129,7 +129,7 @@ export const EditAgentModal: React.FC<EditAgentModalProps> = ({
               />
             </div>
 
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-white/70 mb-2">
                 Status
               </label>
@@ -141,7 +141,7 @@ export const EditAgentModal: React.FC<EditAgentModalProps> = ({
                 <option value="active">Active</option>
                 <option value="paused">Paused</option>
               </select>
-            </div>
+            </div> */}
 
             {/* Actions */}
             <div className="flex gap-3 pt-4">

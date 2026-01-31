@@ -17,10 +17,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      'inline-flex tap-highlight-transparent hover:scale-[1.03] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-500 transition-transform duration-200 ease-out active:scale-[0.97] cursor-pointer items-center justify-center gap-2 rounded-full font-medium transition-all focus:outline-none focus:ring-2 focus:ring-base/50 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0px_0px_0px_3px_rgba(255,255,255,0.5)_inset,_0px_2px_2px_rgba(0,0,0,0.1)]';
+      'inline-flex tap-highlight-transparent hover:scale-[1.03] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-500 transition-transform duration-200 ease-out active:scale-[0.97] cursor-pointer items-center justify-center gap-2 rounded-full font-medium transition-all focus:outline-none focus:ring-2 focus:ring-base/50 disabled:opacity-50 disabled:cursor-not-allowed shadow-[inset_0_1px_2px_rgba(255,255,255,0.35),_inset_0_-2px_6px_rgba(0,0,0,0.25)]';
 
     const variants = {
-      primary: 'bg-accent hover:bg-accent-hover text-white font-semibold',
+      primary: 'bg-accent dark:bg-accent-dark hover:bg-accent-hover text-white font-semibold',
       secondary: 'bg-accent/20 hover:bg-accent/30 text-white border border-white/10',
       ghost: 'bg-accent/10 hover:bg-accent/20 text-white border border-transparent',
       destructive: 'bg-error hover:bg-error/90 text-white',
@@ -65,11 +65,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           disabled || loading
             ? undefined
             : {
-                scale: 0.8,
-                y: 1,
-              }
+              scale: 0.8,
+              y: 1,
+            }
         }
-        
+
         onMouseDown={createWave}
         className={cn(baseStyles, variants[variant], sizes[size], className)}
         disabled={disabled || loading}

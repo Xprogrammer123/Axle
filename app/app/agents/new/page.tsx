@@ -38,6 +38,20 @@ function CreateAgentContent() {
     useEffect(() => {
         const loadTemplate = async () => {
             try {
+                // Check for direct query params first (from Templates page)
+                const paramName = searchParams.get('name');
+                const paramDesc = searchParams.get('description');
+                const paramInstr = searchParams.get('instructions');
+
+                if (paramName || paramDesc || paramInstr) {
+                    setFormData({
+                        name: paramName || '',
+                        description: paramDesc || '',
+                        instructions: paramInstr || ''
+                    });
+                    return;
+                }
+
                 if (!templateId) return;
                 const data = await api.getTemplates();
                 const templates = data.templates || [];
@@ -46,8 +60,8 @@ function CreateAgentContent() {
 
                 const instructions = Array.isArray(match.actions)
                     ? `Use this action sequence as your playbook:\n\n${match.actions
-                          .map((a: any, idx: number) => `${idx + 1}. ${a.type}`)
-                          .join('\n')}`
+                        .map((a: any, idx: number) => `${idx + 1}. ${a.type}`)
+                        .join('\n')}`
                     : '';
 
                 setFormData({
@@ -60,7 +74,7 @@ function CreateAgentContent() {
             }
         };
         loadTemplate();
-    }, [templateId]);
+    }, [templateId, searchParams]);
 
     useEffect(() => {
         const loadProviders = async () => {
@@ -147,53 +161,53 @@ function CreateAgentContent() {
     };
 
     return (
-        <div className="max-w-4xl px-5 overflow-auto w-full mx-auto pb-20">
+        <div className="max-w-4xl pt-20 px-5 overflow-auto h-full w-full mx-auto">
             <div className="mb-6">
-                <Link href="/dashboard/agents" className="text-sm text-dark/40 hover:text-dark mb-4 flex items-center gap-1 transition-colors">
+                <Link href="/app/agents" className="text-sm text-dark/40 dark:text-white/40 dark:hover:text-white hover:text-dark mb-4 flex items-center gap-1 transition-colors">
                     <CaretLeft /> Back to Agents
                 </Link>
-                <h1 className="md:text-3xl text-2xl font-semibold text-dark tracking-tight">Create New Agent</h1>
-                <p className="text-dark/40 mt-1">Describe the role and responsibilities. The Agent handles the rest.</p>
+                <h1 className="md:text-3xl text-2xl font-semibold text-dark dark:text-white tracking-tight">Create New Agent</h1>
+                <p className="text-dark/40 dark:text-white/40 mt-1">Describe the role and responsibilities. The Agent handles the rest.</p>
             </div>
 
-            <Card className="py-3 bg-dark/0 border border-dark/0 rounded-4xl space-y-6">
-                        <Input
-                            label="Agent Name"
-                            placeholder="e.g. Research Assistant"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="bg-dark/3 text-sm rounded-full py-3 border-dark/5"
-                        />
+            <Card className="py-3 bg-dark/0 dark:bg-white/0 border border-dark/0 dark:border-white/0 rounded-4xl space-y-6">
+                <Input
+                    label="Agent Name"
+                    placeholder="e.g. Research Assistant"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="bg-dark/3 dark:bg-white/1 text-sm rounded-full py-3 border-dark/5 dark:border-white/2"
+                />
 
-                        <Input
-                            label="Short Description"
-                            placeholder="What does this agent do?"
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            className="bg-dark/3 text-sm rounded-full py-3 border-dark/5"
-                        />
+                <Input
+                    label="Short Description"
+                    placeholder="What does this agent do?"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="bg-dark/3 dark:bg-white/1 text-sm rounded-full py-3 border-dark/5 dark:border-white/2"
+                />
 
-                        <Textarea
-                            label="Instructions"
-                            placeholder="You are a helpful assistant. Your goal is to..."
-                            helperText="Use natural language. No code or configuration needed."
-                            rows={8}
-                            value={formData.instructions}
-                            onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
-                            className="bg-dark/3 rounded-3xl outline-white/5 p-5 border-dark/5 text-sm"
-                        />
+                <Textarea
+                    label="Instructions"
+                    placeholder="You are a helpful assistant. Your goal is to..."
+                    helperText="Use natural language. No code or configuration needed."
+                    rows={8}
+                    value={formData.instructions}
+                    onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+                    className="bg-dark/3 dark:bg-white/1 rounded-3xl outline-white/5 p-5 border-dark/5 dark:border-white/2 text-sm"
+                />
 
-                        <div className="flex justify-end gap-2">
-                            <Button
-                                onClick={() => handleSubmit()}
-                                disabled={!formData.name || !formData.instructions}
-                                className="py-3"
-                                loading={loading}
-                            >
-                                Create Agent
-                            </Button>
-                        </div>
-                 </Card>
+                <div className="flex justify-end gap-2">
+                    <Button
+                        onClick={() => handleSubmit()}
+                        disabled={!formData.name || !formData.instructions}
+                        className="py-3"
+                        loading={loading}
+                    >
+                        Create Agent
+                    </Button>
+                </div>
+            </Card>
         </div>
     );
 }

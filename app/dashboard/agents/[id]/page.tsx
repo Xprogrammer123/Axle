@@ -101,9 +101,8 @@ const Page = () => {
       if (toolLower.includes("github")) {
         if (toolLower.includes("issue")) {
           const title = params?.title as string;
-          return `Creating issue${
-            title ? `: ${title.substring(0, 30)}...` : "..."
-          }`;
+          return `Creating issue${title ? `: ${title.substring(0, 30)}...` : "..."
+            }`;
         }
         if (toolLower.includes("repo")) {
           const name = params?.name as string;
@@ -293,7 +292,7 @@ const Page = () => {
                     console.error("Failed to update thread:", error);
                   }
                 })();
-                
+
                 return currentMsgs;
               });
             } catch (error) {
@@ -397,7 +396,7 @@ const Page = () => {
               newMessages[lastAssistantIndex].role === "assistant"
             ) {
               const lastMessage = newMessages[lastAssistantIndex];
-              
+
               // Remove from activeToolCalls and move to completedToolCalls
               if (lastMessage.activeToolCalls) {
                 const toolIndex = lastMessage.activeToolCalls.findIndex((tc) => tc.type === data.type);
@@ -405,7 +404,7 @@ const Page = () => {
                   const toolCall = lastMessage.activeToolCalls[toolIndex];
                   const result = data.result || data.functionResponse?.response || data.output;
                   const isError = data.error || (result && typeof result === 'object' && result.success === false);
-                  
+
                   // Move to completedToolCalls
                   if (!lastMessage.completedToolCalls) {
                     lastMessage.completedToolCalls = [];
@@ -416,7 +415,7 @@ const Page = () => {
                     result: result,
                     durationMs: data.durationMs,
                   });
-                  
+
                   // Remove from active
                   lastMessage.activeToolCalls = lastMessage.activeToolCalls.filter(
                     (tc) => tc.type !== data.type
@@ -440,10 +439,10 @@ const Page = () => {
             ) {
               // Check if this is reasoning/thinking (from execution:reasoning_delta)
               // The event name itself indicates reasoning_delta
-              const isReasoning = data.type === "reasoning" || 
-                                 (data as any).eventType === "reasoning_delta" ||
-                                 (data as any).eventName?.includes("reasoning");
-              
+              const isReasoning = data.type === "reasoning" ||
+                (data as any).eventType === "reasoning_delta" ||
+                (data as any).eventName?.includes("reasoning");
+
               if (isReasoning) {
                 const currentThinking = newMessages[lastAssistantIndex].thinking || "";
                 newMessages[lastAssistantIndex].thinking = currentThinking + data.delta;
@@ -543,7 +542,7 @@ const Page = () => {
                 role: m.role,
                 content: m.content || "",
               }));
-            
+
             // Save to thread asynchronously
             (async () => {
               try {
@@ -556,7 +555,7 @@ const Page = () => {
                 console.error("Failed to save message to thread:", error);
               }
             })();
-            
+
             return currentMsgs;
           });
         } catch (error) {
@@ -583,7 +582,7 @@ const Page = () => {
         // Add repo context to help agent understand which repo to use
         contextualMessage = `${message}\n\n[Context: Working with repository ${githubRepo.owner}/${githubRepo.repo}]`;
       }
-      
+
       const payload: Record<string, unknown> = {
         message: contextualMessage,
         task: contextualMessage,
@@ -641,6 +640,63 @@ const Page = () => {
       }
     };
   }, []);
+
+  // =====================================================
+  // Card Action Handlers - for rich UI card interactions
+  // =====================================================
+
+  const handleApprove = (approvalId: string) => {
+    socketClient.emitApproval(approvalId);
+  };
+
+  const handleReject = (approvalId: string, reason?: string) => {
+    socketClient.emitRejection(approvalId, reason);
+  };
+
+  const handleSendEmail = (emailData: any) => {
+    if (!currentExecutionIdRef.current) return;
+    socketClient.emitToolAction(currentExecutionIdRef.current, 'send_email', emailData);
+  };
+
+  const handlePostTweet = (tweetData: any) => {
+    if (!currentExecutionIdRef.current) return;
+    socketClient.emitToolAction(currentExecutionIdRef.current, 'post_tweet', tweetData);
+  };
+
+  const handleMergePR = (prData: any) => {
+    if (!currentExecutionIdRef.current) return;
+    socketClient.emitToolAction(currentExecutionIdRef.current, 'merge_pr', prData);
+  };
+
+  const handleCommentIssue = (issueData: any) => {
+    if (!currentExecutionIdRef.current) return;
+    socketClient.emitToolAction(currentExecutionIdRef.current, 'comment_issue', issueData);
+  };
+
+  const handleSendSlackMessage = (slackData: any) => {
+    if (!currentExecutionIdRef.current) return;
+    socketClient.emitToolAction(currentExecutionIdRef.current, 'send_slack_message', slackData);
+  };
+
+  const handleCreateChannel = (channelData: any) => {
+    if (!currentExecutionIdRef.current) return;
+    socketClient.emitToolAction(currentExecutionIdRef.current, 'create_slack_channel', channelData);
+  };
+
+  const handleShareFile = (fileData: any) => {
+    if (!currentExecutionIdRef.current) return;
+    socketClient.emitToolAction(currentExecutionIdRef.current, 'share_file', fileData);
+  };
+
+  const handleApplyChanges = (changeData: any) => {
+    if (!currentExecutionIdRef.current) return;
+    socketClient.emitToolAction(currentExecutionIdRef.current, 'apply_changes', changeData);
+  };
+
+  const handleToggleSchedule = (scheduleData: any) => {
+    if (!currentExecutionIdRef.current) return;
+    socketClient.emitToolAction(currentExecutionIdRef.current, 'toggle_schedule', scheduleData);
+  };
 
   return (
     <div className="flex max-w-7xl mx-auto h-full w-full">
@@ -740,7 +796,7 @@ const Page = () => {
           <AgentInput onSend={handleSendMessage} disabled={loading} />
         </div>
       </div>
-      
+
       {/* History Sidebar */}
       <HistorySidebar
         agentId={agentId}

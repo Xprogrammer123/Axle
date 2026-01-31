@@ -48,6 +48,7 @@ class ApiClient {
         ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
       },
+      credentials: "include",
     };
 
     for (let attempt = 0; attempt <= retries; attempt++) {
@@ -75,13 +76,13 @@ class ApiClient {
 
           const message =
             payload &&
-            typeof payload === "object" &&
-            "error" in payload &&
-            (payload as any).error
+              typeof payload === "object" &&
+              "error" in payload &&
+              (payload as any).error
               ? String((payload as any).error)
               : typeof payload === "string" && payload
-              ? payload
-              : `HTTP ${response.status}`;
+                ? payload
+                : `HTTP ${response.status}`;
 
           throw new Error(message);
         }
@@ -549,6 +550,28 @@ class ApiClient {
     });
   }
 
+  async getUploadSignature() {
+    return this.request<{
+      signature: string;
+      timestamp: number;
+      cloudName: string;
+      apiKey: string;
+    }>("/profile/upload-signature");
+  }
+
+  async changePassword(data: any) {
+    return this.request("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteAccount() {
+    return this.request("/profile", {
+      method: "DELETE",
+    });
+  }
+
   // Webhooks
   async getWebhooks() {
     return this.request<{ webhooks: any[] }>("/webhooks");
@@ -562,6 +585,17 @@ class ApiClient {
 
   async getWebhookEvents() {
     return this.request<{ events: any[] }>("/webhooks/events");
+  }
+  // Feedback
+  async getFeedbacks() {
+    return this.request<{ feedbacks: any[] }>("/feedback");
+  }
+
+  async createFeedback(data: { type: string; title: string; description?: string }) {
+    return this.request<{ feedback: any }>("/feedback", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
   }
 }
 

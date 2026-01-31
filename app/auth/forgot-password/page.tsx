@@ -27,23 +27,24 @@ const page = () => {
   };
 
   return (
-    <>
+    <div className="flex dark:bg-[#0f0f0f] items-center justify-center h-screen flex-col gap-4">
       <Logo size={36} />
-      <h2 className="text-dark text-2xl font-semibold mt-8 text-center">
+     <div className="flex flex-col gap-1.5">
+       <h2 className="text-dark dark:text-white text-2xl font-semibold mt-5 text-center">
         Forgot your password?
       </h2>
-      <p className="text-dark/50 text-sm font-medium mt-2 text-center max-w-sm">
+      <p className="text-dark/50 dark:text-white/50 text-sm font-medium text-center max-w-sm">
         {sent
           ? "If an account exists for that email, we sent a reset link."
           : "Enter your email and we’ll send you a reset link."}
       </p>
-
+     </div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-1.5 w-80 mt-6">
-        <div className="flex group group-focus:ring-2 ring-accent/10 bg-dark/3 rounded-full border-2 border-dark/3 p-3 w-full items-center gap-1.5">
+        <div className="flex group group-focus:ring-2 ring-accent/10 bg-dark/3 dark:bg-white/1.5 rounded-full border-2 border-dark/3 dark:border-white/2 p-3 w-full items-center gap-1.5">
           <EnvelopeIcon className="text-accent text-lg" />
           <input
             type="email"
-            className="text-dark outline-0 group bg-transparent w-full text-sm"
+            className="text-dark dark:text-white outline-0 group bg-transparent w-full text-sm"
             placeholder="Enter your email address here..."
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -59,24 +60,24 @@ const page = () => {
           Send reset link
         </Button>
 
-        <div className="my-5 h-0.5 w-80 bg-dark/10 rounded-full"></div>
+        <div className="my-5 h-0.5 w-80 bg-dark/3 dark:bg-white/1.5 rounded-full"></div>
 
-        <div className="flex items-center justify-between w-80 text-sm font-medium">
+        <div className="flex items-center justify-center w-80 text-sm font-medium">
           <Link
-            className="text-dark/40 hover:text-dark transition-all"
+            className="text-dark/40 hover:text-dark dark:text-white transition-all"
             href="/auth/login"
           >
             Back to Login
           </Link>
-          <Link
-            className="text-dark/40 hover:text-dark transition-all"
+          {/* <Link
+            className="text-dark/40 hover:text-dark dark:text-white transition-all"
             href="/auth/signup"
           >
             Sign Up
-          </Link>
+          </Link> */}
         </div>
       </form>
-    </>
+    </div>
   );
 };
 

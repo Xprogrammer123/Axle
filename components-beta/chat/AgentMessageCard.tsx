@@ -3,15 +3,15 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ContentRenderer } from "./ContentRenderer";
-import { ToolCallCard } from "./ToolCallCard";
+import { ToolCallCard } from "./ToolRegistry";
 import { ThinkingDropdown } from "./ThinkingDropdown";
 
 interface ToolCall {
   type: string;
   description: string;
-  params?: Record<string, any>;
+  params?: Record<string, unknown>;
   status?: "running" | "success" | "failed";
-  result?: any;
+  result?: unknown;
   durationMs?: number;
 }
 
@@ -33,7 +33,7 @@ const GeminiLoader: React.FC = () => (
       className="absolute inset-[-4px] rounded-full"
       style={{
         background:
-          "conic-gradient(from 0deg, transparent, #36B460, #ffffff, transparent)",
+          "conic-gradient(from 0deg, transparent, #36B460, #ffffff00, transparent)",
       }}
       animate={{ rotate: 360 }}
       transition={{
@@ -46,7 +46,7 @@ const GeminiLoader: React.FC = () => (
       className="absolute inset-[-4px] rounded-full opacity-50"
       style={{
         background:
-          "conic-gradient(from 180deg, transparent, #ffffffff, #ffffffff, transparent)",
+          "conic-gradient(from 180deg, transparent, #ffffffff00, #ffffffff00, transparent)",
       }}
       animate={{ rotate: -360 }}
       transition={{
@@ -55,7 +55,7 @@ const GeminiLoader: React.FC = () => (
         ease: "linear",
       }}
     />
-    <div className="bg-white z-50 rounded-full size-8"></div>
+    <div className="bg-[#eee] backdrop-blur-[300px] dark:bg-black z-50 rounded-full size-8"></div>
   </div>
 );
 
@@ -63,7 +63,7 @@ const GeminiLoader: React.FC = () => (
 const useTypingAnimation = (
   text: string,
   isEnabled: boolean,
-  speed: number = 15
+  speed: number = 15,
 ) => {
   const [displayedText, setDisplayedText] = useState("");
   const [isComplete, setIsComplete] = useState(false);
@@ -71,21 +71,21 @@ const useTypingAnimation = (
   const previousTextRef = useRef("");
 
   useEffect(() => {
-    // Reset if text changes completely (new message)
-    if (
-      text !== previousTextRef.current &&
-      !text.startsWith(previousTextRef.current)
-    ) {
-      indexRef.current = 0;
-      setDisplayedText("");
-      setIsComplete(false);
-    }
+    const prev = previousTextRef.current;
+    const isNewMessage = text !== prev && !text.startsWith(prev);
     previousTextRef.current = text;
 
     if (!isEnabled || !text) {
+      indexRef.current = 0;
       setDisplayedText(text);
       setIsComplete(true);
       return;
+    }
+
+    if (isNewMessage) {
+      indexRef.current = 0;
+      setDisplayedText("");
+      setIsComplete(false);
     }
 
     if (indexRef.current >= text.length) {
@@ -134,7 +134,7 @@ export const AgentMessageCard: React.FC<AgentMessageCardProps> = ({
   const { displayedText, isComplete } = useTypingAnimation(
     displayContent,
     shouldAnimate,
-    12 // Speed in ms per tick
+    12, // Speed in ms per tick
   );
 
   // For streaming, show as-is; for final content, use animated text
@@ -146,7 +146,7 @@ export const AgentMessageCard: React.FC<AgentMessageCardProps> = ({
 
   return (
     <div className="flex flex-col items-start gap-3 w-full">
-      <div className="bg-white p-2 rounded-full flex-shrink-0 mt-1 relative">
+      <div className="bg-dark/5 dark:bg-black p-2 rounded-full flex-shrink-0 mt-1 relative">
         {/* Gemini-style loader around logo */}
         {isLoading && <GeminiLoader />}
         <Image
@@ -235,7 +235,7 @@ export const AgentMessageCard: React.FC<AgentMessageCardProps> = ({
 
         {/* Tool cards - show AFTER completion */}
         {completedToolCalls.length > 0 && !isLoading && (
-          <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-white/5">
+          <div className="flex flex-wrap items-center gap-2 mt-2 pt-2 border-t border-border">
             {completedToolCalls.map((toolCall, index) => (
               <motion.div
                 key={`completed-${toolCall.type}-${index}`}

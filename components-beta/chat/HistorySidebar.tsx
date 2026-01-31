@@ -91,19 +91,19 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         onClick={onClose}
       />
       {/* Sidebar */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-sm md:w-80 bg-dark/4 backdrop-blur-xl border-l-2 border-white/10 z-50 animate-in slide-in-from-right-2 shadow-2xl">
+      <div className="fixed right-0 top-0 h-full w-full max-w-sm md:w-80 bg-dark/4 backdrop-blur-xl border-l-2 border-border z-50 animate-in slide-in-from-right-2 shadow-2xl">
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-white/10">
+          <div className="flex items-center justify-between p-4 border-b border-border">
             <div className="flex items-center gap-2">
-              <ClockIcon className="text-dark/70 text-lg" />
-              <h2 className="text-lg font-semibold text-dark">History</h2>
+              <ClockIcon className="text-dark/70 dark:text-white/50 text-lg" />
+              <h2 className="text-lg dark:text-white font-semibold text-dark">History</h2>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-surface/40 rounded-lg transition-colors"
             >
-              <XIcon className="text-dark/70 text-lg" />
+              <XIcon className="text-dark/70 dark:text-white/50 text-lg" />
             </button>
           </div>
 
@@ -124,7 +124,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                 </div>
               </div>
             ) : threads.length === 0 ? (
-              <div className="text-center py-8 text-dark/50 text-sm">
+              <div className="text-center py-8 text-dark/50 dark:text-white/50 text-sm">
                 No conversations yet
               </div>
             ) : (
@@ -135,17 +135,17 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                     onSelectThread(thread._id);
                     onClose();
                   }}
-                  className="w-full text-left p-3 bg-dark/5 hover:bg-dark/10 border border-white/10 rounded-xl transition-all hover:scale-[1.02] hover:border-white/20 group"
+                  className="w-full text-left p-3 bg-dark/5 hover:bg-dark/10 border border-border rounded-xl transition-all hover:scale-[1.02] hover:border-border group dark:text-white/50"
                 >
                   <div className="flex items-start justify-between gap-2 mb-1">
-                    <h3 className="text-sm font-semibold text-dark group-hover:text-dark/90 transition-colors flex-1">
+                    <h3 className="text-sm font-semibold text-dark group-hover:text-dark/90 transition-colors flex-1 dark:text-white/50">
                       {getTitle(thread)}
                     </h3>
-                    <span className="text-xs text-dark/40 group-hover:text-dark/60 transition-colors whitespace-nowrap ml-2">
+                    <span className="text-xs text-dark/40 group-hover:text-dark/60 transition-colors whitespace-nowrap ml-2 dark:text-white/50">
                       {formatDate(thread.updatedAt)}
                     </span>
                   </div>
-                  <p className="text-xs text-dark/60 group-hover:text-dark/70 transition-colors line-clamp-2 mt-1">
+                  <p className="text-xs text-dark/60 group-hover:text-dark/70 transition-colors line-clamp-2 mt-1 dark:text-white/50">
                     {getPreview(thread)}
                   </p>
                 </button>

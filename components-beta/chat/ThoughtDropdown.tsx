@@ -8,7 +8,11 @@ interface ThoughtDropdownProps {
   isStreaming?: boolean;
 }
 
-export const ThoughtDropdown: React.FC<ThoughtDropdownProps> = ({ thought, duration, isStreaming = false }) => {
+export const ThoughtDropdown: React.FC<ThoughtDropdownProps> = ({
+  thought,
+  duration,
+  isStreaming = false,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -19,25 +23,26 @@ export const ThoughtDropdown: React.FC<ThoughtDropdownProps> = ({ thought, durat
       >
         {isStreaming ? (
           <>
-            <span className="inline-block w-1.5 h-1.5 bg-white/50 rounded-full animate-pulse mr-1" />
+            <span className="inline-block w-1.5 h-1.5 bg-text/40 rounded-full animate-pulse mr-1" />
             Thinking...
           </>
         ) : (
           <>Thought{duration > 0 ? ` for ${duration}s` : ""}</>
         )}
-        <CaretDownIcon 
-          className={`text-[15px] text-dark/35 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+        <CaretDownIcon
+          className={`text-[15px] text-dark/35 transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
         />
       </button>
       {isOpen && (
-        <div className="bg-black/20 border border-white/5 rounded-xl p-3 mt-1 max-h-64 overflow-y-auto">
+        <div className="bg-surface/60 border border-border rounded-xl p-3 mt-1 max-h-64 overflow-y-auto">
           <p className="text-dark/70 text-sm whitespace-pre-wrap">{thought}</p>
           {isStreaming && (
-            <span className="inline-block w-1 h-4 bg-white/50 ml-1 animate-pulse" />
+            <span className="inline-block w-1 h-4 bg-text/40 ml-1 animate-pulse" />
           )}
         </div>
       )}
     </div>
   );
 };
-

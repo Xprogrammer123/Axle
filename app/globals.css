@@ -1,7 +1,36 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* Tailwind v4 theme configuration with dark: class support */
+@theme {
+  /* Base colors - light mode */
+  --color-background: #f0f0f0;
+  --color-background-dark: #090909;
+  --color-surface: #fafafa;
+  --color-surface-dark: #0c0c0c;
+  --color-border: rgba(8, 11, 16, 0.1);
+  --color-border-dark: rgba(255, 255, 255, 0.12);
+
+  /* Main text colors - "dark" is confusing but matches existing usage */
+  --color-dark: #040526;
+  --color-dark-light: #ededed;
+  --color-text-muted: rgba(8, 11, 16, 0.6);
+  --color-text-muted-dark: rgba(237, 237, 237, 0.65);
+
+  /* Brand colors (same in both modes) */
+  --color-base: #2DA355;
+  --color-accent: #57BF7A !important;
+  --color-accent-dark: #27A94A;
+  --color-base-hover: rgba(54, 180, 96, 0.6);
+
+  /* Status colors */
+  --color-success: #16a34a;
+  --color-success-dark: #22c55e;
+  --color-error: #dc2626;
+  --color-error-dark: #ef4444;
+  --color-warning: #d97706;
+  --color-warning-dark: #f59e0b;
+}
 
 @font-face {
   font-family: Satoshi;
@@ -13,19 +42,16 @@
   src: url("/InstrumentSerif-Italic.ttf");
 }
 
-@theme {
-  /* Dark Mode Only - Supabase Inspired */
-  --color-background: #191919;
-  --color-dark: #060527;
-  --color-base: #2DA355;
-  --color-accent: #57BF7A;
-  --color-base-hover: #36B46095;
-}
-
 * {
   font-family: "Satoshi", sans-serif;
   letter-spacing: -0.5px;
   box-sizing: border-box;
+}
+
+.bg {
+  background: url("/dark.jpg");
+  background-size: cover;
+  background-position: center;
 }
 
 .tap-highlight-transparent {
@@ -39,8 +65,7 @@
 }
 
 body {
-  background: #191919;
-  color: #ededed;
+  @apply bg-background text-dark dark:bg-background-dark dark:text-dark-light;
 }
 
 *::-webkit-scrollbar {
@@ -145,6 +170,7 @@ body {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -158,6 +184,7 @@ body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -168,6 +195,7 @@ body {
     transform: translateY(-10px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -179,6 +207,7 @@ body {
     transform: translateX(-10px);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -190,6 +219,7 @@ body {
     transform: translateY(10px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -201,6 +231,7 @@ body {
     transform: scale(0.8);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
@@ -236,6 +267,7 @@ body {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -248,10 +280,13 @@ body {
 
 /* Enhanced pulse animation */
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     box-shadow: 0 0 0 0 rgba(54, 180, 96, 0.4);
   }
+
   50% {
     opacity: 0.8;
     box-shadow: 0 0 0 8px rgba(54, 180, 96, 0);
@@ -268,6 +303,7 @@ body {
     transform: scale(0.95);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
@@ -283,6 +319,7 @@ body {
     transform: scale(0);
     opacity: 0.35;
   }
+
   to {
     transform: scale(3);
     opacity: 0;
@@ -301,16 +338,180 @@ body {
     from {
       transform: translateX(0);
     }
+
     to {
       transform: translateX(calc(-100% - var(--gap)));
     }
   }
+
   @keyframes marquee-vertical {
     from {
       transform: translateY(0);
     }
+
     to {
       transform: translateY(calc(-100% - var(--gap)));
     }
   }
+}
+
+@layer utilities {
+  .glass {
+    @apply backdrop-blur-xl border border-white/10 dark:border-white/0;
+  }
+
+  .inner-pressed {
+    box-shadow:
+      inset 0 1px 2px rgba(255, 255, 255, 0.08),
+      inset 0 -2px 6px rgba(0, 0, 0, 0.55);
+  }
+
+  .inner-hover {
+    box-shadow:
+      inset 0 1px 2px rgba(255, 255, 255, 0.12),
+      inset 0 -3px 8px rgba(0, 0, 0, 0.65);
+  }
+}
+
+/* CRITICAL: Onborda Mobile Fixes - Add this to your globals.css */
+
+/* 
+  Problem: Onborda was pushing content around and not creating proper spotlight
+  Solution: Force absolute/fixed positioning and proper layering
+*/
+
+/* Base overlay - sits on top of everything */
+[data-onborda="true"] {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* The dark overlay background */
+.onborda-overlay,
+[class*="onborda"] > div[style*="position: fixed"] {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  z-index: 9997 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+
+/* Prevent body scroll when onboarding is active */
+body:has([data-onborda="true"]) {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* The highlighted/spotlighted element */
+[data-onborda-highlighted="true"],
+[style*="z-index: 100"] {
+  position: relative !important;
+  z-index: 9999 !important;
+  pointer-events: auto !important;
+}
+
+/* The onboarding card */
+[data-onborda-card="true"],
+.onborda-card,
+[class*="CardComponent"] {
+  position: fixed !important;
+  z-index: 10000 !important;
+  pointer-events: auto !important;
+  margin: 0 !important;
+}
+
+/* Mobile-specific positioning */
+@media (max-width: 768px) {
+  /* Force cards to be positioned properly on mobile */
+  [data-onborda-card="true"],
+  .onborda-card,
+  [class*="CardComponent"] {
+    max-width: calc(100vw - 2rem) !important;
+    left: 1rem !important;
+    right: 1rem !important;
+    width: auto !important;
+    margin: 0 !important;
+  }
+  
+  /* When card should be at bottom */
+  [data-onborda-card="true"][data-side="bottom"],
+  [data-side="bottom"] {
+    bottom: 1rem !important;
+    top: auto !important;
+  }
+  
+  /* When card should be at top */
+  [data-onborda-card="true"][data-side="top"],
+  [data-side="top"] {
+    top: 1rem !important;
+    bottom: auto !important;
+  }
+  
+  /* Center horizontally on mobile */
+  [data-onborda-card="true"][data-side="left"],
+  [data-onborda-card="true"][data-side="right"],
+  [data-side="left"],
+  [data-side="right"] {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    bottom: 1rem !important;
+    top: auto !important;
+  }
+  
+  /* Hide arrows on mobile */
+  [data-onborda-arrow="true"],
+  .onborda-arrow,
+  [class*="arrow"] {
+    display: none !important;
+  }
+}
+
+/* Ensure no element can break out of viewport */
+[data-onborda="true"] * {
+  max-width: 100vw !important;
+}
+
+/* Prevent layout shift */
+.onborda-wrapper {
+  position: relative !important;
+  z-index: 0 !important;
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Fix viewport height on iOS */
+  .onborda-overlay,
+  [class*="onborda"] > div[style*="position: fixed"] {
+    min-height: 100vh !important;
+    min-height: -webkit-fill-available !important;
+  }
+  
+  body:has([data-onborda="true"]) {
+    min-height: 100vh !important;
+    min-height: -webkit-fill-available !important;
+  }
+}
+
+/* Prevent content from being pushed/moved */
+[data-onborda="true"] ~ * {
+  position: relative !important;
+  z-index: 0 !important;
+}
+
+/* Make sure overlay doesn't create scrollbars */
+html:has([data-onborda="true"]),
+body:has([data-onborda="true"]) {
+  overflow: hidden !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
 }

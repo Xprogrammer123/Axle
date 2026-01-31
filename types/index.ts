@@ -1,3 +1,6 @@
+// Re-export message types
+export * from './messages';
+
 export interface User {
   _id: string;
   email: string;

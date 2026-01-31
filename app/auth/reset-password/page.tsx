@@ -7,8 +7,9 @@ import { LockIcon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import React, { Suspense, useMemo, useState } from "react";
+import { Router } from "next/router";
 
-function ResetPasswordInner() {
+function ResetPasswordInner(router: Router) {
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
 
@@ -31,6 +32,7 @@ function ResetPasswordInner() {
     try {
       await api.resetPassword(token, password);
       setDone(true);
+      router.push("/auth/login");
     } catch (err) {
       console.error(err);
     } finally {
@@ -39,34 +41,34 @@ function ResetPasswordInner() {
   };
 
   return (
-    <>
+    <div className="flex dark:bg-[#0f0f0f] items-center justify-center h-screen flex-col gap-4">
       <Logo size={36} />
-      <h2 className="text-dark text-2xl font-semibold mt-8 text-center">
+      <h2 className="text-dark dark:text-white text-2xl font-semibold mt-8 text-center">
         Reset your password
       </h2>
-      <p className="text-dark/50 text-sm font-medium mt-2 text-center max-w-sm">
+      <p className="text-dark/50 dark:text-white/50 text-sm font-medium text-center max-w-sm">
         {done
           ? "Password updated. You can log in now."
           : "Enter a new password (min 8 characters)."}
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-1.5 w-80 mt-6">
-        <div className="flex group group-focus:ring-2 ring-accent/10 bg-dark/3 rounded-full border-2 border-dark/3 p-3 w-full items-center gap-1.5">
+        <div className="flex group group-focus:ring-2 ring-accent/10 bg-dark/3 dark:bg-white/1.5 rounded-full border-2 border-dark/3 dark:border-white/2 p-3 w-full items-center gap-1.5">
           <LockIcon className="text-accent text-lg" />
           <input
             type="password"
-            className="text-dark outline-0 group bg-transparent w-full text-sm"
+            className="text-dark dark:text-white outline-0 group bg-transparent w-full text-sm"
             placeholder="New password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading || done}
           />
         </div>
-        <div className="flex group group-focus:ring-2 ring-accent/10 bg-dark/3 rounded-full border-2 border-dark/3 p-3 w-full items-center gap-1.5">
+        <div className="flex group group-focus:ring-2 ring-accent/10 bg-dark/3 dark:bg-white/1.5 rounded-full border-2 border-dark/3 dark:border-white/2 p-3 w-full items-center gap-1.5">
           <LockIcon className="text-accent text-lg" />
           <input
             type="password"
-            className="text-dark outline-0 group bg-transparent w-full text-sm"
+            className="text-dark dark:text-white outline-0 group bg-transparent w-full text-sm"
             placeholder="Confirm password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
@@ -82,24 +84,24 @@ function ResetPasswordInner() {
           Update password
         </Button>
 
-        <div className="my-5 h-0.5 w-80 bg-dark/10 rounded-full"></div>
+        <div className="my-5 h-0.5 w-80 bg-dark/3 dark:bg-white/1.5 rounded-full"></div>
 
         <div className="flex items-center justify-between w-80 text-sm font-medium">
           <Link
-            className="text-dark/40 hover:text-dark transition-all"
+            className="text-dark/40 hover:text-dark dark:text-white transition-all"
             href="/auth/login"
           >
             Back to Login
           </Link>
           <Link
-            className="text-dark/40 hover:text-dark transition-all"
-            href="/app/auth/forgot-password"
+            className="text-dark/40 hover:text-dark dark:text-white transition-all"
+            href="/auth/forgot-password"
           >
             Resend link
           </Link>
         </div>
       </form>
-    </>
+    </div>
   );
 }
 

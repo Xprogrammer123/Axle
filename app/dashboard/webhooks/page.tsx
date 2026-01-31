@@ -9,7 +9,7 @@ import { useToast } from '@/components/ui/toast';
 import { api } from '@/lib/api';
 import { motion } from 'framer-motion';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7000';
 
 export default function WebhooksPage() {
   const [webhooks, setWebhooks] = useState<any[]>([]);
@@ -138,54 +138,54 @@ export default function WebhooksPage() {
                         key={webhook._id}
                         variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
                       >
-                      <Card hover className="p-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <Webhook className="text-[#3ecf8e]" size={20} />
-                              <h3 className="text-lg font-semibold">
-                                {webhook.agentId?.name || 'Unknown Agent'}
-                              </h3>
-                              <Badge variant={webhook.enabled ? 'active' : 'paused'}>
-                                {webhook.enabled ? 'Active' : 'Inactive'}
-                              </Badge>
-                              {webhook.source && (
-                                <span className="text-xs text-white/30">
-                                  {String(webhook.source)}
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-[#8b8b8b]">URL:</span>
-                                <code className="text-xs bg-[#1a1a1a] px-2 py-1 rounded border border-[#2a2a2a] flex-1">
-                                  {resolveWebhookUrl(webhook)}
-                                </code>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => copyWebhookUrl(resolveWebhookUrl(webhook))}
-                                >
-                                  <Copy size={16} />
-                                </Button>
+                        <Card hover className="p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <Webhook className="text-[#3ecf8e]" size={20} />
+                                <h3 className="text-lg font-semibold">
+                                  {webhook.agentId?.name || 'Unknown Agent'}
+                                </h3>
+                                <Badge variant={webhook.enabled ? 'active' : 'paused'}>
+                                  {webhook.enabled ? 'Active' : 'Inactive'}
+                                </Badge>
+                                {webhook.source && (
+                                  <span className="text-xs text-white/30">
+                                    {String(webhook.source)}
+                                  </span>
+                                )}
                               </div>
 
-                              {webhook.lastCalledAt && (
-                                <p className="text-sm text-[#8b8b8b]">
-                                  Last called: {new Date(webhook.lastCalledAt).toLocaleString()}
-                                </p>
-                              )}
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm text-[#8b8b8b]">URL:</span>
+                                  <code className="text-xs bg-[#1a1a1a] px-2 py-1 rounded border border-[#2a2a2a] flex-1">
+                                    {resolveWebhookUrl(webhook)}
+                                  </code>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => copyWebhookUrl(resolveWebhookUrl(webhook))}
+                                  >
+                                    <Copy size={16} />
+                                  </Button>
+                                </div>
+
+                                {webhook.lastCalledAt && (
+                                  <p className="text-sm text-[#8b8b8b]">
+                                    Last called: {new Date(webhook.lastCalledAt).toLocaleString()}
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <details className="mt-4">
-                          <summary className="text-sm text-[#3ecf8e] cursor-pointer hover:text-[#33b376]">
-                            Show example payload
-                          </summary>
-                          <pre className="mt-2 text-xs bg-[#1a1a1a] p-4 rounded border border-[#2a2a2a] overflow-x-auto">
-{`POST ${resolveWebhookUrl(webhook)}
+                          <details className="mt-4">
+                            <summary className="text-sm text-[#3ecf8e] cursor-pointer hover:text-[#33b376]">
+                              Show example payload
+                            </summary>
+                            <pre className="mt-2 text-xs bg-[#1a1a1a] p-4 rounded border border-[#2a2a2a] overflow-x-auto">
+                              {`POST ${resolveWebhookUrl(webhook)}
 Content-Type: application/json
 
 {
@@ -193,9 +193,9 @@ Content-Type: application/json
     "key": "value"
   }
 }`}
-                          </pre>
-                        </details>
-                      </Card>
+                            </pre>
+                          </details>
+                        </Card>
                       </motion.div>
                     ))}
                   </motion.div>
