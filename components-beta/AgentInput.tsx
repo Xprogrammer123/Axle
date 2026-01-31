@@ -188,7 +188,7 @@ export const AgentInput: React.FC<AgentInputProps> = ({
               <div className="loader-light" />
             </div>
           ) : (
-            <ArrowUpRight className="text-base md:text-md font-semibold text-white" />
+            <ArrowUpRight className="text-md md:text-md font-semibold text-white" />
           )}
         </Button>
       </div>

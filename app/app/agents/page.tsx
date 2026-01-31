@@ -277,7 +277,7 @@ export default function AgentsPage() {
                     <Button
                           onClick={(e) => handleDeleteAgent(e, agent._id)}
                           disabled={deletingId === agent._id}
-                          className="p-3 bg-[#c04547] text-white dark:text-white transition-all rounded-full"
+                          className="p-3 bg-red-700 text-white dark:text-white transition-all rounded-full"
                           title="Delete agent"
                         >
                           <Trash size={20} />
