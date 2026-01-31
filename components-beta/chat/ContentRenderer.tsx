@@ -165,7 +165,7 @@ export const ContentRenderer: React.FC<ContentRendererProps> = memo(
 
         {isStreaming && (
           <motion.span
-            className="inline-block w-2 h-4 bg-text/30 dark:bg-white ml-1 align-middle rounded-sm"
+            className="inline-block w-2 h-4 bg-dark/30 dark:bg-white/50 ml-1 align-middle rounded-sm"
             animate={{ opacity: [1, 0] }}
             transition={{ duration: 1.0, repeat: Infinity }}
           />

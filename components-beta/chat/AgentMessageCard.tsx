@@ -126,8 +126,8 @@ export const AgentMessageCard: React.FC<AgentMessageCardProps> = ({
   const displayContent = hasContent
     ? message
     : hasStreaming
-    ? streamingContent
-    : "";
+      ? streamingContent
+      : "";
 
   // Use typing animation for final content only (not streaming)
   const shouldAnimate = hasContent && !hasStreaming;
@@ -177,7 +177,7 @@ export const AgentMessageCard: React.FC<AgentMessageCardProps> = ({
               animate={{ opacity: [0.4, 1, 0.4] }}
               transition={{ duration: 0.9, repeat: Infinity }}
             />
-            <span className="text-dark/60">{workingStatus}</span>
+            <span className="text-dark/60 dark:text-white/60">{workingStatus}</span>
           </motion.div>
         )}
 
@@ -194,7 +194,7 @@ export const AgentMessageCard: React.FC<AgentMessageCardProps> = ({
                 }}
               >
                 <span className="inline-block w-1.5 h-1.5 bg-[#36B460] rounded-full animate-pulse" />
-                <span className="text-dark/60">{toolCall.description}</span>
+                <span className="text-dark/60 dark:text-white/60">{toolCall.description}</span>
               </span>
             ))}
           </div>
@@ -208,7 +208,7 @@ export const AgentMessageCard: React.FC<AgentMessageCardProps> = ({
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
           >
-            <span className="text-dark/40">Thinking...</span>
+            <span className="text-dark/40 dark:text-white/40">Thinking...</span>
           </motion.div>
         ) : textToShow ? (
           <motion.div
@@ -225,7 +225,7 @@ export const AgentMessageCard: React.FC<AgentMessageCardProps> = ({
             {/* Typing cursor */}
             {shouldAnimate && !isComplete && (
               <motion.span
-                className="inline-block w-0.5 h-4 bg-dark/60 ml-0.5 align-middle"
+                className="inline-block w-0.5 h-4 bg-dark/60 dark:bg-white/60 ml-0.5 align-middle"
                 animate={{ opacity: [1, 0] }}
                 transition={{ duration: 0.5, repeat: Infinity }}
               />

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import {
   DotsThreeVerticalIcon,
@@ -102,6 +102,31 @@ const Page = () => {
   const currentExecutionIdRef = useRef<string | null>(null);
   const socketUnsubscribeRef = useRef<(() => void) | null>(null);
   const didAutostartRef = useRef(false);
+  const [profile, setProfile] = useState<any>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  const getGreeting = () => {
+    const hour = currentTime.getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 18) return "Good Afternoon";
+    return "Good Evening";
+  };
+
+  const displayName = useMemo(() => {
+    if (!profile) return "there";
+    const name = profile.name || profile.email;
+    if (!name) return "there";
+    const first = String(name).split("@")[0].split(" ")[0];
+    return first || "there";
+  }, [profile]);
+
+  const formattedDate = useMemo(() => {
+    return currentTime.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  }, [currentTime]);
 
   const loadThreadIntoChat = React.useCallback(async (threadId: string) => {
     try {
@@ -354,26 +379,31 @@ const Page = () => {
   );
 
   useEffect(() => {
-    const fetchAgent = async () => {
+    const fetchAgentAndProfile = async () => {
       try {
-        const data = await api.getAgent(agentId);
-        setAgent(data.agent);
-      } catch (error) {
-        console.error("Failed to fetch agent:", error);
-        const errorMessage =
-          error instanceof Error ? error.message : "Failed to load agent";
-        if (
-          errorMessage.includes("Invalid agent ID") ||
-          errorMessage.includes("400")
-        ) {
-          setAgent(null);
+        const [agentData, profileData] = await Promise.all([
+          api.getAgent(agentId),
+          api.getProfile().catch(() => null)
+        ]);
+        setAgent(agentData.agent);
+        if (profileData) {
+          setProfile((profileData as any).user || (profileData as any).profile || profileData);
         }
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
       }
     };
     if (agentId) {
-      fetchAgent();
+      fetchAgentAndProfile();
     }
   }, [agentId]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (agentId) {
@@ -878,10 +908,10 @@ const Page = () => {
             {messages.length === 0 && (
               <div className="flex flex-col items-center py-35 justify-center h-full">
                 <p className="text-dark/50 dark:text-white/50 md:text-lg mb-3 font-medium">
-                  27th January, 2026
+                  {formattedDate}
                 </p>
                 <h2 className="font-bold text-2xl md:text-4xl bg-clip-text bg-linear-to-b text-transparent from-dark/50 dark:from-white/50 dark:to-white py-1 to-dark">
-                  Good Afternoon, Tayo!
+                  {getGreeting()}, {displayName}!
                 </h2>
                 <p className="text-dark/50 text-sm dark:text-white/50 md:text-md font-medium">How can I help you today?</p>
               </div>
