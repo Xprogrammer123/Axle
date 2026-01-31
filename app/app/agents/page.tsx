@@ -271,17 +271,18 @@ export default function AgentsPage() {
                     </div>
                     <div className="flex pt-5 mt-5 border-t border-dark/5 dark:border-white/5 items-center justify-between gap-2 w-full">
                       <Link className="w-[90%]" href={`/app/agents/${agent._id}`}>
-                    <Button className="w-full p-3">View Agent</Button>
-                    </Link>
+                        <Button className="w-full p-3">View Agent</Button>
+                      </Link>
 
-                    <Button
-                          onClick={(e) => handleDeleteAgent(e, agent._id)}
-                          disabled={deletingId === agent._id}
-                          className="p-3 bg-red-700 text-white dark:text-white transition-all rounded-full"
-                          title="Delete agent"
-                        >
-                          <Trash size={20} />
-                        </Button>
+                      <Button
+                        onClick={(e) => handleDeleteAgent(e, agent._id)}
+                        disabled={deletingId === agent._id}
+                        variant="destructive"
+                        className="p-3 transition-all rounded-full"
+                        title="Delete agent"
+                      >
+                        <Trash size={20} />
+                      </Button>
                     </div>
                   </div>
                 </Link>

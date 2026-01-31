@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { CaretDownIcon, GithubLogoIcon } from "@phosphor-icons/react";
-import { ArrowUpRight } from "lucide-react";
+import { CaretDownIcon, GithubLogoIcon, ArrowUpRightIcon } from "@phosphor-icons/react";
 import { api } from "@/lib/api";
 import { Button } from "@/components-beta/Button";
 
@@ -95,9 +94,9 @@ export const AgentInput: React.FC<AgentInputProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-white/3 rounded-0 flex flex-col justify-between p-4 md:p-5 h-32 md:h-36">
+    <div className="bg-white dark:bg-white/3 rounded-0 flex flex-col justify-between p-4 md:p-5 min-h-[120px] md:h-36">
       <textarea
-        className="h-12 md:h-14 resize-none bg-transparent outline-0 ring-transparent border-0 text-dark placeholder:text-dark/50 dark:text-white dark:placeholder:text-white/50 text-sm"
+        className="w-full min-h-[60px] md:h-14 resize-none bg-transparent outline-0 ring-transparent border-0 text-dark placeholder:text-dark/50 dark:text-white dark:placeholder:text-white/50 text-sm mb-2"
         placeholder="Ask anything..."
         value={message}
         onChange={(e) => setMessage(e.target.value)}
@@ -111,8 +110,8 @@ export const AgentInput: React.FC<AgentInputProps> = ({
               if (!githubConnected) return; // Don't open if GitHub not connected
               setIsRepoDropdownOpen(!isRepoDropdownOpen);
             }}
-            className={`bg-black/3 dark:bg-white/3 border-3 items-center w-fit p-2 md:p-3 border-dark/2.5 rounded-full flex gap-2 md:gap-2 transition-colors ${githubConnected
-              ? "hover:bg-black/3 dark:hover:bg-white/3 cursor-pointer"
+            className={`bg-black/3 dark:bg-white/3 border border-dark/5 items-center w-fit px-3 py-2 md:p-3 rounded-full flex gap-2 transition-colors ${githubConnected
+              ? "hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
               : "opacity-50 cursor-not-allowed"
               }`}
             title={
@@ -120,7 +119,7 @@ export const AgentInput: React.FC<AgentInputProps> = ({
             }
           >
             <GithubLogoIcon className="text-dark/50 dark:text-white/50 text-base md:text-lg flex-shrink-0" />
-            <p className="text-xs md:text-sm font-medium truncate max-w-[120px] md:max-w-none">
+            <p className="text-xs md:text-sm font-medium truncate max-w-[100px] sm:max-w-[120px] md:max-w-none">
               {!githubConnected
                 ? "GitHub"
                 : selectedRepo
@@ -129,13 +128,13 @@ export const AgentInput: React.FC<AgentInputProps> = ({
             </p>
             {githubConnected && (
               <CaretDownIcon
-                className={`text-base md:text-lg ml-4 text-dark/50 dark:text-white/50 transition-transform flex-shrink-0 ${isRepoDropdownOpen ? "rotate-180" : ""
+                className={`text-base md:text-lg ml-2 md:ml-4 text-dark/50 dark:text-white/50 transition-transform flex-shrink-0 ${isRepoDropdownOpen ? "rotate-180" : ""
                   }`}
               />
             )}
           </button>
           {isRepoDropdownOpen && githubConnected && (
-            <div className="absolute bottom-full backdrop-blur-xl w-64 md:w-72 mb-2 left-0 bg-white/3 border border-dark/5 shadow-lg shadow-dark/2 rounded-2xl p-2 max-h-48 overflow-y-auto z-50">
+            <div className="absolute bottom-full backdrop-blur-xl w-64 md:w-72 mb-2 left-0 bg-white dark:bg-neutral-900 border border-dark/5 shadow-lg rounded-2xl p-2 max-h-48 overflow-y-auto z-50">
               {loadingRepos ? (
                 <p className="text-dark/50 dark:text-white/50 text-sm p-3">Loading repos...</p>
               ) : repos.length === 0 ? (
@@ -149,7 +148,7 @@ export const AgentInput: React.FC<AgentInputProps> = ({
                       setSelectedRepo(null);
                       setIsRepoDropdownOpen(false);
                     }}
-                    className="w-full text-left text-dark/70 hover:text-dark text-sm p-2 rounded-lg hover:bg-dark/5 transition-colors"
+                    className="w-full text-left text-dark/70 hover:text-dark text-sm p-2 rounded-lg hover:bg-dark/5 dark:hover:bg-white/5 transition-colors"
                   >
                     None
                   </button>
@@ -161,13 +160,13 @@ export const AgentInput: React.FC<AgentInputProps> = ({
                         setIsRepoDropdownOpen(false);
                       }}
                       className={`w-full text-left text-sm p-2 rounded-lg transition-colors ${selectedRepo?.id === repo.id
-                        ? "bg-dark/10 text-dark"
-                        : "text-dark/70 hover:text-dark hover:bg-dark/5"
+                        ? "bg-dark/10 dark:bg-white/10 text-dark dark:text-white"
+                        : "text-dark/70 hover:text-dark dark:text-white/70 dark:hover:text-white hover:bg-dark/5 dark:hover:bg-white/5"
                         }`}
                     >
                       <p className="font-medium truncate">{repo.full_name}</p>
                       {repo.description && (
-                        <p className="text-xs text-dark/50 truncate">
+                        <p className="text-xs text-dark/50 dark:text-white/50 truncate">
                           {repo.description}
                         </p>
                       )}
@@ -181,14 +180,17 @@ export const AgentInput: React.FC<AgentInputProps> = ({
         <Button
           onClick={handleSend}
           disabled={disabled || !message.trim()}
-          className="p-2 md:p-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 relative flex-shrink-0"
+          variant="primary"
+          className="p-3 md:p-4 aspect-square flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed relative flex-shrink-0"
         >
           {disabled ? (
             <div className="flex items-center justify-center">
-              <div className="loader-light" />
+              <div className="loader-light w-4 h-4" />
             </div>
           ) : (
-            <ArrowUpRight className="text-md md:text-md font-semibold text-white" />
+            <div>
+              <ArrowUpRightIcon size={20} className="text-white" />
+            </div>
           )}
         </Button>
       </div>

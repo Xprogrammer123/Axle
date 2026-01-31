@@ -48,7 +48,7 @@ export default function Home() {
         <Image src="/f.png" alt="Logo" width={60} height={60} className="hidden md:block dark:opacity-65 absolute bottom-30 left-40" />
         <Image src="/g.png" alt="Logo" width={60} height={60} className="hidden md:block dark:opacity-65 absolute top-30 right-10" />
         <div className="flex flex-col z-30 items-center">
-          {/* <motion.div
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
@@ -60,7 +60,7 @@ export default function Home() {
               <Image src="/tayo.png" alt="Logo" width={26} height={26} />
             </div>
             <p className="text-dark/50 dark:text-white/50 font-medium">Trusted by users worldwide.</p>
-          </motion.div> */}
+          </motion.div>
           <div className="flex items-center justify-center mt-8 flex-col max-w-4xl text-center gap-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -104,7 +104,7 @@ export default function Home() {
         </div>
       </motion.section>
 
-      <motion.section
+      {/* <motion.section
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
@@ -112,7 +112,7 @@ export default function Home() {
         className="bg-dark/2 flex flex-col justify-center items-center border-y-2 border-dark/3 dark:border-white/3 dark:bg-white/3 py-5 px-3 md:py-10 md:px-10 w-full"
       >
         <h3 className="text-lg font-semibold text-dark dark:text-white">Trusted by employees in:</h3>
-      </motion.section>
+      </motion.section> */}
 
       <motion.section
         initial={{ opacity: 0, y: 20 }}
