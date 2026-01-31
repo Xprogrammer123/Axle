@@ -15,42 +15,33 @@ export const OnboardingTrigger: React.FC = () => {
     useEffect(() => {
         if (!isMounted) return
 
-        // Check if user has already seen the tour
-        const hasSeenTour = localStorage.getItem('axle_onboarding_completed')
+        // OnboardingTrigger is only rendered by AppLayout if !user?.hasCompletedOnboarding
+        const timer = setTimeout(() => {
+            const firstElement = document.querySelector('#dashboard-magic-input')
 
-        if (!hasSeenTour) {
-            // Longer delay for mobile to ensure everything is loaded and rendered
-            // Also check if elements exist before starting
-            const timer = setTimeout(() => {
-                // Verify that key elements exist before starting tour
-                const firstElement = document.querySelector('#dashboard-magic-input')
-
-                if (firstElement) {
+            if (firstElement) {
+                try {
+                    startOnborda('main')
+                } catch (error) {
+                    console.error('Error starting onboarding:', error)
+                }
+            } else {
+                setTimeout(() => {
                     try {
                         startOnborda('main')
                     } catch (error) {
-                        console.error('Error starting onboarding:', error)
+                        console.error('Error starting onboarding (retry):', error)
                     }
-                } else {
-                    // Retry after a longer delay if elements not ready
-                    setTimeout(() => {
-                        try {
-                            startOnborda('main')
-                        } catch (error) {
-                            console.error('Error starting onboarding (retry):', error)
-                        }
-                    }, 2000)
-                }
-            }, 1500)
+                }, 2000)
+            }
+        }, 1500)
 
-            return () => clearTimeout(timer)
-        }
+        return () => clearTimeout(timer)
     }, [startOnborda, isMounted])
 
-    return null // This component doesn't render anything
+    return null
 }
 
-// Optional: Add a manual trigger button for testing or allowing users to replay
 export const ManualOnboardingTrigger: React.FC<{
     className?: string
     children?: React.ReactNode
@@ -59,8 +50,9 @@ export const ManualOnboardingTrigger: React.FC<{
 
     const handleStart = () => {
         if (window.innerWidth < 1024) {
-            localStorage.removeItem('axle_onboarding_completed')
-            window.location.reload() // Simplest way to re-trigger the state-based onboarding in AppLayout
+            // For mobile, we reload to trigger the state-based onboarding in AppLayout
+            // We should ideally have a way to reset the DB flag if we want manual re-trigger
+            window.location.reload()
             return
         }
         try {

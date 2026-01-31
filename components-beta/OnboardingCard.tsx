@@ -8,6 +8,7 @@ import { Button } from './Button'
 import { useUI } from '@/context/UIContext'
 import { useEffect } from 'react'
 import { steps } from '@/lib/onboarding/steps'
+import { api } from '@/lib/api'
 
 const OnboardingCard: React.FC<CardComponentProps> = ({
     step,
@@ -29,15 +30,24 @@ const OnboardingCard: React.FC<CardComponentProps> = ({
         }
     }, [step.selector, setSidebarOpen])
 
-    const handleClose = () => {
+    const handleClose = async () => {
         setSidebarOpen(false)
         closeOnborda()
+        try {
+            await api.updateProfile({ hasCompletedOnboarding: true })
+        } catch (e) {
+            console.error("Failed to update onboarding status:", e)
+        }
     }
 
-    const handleFinish = () => {
-        localStorage.setItem('axle_onboarding_completed', 'true')
+    const handleFinish = async () => {
         setSidebarOpen(false)
         closeOnborda()
+        try {
+            await api.updateProfile({ hasCompletedOnboarding: true })
+        } catch (e) {
+            console.error("Failed to update onboarding status:", e)
+        }
     }
 
     const onNext = () => {

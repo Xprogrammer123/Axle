@@ -14,6 +14,8 @@ import { api } from "@/lib/api";
 import Logo from "@/components-beta/Logo";
 import { Button } from "@/components-beta/Button";
 import Image from "next/image";
+import { StaggerContainer, StaggerItem } from "@/components/ui/animations";
+
 
 export default function OnboardingPage() {
     const router = useRouter();
@@ -151,22 +153,26 @@ export default function OnboardingPage() {
                                     </p>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4 w-full mt-8">
-                                    <div className="bg-white/50 dark:bg-white/5 p-4 rounded-2xl border border-dark/5 dark:border-white/5 backdrop-blur-sm">
-                                        <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center mb-3 mx-auto text-accent">
-                                            <ArrowRight weight="bold" size={20} />
+                                <StaggerContainer className="grid grid-cols-2 gap-4 w-full mt-8">
+                                    <StaggerItem>
+                                        <div className="bg-white/50 dark:bg-white/5 p-4 rounded-2xl border border-dark/5 dark:border-white/5 backdrop-blur-sm h-full">
+                                            <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center mb-3 mx-auto text-accent">
+                                                <ArrowRight weight="bold" size={20} />
+                                            </div>
+                                            <h3 className="font-semibold mb-1">Automate</h3>
+                                            <p className="text-xs text-dark/60 dark:text-white/60">Streamline repetitive tasks instantly</p>
                                         </div>
-                                        <h3 className="font-semibold mb-1">Automate</h3>
-                                        <p className="text-xs text-dark/60 dark:text-white/60">Streamline repetitive tasks instantly</p>
-                                    </div>
-                                    <div className="bg-white/50 dark:bg-white/5 p-4 rounded-2xl border border-dark/5 dark:border-white/5 backdrop-blur-sm">
-                                        <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center mb-3 mx-auto text-accent">
-                                            <Check weight="bold" size={20} />
+                                    </StaggerItem>
+                                    <StaggerItem>
+                                        <div className="bg-white/50 dark:bg-white/5 p-4 rounded-2xl border border-dark/5 dark:border-white/5 backdrop-blur-sm h-full">
+                                            <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center mb-3 mx-auto text-accent">
+                                                <Check weight="bold" size={20} />
+                                            </div>
+                                            <h3 className="font-semibold mb-1">Create</h3>
+                                            <p className="text-xs text-dark/60 dark:text-white/60">Build custom agents for any need</p>
                                         </div>
-                                        <h3 className="font-semibold mb-1">Create</h3>
-                                        <p className="text-xs text-dark/60 dark:text-white/60">Build custom agents for any need</p>
-                                    </div>
-                                </div>
+                                    </StaggerItem>
+                                </StaggerContainer>
 
                                 <Button
                                     onClick={handleNext}
@@ -271,7 +277,7 @@ export default function OnboardingPage() {
                                         disabled={loading}
                                         className="w-full items-center gap-1 flex justify-center py-3"
                                         loading={loading}
-                                    >   
+                                    >
                                         {loading ? (
                                             <span className="" />
                                         ) : (

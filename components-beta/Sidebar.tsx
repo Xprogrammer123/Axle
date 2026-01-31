@@ -43,10 +43,10 @@ const Sidebar = () => {
           name: profileData?.name || profileData?.email?.split("@")[0] || "User",
           email: profileData?.email || "",
           avatar: profileData?.avatar || profileData?.profileImageUrl || "/tayo.png",
-          plan: profileData?.plan || "Free",
-          tokensUsed: profileData?.tokensUsed ?? 500,
-          tokensTotal: profileData?.tokensTotal ?? 1000,
-          tokensPurchased: profileData?.tokensPurchased ?? 1000,
+          plan: profileData?.plan || "free",
+          tokensUsed: profileData?.credits ?? 0,
+          tokensTotal: profileData?.plan === "pro" ? 500 : 100, // Basic mapping, Modal will fetch precise limits
+          tokensPurchased: 0,
         });
       } catch (error) {
         console.error("Failed to fetch profile:", error);
@@ -55,10 +55,10 @@ const Sidebar = () => {
           name: "User",
           email: "",
           avatar: "/tayo.png",
-          plan: "Free",
-          tokensUsed: 500,
-          tokensTotal: 1000,
-          tokensPurchased: 1000,
+          plan: "free",
+          tokensUsed: 0,
+          tokensTotal: 100,
+          tokensPurchased: 0,
         });
       } finally {
         setLoading(false);

@@ -22,14 +22,33 @@ type AccountSettingsModalProps = {
   onClose: () => void;
 };
 
-const AccountSettingsModal = ({ profile, loading, onClose }: AccountSettingsModalProps) => {
+const AccountSettingsModal = ({ profile, loading: initialLoading, onClose }: AccountSettingsModalProps) => {
   const router = useRouter();
+  const [subscription, setSubscription] = React.useState<any>(null);
+  const [fetching, setFetching] = React.useState(true);
 
-  const tokensUsed = profile?.tokensUsed ?? 0;
-  const tokensTotal = profile?.tokensTotal ?? 1000;
-  const tokensPurchased = profile?.tokensPurchased ?? 1000;
-  const plan = profile?.plan || "Free";
-  const tokenPercentage = tokensTotal > 0 ? (tokensUsed / tokensTotal) * 100 : 0;
+  const loading = initialLoading || fetching;
+
+  React.useEffect(() => {
+    const fetchSubscription = async () => {
+      try {
+        setFetching(true);
+        const data = await api.getSubscription();
+        setSubscription(data?.subscription || data);
+      } catch (error) {
+        console.error("Failed to fetch subscription:", error);
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchSubscription();
+  }, []);
+
+  const credits = subscription?.credits ?? profile?.tokensUsed ?? 0;
+  const creditsLimit = subscription?.creditsLimit ?? profile?.tokensTotal ?? 1000;
+  const plan = subscription?.planName || profile?.plan || "Free";
+  const usedPercentage = creditsLimit > 0 ? ((creditsLimit - credits) / creditsLimit) * 100 : 0;
 
   const handleLogout = async () => {
     try {
@@ -73,12 +92,12 @@ const AccountSettingsModal = ({ profile, loading, onClose }: AccountSettingsModa
             transition={{ delay: 0.1 }}
           >
             <div className="flex justify-between items-center">
-              <p className="text-xs dark:text-white/60 text-dark/60 font-medium">Available Tokens</p>
+              <p className="text-xs dark:text-white/60 text-dark/60 font-medium">Credits Available</p>
               {loading ? (
                 <div className="w-16 h-3 bg-dark/10 dark:bg-white/10 rounded animate-pulse" />
               ) : (
                 <p className="text-xs text-accent font-bold">
-                  {tokensUsed}/{tokensTotal}
+                  {credits.toLocaleString()}/{creditsLimit.toLocaleString()}
                 </p>
               )}
             </div>
@@ -86,7 +105,7 @@ const AccountSettingsModal = ({ profile, loading, onClose }: AccountSettingsModa
               <motion.div
                 className="h-full bg-accent rounded-full"
                 initial={{ width: 0 }}
-                animate={{ width: loading ? "50%" : `${tokenPercentage}%` }}
+                animate={{ width: loading ? "50%" : `${100 - usedPercentage}%` }}
                 transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
               />
             </div>
@@ -94,7 +113,7 @@ const AccountSettingsModal = ({ profile, loading, onClose }: AccountSettingsModa
               {loading ? (
                 <div className="w-32 h-3 bg-dark/10 dark:bg-white/10 rounded animate-pulse" />
               ) : (
-                <>Plan: {plan} • Purchased: {tokensPurchased}</>
+                <>Plan: {plan} • {subscription?.nextBillingDate ? `Resets: ${new Date(subscription.nextBillingDate).toLocaleDateString()}` : "Free Plan"}</>
               )}
             </div>
           </motion.div>

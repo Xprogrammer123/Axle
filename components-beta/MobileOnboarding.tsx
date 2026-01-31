@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CaretRight, CaretLeft, Check } from '@phosphor-icons/react'
 import { Button } from './Button'
+import { api } from '@/lib/api'
 
 const slides = [
     {
@@ -61,9 +62,13 @@ const MobileOnboarding: React.FC<MobileOnboardingProps> = ({ onComplete }) => {
         }
     }
 
-    const handleComplete = () => {
-        localStorage.setItem('axle_onboarding_completed', 'true')
+    const handleComplete = async () => {
         onComplete()
+        try {
+            await api.updateProfile({ hasCompletedOnboarding: true })
+        } catch (e) {
+            console.error("Failed to update onboarding status:", e)
+        }
     }
 
     const variants = {

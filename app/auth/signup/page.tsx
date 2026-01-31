@@ -7,6 +7,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { StaggerContainer, StaggerItem, FadeIn } from "@/components/ui/animations";
+
 
 const Page = () => {
   const router = useRouter();
@@ -405,111 +407,105 @@ const Page = () => {
         </div>
       </div>
       <div className="flex bg-background items-center justify-center md:w-1/2 w-full dark:bg-[#0f0f0f] text-dark dark:text-white h-screen flex-col">
-        <div className="fade-in-up">
-          <Logo size={36} />
-        </div>
-        <h2 className="text-dark dark:text-white text-2xl font-semibold mt-8 text-center fade-in-up" style={{ animationDelay: '0.1s' }}>
-          Sign Up to continue to Axle
-        </h2>
-        <form onSubmit={onSubmit} className="flex flex-col gap-2.5 w-80 mt-5">
-          <div className="flex group hover:scale-[1.02] transition-all duration-300 focus-within:ring-2 ring-accent/20 bg-dark/3 dark:bg-white/2 dark:border-white/3 dark:border-1 rounded-full border-2 border-dark/3 p-3 w-full items-center gap-1.5 fade-in-up" style={{ animationDelay: '0.2s' }}>
-            <EnvelopeIcon className="text-accent text-lg" />
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-              className="text-dark dark:text-white outline-0 group bg-transparent w-full text-sm"
-              placeholder="Enter your email address here..."
-              required
-            />
-          </div>
-          <div className="flex group hover:scale-[1.02] transition-all duration-300 focus-within:ring-2 ring-accent/20 bg-dark/3 dark:bg-white/2 dark:border-white/3 dark:border-1 rounded-full border-2 border-dark/3 p-3 w-full items-center gap-1.5 fade-in-up" style={{ animationDelay: '0.3s' }}>
-            <LockIcon className="text-accent text-lg" />
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              className="text-dark dark:text-white outline-0 group bg-transparent w-full text-sm"
-              placeholder="Enter your password here..."
-              required
-            />
-          </div>
-          {error && <div className="text-sm dark:text-white text-red-600 mt-2 fade-in">{error}</div>}
-          <Button type="submit" loading={loading} className="mt-3 py-3 w-80 hover:scale-[1.02] transition-all duration-300 fade-in-up" style={{ animationDelay: '0.4s' }}>
-            Sign Up
-          </Button>
+        <StaggerContainer className="flex flex-col items-center">
+          <StaggerItem>
+            <Logo size={36} />
+          </StaggerItem>
+          <StaggerItem>
+            <h2 className="text-dark dark:text-white text-2xl font-semibold mt-8 text-center">
+              Sign Up to continue to Axle
+            </h2>
+          </StaggerItem>
 
-          <div className="flex items-center gap-3 w-full mt-4 fade-in-up" style={{ animationDelay: '0.45s' }}>
-            <div className="h-[1px] bg-dark/10 dark:bg-white/10 flex-1" />
-            <span className="text-xs font-medium text-dark/40 dark:text-white/40">OR</span>
-            <div className="h-[1px] bg-dark/10 dark:bg-white/10 flex-1" />
-          </div>
+          <form onSubmit={onSubmit} className="flex flex-col gap-2.5 w-80 mt-5">
+            <StaggerItem>
+              <div className="flex group hover:scale-[1.02] transition-all duration-300 focus-within:ring-2 ring-accent/20 bg-dark/3 dark:bg-white/2 dark:border-white/3 dark:border-1 rounded-full border-2 border-dark/3 p-3 w-full items-center gap-1.5">
+                <EnvelopeIcon className="text-accent text-lg" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                  className="text-dark dark:text-white outline-0 group bg-transparent w-full text-sm"
+                  placeholder="Enter your email address here..."
+                  required
+                />
+              </div>
+            </StaggerItem>
 
-          <Button
-            type="button"
-            onClick={async () => {
-              try {
-                setGoogleLoading(true);
-                await api.loginWithGoogle();
-              } catch (err) {
-                setError(err instanceof Error ? err.message : "Google login failed");
-              } finally {
-                setGoogleLoading(false);
-              }
-            }}
-            className="w-full bg-white dark:bg-white/5 border border-dark/10 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10 transition-all duration-200 rounded-full py-3 flex items-center justify-center gap-3 group fade-in-up"
-            style={{ animationDelay: '0.5s' }}
-            loading={googleLoading}
-          >
-            <Image
-              src="/google.svg"
-              alt="Google"
-              width={20}
-              height={20}
-              className="opacity-70 group-hover:opacity-100 transition-opacity"
-            />
-            <span className="text-sm font-medium text-dark/70 dark:text-white/80 group-hover:text-dark dark:group-hover:text-white">
-              Continue with Google
-            </span>
-          </Button>
-        </form>
-        <p className="text-dark/75 text-sm dark:text-white font-medium mt-5 fade-in-up" style={{ animationDelay: '0.5s' }}>
-          Already have an account? <Link className="font-semibold text-accent hover:underline transition-all" href="/auth/login">Login</Link>
-        </p>
+            <StaggerItem>
+              <div className="flex group hover:scale-[1.02] transition-all duration-300 focus-within:ring-2 ring-accent/20 bg-dark/3 dark:bg-white/2 dark:border-white/3 dark:border-1 rounded-full border-2 border-dark/3 p-3 w-full items-center gap-1.5">
+                <LockIcon className="text-accent text-lg" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  className="text-dark dark:text-white outline-0 group bg-transparent w-full text-sm"
+                  placeholder="Enter your password here..."
+                  required
+                />
+              </div>
+            </StaggerItem>
 
-        <style jsx>{`
-          @keyframes fadeInUp {
-            from {
-              opacity: 0;
-              transform: translateY(20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
+            {error && (
+              <StaggerItem>
+                <div className="text-sm dark:text-white text-red-600 mt-2">{error}</div>
+              </StaggerItem>
+            )}
 
-          @keyframes fadeIn {
-            from {
-              opacity: 0;
-            }
-            to {
-              opacity: 1;
-            }
-          }
+            <StaggerItem>
+              <Button type="submit" loading={loading} className="mt-3 py-3 w-80 hover:scale-[1.02] transition-all duration-300">
+                Sign Up
+              </Button>
+            </StaggerItem>
 
-          .fade-in-up {
-            animation: fadeInUp 0.6s ease-out forwards;
-            opacity: 0;
-          }
+            <StaggerItem>
+              <div className="flex items-center gap-3 w-full mt-4">
+                <div className="h-[1px] bg-dark/10 dark:bg-white/10 flex-1" />
+                <span className="text-xs font-medium text-dark/40 dark:text-white/40">OR</span>
+                <div className="h-[1px] bg-dark/10 dark:bg-white/10 flex-1" />
+              </div>
+            </StaggerItem>
 
-          .fade-in {
-            animation: fadeIn 0.4s ease-out forwards;
-            opacity: 0;
-          }
-        `}</style>
+            <StaggerItem>
+              <Button
+                type="button"
+                onClick={async () => {
+                  try {
+                    setGoogleLoading(true);
+                    await api.loginWithGoogle();
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Google login failed");
+                  } finally {
+                    setGoogleLoading(false);
+                  }
+                }}
+                className="w-full bg-white dark:bg-white/5 border border-dark/10 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10 transition-all duration-200 rounded-full py-3 flex items-center justify-center gap-3 group"
+                loading={googleLoading}
+              >
+                <Image
+                  src="/google.svg"
+                  alt="Google"
+                  width={20}
+                  height={20}
+                  className="opacity-70 group-hover:opacity-100 transition-opacity"
+                />
+                <span className="text-sm font-medium text-dark/70 dark:text-white/80 group-hover:text-dark dark:group-hover:text-white">
+                  Continue with Google
+                </span>
+              </Button>
+            </StaggerItem>
+          </form>
+
+          <StaggerItem>
+            <p className="text-dark/75 text-sm dark:text-white font-medium mt-5">
+              Already have an account? <Link className="font-semibold text-accent hover:underline transition-all" href="/auth/login">Login</Link>
+            </p>
+          </StaggerItem>
+        </StaggerContainer>
+
+
       </div>
     </div>
   );
