@@ -37,6 +37,13 @@ const ALL_PROVIDERS = [
     category: "Social",
     description: "Post updates and track mentions.",
   },
+  {
+  name: "Notion",
+  provider: "notion",
+  icon: "/notion2.svg",
+  category: "Productivity",
+  description: "Organize work, track updates, and stay on top of mentions effortlessly.",
+}
 ];
 
 type Integration = {
