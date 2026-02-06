@@ -50,6 +50,13 @@ const ALL_PROVIDERS = [
   icon: "/figma2.svg",
   category: "Design",
   description: "Stay in the loop on designs, track updates, and never miss a comment or mention."
+},
+ {
+  "name": "Linear",
+  "provider": "linear",
+  "icon": "/linear.svg",
+  "category": "Team",
+  "description": "Manage your projects, track issues, and keep your team aligned—all in one sleek workflow."
 }
 ];
 
