@@ -43,7 +43,7 @@ const ALL_PROVIDERS = [
   icon: "/notion2.svg",
   category: "Productivity",
   description: "Organize work, track updates, and stay on top of mentions effortlessly.",
-}
+},
  {
   name: "Figma",
   provider: "figma",
