@@ -44,6 +44,13 @@ const ALL_PROVIDERS = [
   category: "Productivity",
   description: "Organize work, track updates, and stay on top of mentions effortlessly.",
 }
+ {
+  name: "Figma",
+  provider: "figma",
+  icon: "/figma2.svg",
+  category: "Design",
+  description: "Stay in the loop on designs, track updates, and never miss a comment or mention."
+}
 ];
 
 type Integration = {
