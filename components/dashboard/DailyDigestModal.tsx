@@ -32,6 +32,20 @@ export function DailyDigestModal({ open, onClose, notifications }: DailyDigestMo
                 return <Image src="/beta/github.svg" alt="GitHub" width={20} height={20} />;
             case "google":
                 return <Image src="/google.svg" alt="Google" width={20} height={20} />;
+            case "figma":
+                return <Image src="/figma.svg" alt="Figma" width={20} height={20} />;
+            case "notion":
+                return <Image src="/notion.svg" alt="Notion" width={20} height={20} />;
+            case "slack":
+                return <Image src="/slack.svg" alt="Slack" width={20} height={20} />;
+            // For others like Linear, Discord etc we might not have icons yet, so we can use generic or specific if available
+            // Assuming we might have them or fall back
+            case "linear":
+                return <Lightning size={20} className="text-orange-500" />; // Fallback or use specific if added
+            case "discord":
+                return <ChatCircle size={20} className="text-indigo-500" />;
+            case "jira":
+                return <Lightning size={20} className="text-blue-500" />;
             default:
                 return <Lightning size={20} className="text-gray-500" />;
         }

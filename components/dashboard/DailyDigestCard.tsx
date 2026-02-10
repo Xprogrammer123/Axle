@@ -19,6 +19,18 @@ export function DailyDigestCard({ notifications }: DailyDigestCardProps) {
                 return <Image src="/beta/github.svg" alt="GitHub" width={18} height={18} />;
             case "google":
                 return <Image src="/google.svg" alt="Google" width={18} height={18} />;
+            case "figma":
+                return <Image src="/figma.svg" alt="Figma" width={18} height={18} />;
+            case "notion":
+                return <Image src="/notion.svg" alt="Notion" width={18} height={18} />;
+            case "slack":
+                return <Image src="/slack.svg" alt="Slack" width={18} height={18} />;
+            case "linear":
+                return <Lightning size={18} className="text-orange-500" />;
+            case "discord":
+                return <ChatCircle size={18} className="text-indigo-500" />;
+            case "jira":
+                return <Lightning size={18} className="text-blue-500" />;
             default:
                 return <Lightning size={18} className="text-gray-500" />;
         }

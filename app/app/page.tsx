@@ -37,6 +37,13 @@ const normalizeNotifications = (raw: unknown[]): any[] =>
     if (rawSource.includes("twitter") || rawSource.includes("x")) source = "twitter";
     else if (rawSource.includes("github")) source = "github";
     else if (rawSource.includes("google") || rawSource.includes("gmail") || rawSource.includes("calendar")) source = "google";
+    else if (rawSource.includes("figma")) source = "figma";
+    else if (rawSource.includes("notion")) source = "notion";
+    else if (rawSource.includes("slack")) source = "slack";
+    else if (rawSource.includes("linear")) source = "linear";
+    else if (rawSource.includes("discord")) source = "discord";
+    else if (rawSource.includes("jira")) source = "jira";
+    else source = rawSource || "system"; // Fallback to rawSource if available
 
     // Extract actions or generate defaults based on source
     const apiActions = (r.actionButtons as any[]) || [];
@@ -46,6 +53,12 @@ const normalizeNotifications = (raw: unknown[]): any[] =>
       if (source === 'twitter') suggestedActions = ['Reply', 'View Post'];
       else if (source === 'github') suggestedActions = ['Review', 'Open Repo'];
       else if (source === 'google') suggestedActions = ['View Details', 'Open App'];
+      else if (source === 'figma') suggestedActions = ['View File', 'Reply'];
+      else if (source === 'notion') suggestedActions = ['View Page', 'Comment'];
+      else if (source === 'slack') suggestedActions = ['Reply', 'Open Channel'];
+      else if (source === 'linear') suggestedActions = ['View Issue', 'Change Status'];
+      else if (source === 'discord') suggestedActions = ['Reply', 'View Channel'];
+      else if (source === 'jira') suggestedActions = ['View Ticket', 'Comment'];
       else suggestedActions = ['View', 'Dismiss'];
     }
 
