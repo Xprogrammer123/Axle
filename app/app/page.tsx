@@ -15,6 +15,8 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import Logo from "@/components-beta/Logo";
 import { StaggerContainer, StaggerItem, ScaleIn } from "@/components/ui/animations";
+import { DailyDigestModal } from "@/components/dashboard/DailyDigestModal";
+import { DailyDigestCard } from "@/components/dashboard/DailyDigestCard";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -24,6 +26,39 @@ const asRecord = (value: unknown): UnknownRecord => {
   if (value && typeof value === "object") return value as UnknownRecord;
   return {};
 };
+
+// Helper to normalize notifications from API to our component format
+const normalizeNotifications = (raw: unknown[]): any[] =>
+  (raw || []).map((n, idx) => {
+    const r = asRecord(n);
+    // Map API source to UI source
+    const rawSource = String(r.source ?? r.sourceApp ?? "").toLowerCase();
+    let source = "system";
+    if (rawSource.includes("twitter") || rawSource.includes("x")) source = "twitter";
+    else if (rawSource.includes("github")) source = "github";
+    else if (rawSource.includes("google") || rawSource.includes("gmail") || rawSource.includes("calendar")) source = "google";
+
+    // Extract actions or generate defaults based on source
+    const apiActions = (r.actionButtons as any[]) || [];
+    let suggestedActions = apiActions.map(a => a.label || a.text || "View");
+
+    if (suggestedActions.length === 0) {
+      if (source === 'twitter') suggestedActions = ['Reply', 'View Post'];
+      else if (source === 'github') suggestedActions = ['Review', 'Open Repo'];
+      else if (source === 'google') suggestedActions = ['View Details', 'Open App'];
+      else suggestedActions = ['View', 'Dismiss'];
+    }
+
+    return {
+      id: String(r.id ?? r._id ?? idx),
+      title: String(r.title ?? "Notification"),
+      description: String(r.snippet ?? r.description ?? r.message ?? ""),
+      timestamp: String(r.timestamp ?? r.createdAt ?? new Date().toISOString()),
+      source: source,
+      suggestedActions: suggestedActions.slice(0, 2), // Ensure max 2
+      metadata: r
+    };
+  });
 
 type Agent = {
   _id: string;
@@ -59,6 +94,10 @@ const Page = () => {
   const [agentDropdownOpen, setAgentDropdownOpen] = useState(false);
   const [sending, setSending] = useState(false);
 
+  // Daily Digest State
+  const [showDigestModal, setShowDigestModal] = useState(false);
+  const [todaysNotifications, setTodaysNotifications] = useState<any[]>([]);
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -90,6 +129,38 @@ const Page = () => {
         if (fetchedAgents.length && !selectedAgentId) {
           setSelectedAgentId(fetchedAgents[0]._id);
         }
+
+        // Daily Digest Logic: Fetch Notifications from API
+        const notificationRes = await api.syncNotifications().catch((e) => {
+          console.error('Failed to sync notifications:', e);
+          return { notifications: [] };
+        }) as any;
+        console.log('Daily Digest: fetched notifications', notificationRes);
+
+        const rawNotifications = notificationRes?.notifications || [];
+
+        // Debug
+        // console.log('Raw Notifications:', rawNotifications);
+
+        let processedNotifications = normalizeNotifications(rawNotifications);
+
+        // Sort by timestamp descending (most recent first)
+        processedNotifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+        setTodaysNotifications(processedNotifications);
+
+        // Show once per session (simulating "every new login")
+        const hasShownSession = sessionStorage.getItem('axle_session_digest_shown');
+        console.log('Daily Digest: hasShownSession?', hasShownSession);
+
+        if (!hasShownSession) {
+          console.log('Daily Digest: Showing modal now!');
+          setShowDigestModal(true);
+          sessionStorage.setItem('axle_session_digest_shown', 'true');
+        } else {
+          console.log('Daily Digest: Skipping modal (already shown this session)');
+        }
+
       } finally {
         setLoading(false);
       }
@@ -414,63 +485,16 @@ const Page = () => {
           </StaggerItem>
 
           <StaggerItem className="w-full lg:w-1/2">
-            <div id="dashboard-recent-conversations" className="bg-dark/3 dark:bg-white/1.5 flex flex-col overflow-hidden h-72 border-0 border-dark/3 dark:border-white/10 rounded-4xl p-3 shadow-lg shadow-dark/4 dark:shadow-black/10">
-              <div className="flex w-full justify-between items-center">
-                <h2 className="text-base md:text-lg font-semibold text-dark dark:text-dark-light px-3 truncate">
-                  Most recent conversations
-                </h2>
-                <Link href="/app/agents">
-                  <Button className="py-3 px-5 md:py-3 text-sm">See More</Button>
-                </Link>
-              </div>
-              <div className="flex flex-col mt-5 gap-2 w-full overflow-auto">
-                {recentThreads.length === 0 ? (
-                  <div className="text-dark/50 dark:text-dark-light/50 text-sm p-3">
-                    No conversations yet
-                  </div>
-                ) : (
-                  recentThreads.map((t) => (
-                    <button
-                      key={t._id}
-                      type="button"
-                      onClick={() => {
-                        const agentId = (t as any).agentId;
-                        if (agentId) {
-                          router.push(`/app/agents/${agentId}?threadId=${t._id}`);
-                        }
-                      }}
-                      className="bg-dark/3 dark:bg-white/2 border border-white/3 justify-between flex items-center rounded-2xl p-2.5 text-left"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="p-2 bg-accent text-white rounded-full">
-                          <ChatsCircleIcon
-                            size={16}
-                            className="md:w-[18px] md:h-[18px]"
-                          />
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <h3 className="text-dark/75 dark:text-dark-light/90 font-semibold truncate text-sm">
-                            {t.title || "Untitled conversation"}
-                          </h3>
-                          <p className="text-xs text-dark/40 dark:text-dark-light/40 truncate">
-                            {new Date(t.updatedAt || t.createdAt).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="primary"
-                        className="py-2.5 px-6 md:py-2.5 text-sm"
-                      >
-                        Open
-                      </Button>
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
+            <DailyDigestCard notifications={todaysNotifications} />
           </StaggerItem>
         </div>
       </StaggerContainer>
+
+      <DailyDigestModal
+        open={showDigestModal}
+        onClose={() => setShowDigestModal(false)}
+        notifications={todaysNotifications}
+      />
     </div>
   );
 };
