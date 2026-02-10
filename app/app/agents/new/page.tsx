@@ -219,7 +219,7 @@ function CreateAgentContent() {
                 open={showLimitModal}
                 onClose={() => setShowLimitModal(false)}
                 size="md"
-                className="bg-surface/70 dark:bg-white/5 border-2 border-border dark:border-white/5 shadow-lg shadow-dark/4"
+                className="bg-surface/70 dark:bg-white/5 border-2 border-border dark:border-white/5 shadow-lg shadow-dark/4 rounded-4xl"
             >
                 <Modal.Header onClose={() => setShowLimitModal(false)}>
                     Plan Limit Reached
