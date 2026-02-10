@@ -7,6 +7,7 @@ import { Button } from '@/components-beta/Button';
 import { Input, Textarea } from '@/components/ui/input';
 import { api } from '@/lib/api';
 import { Card } from '@/components/ui/card';
+import { Modal } from '@/components/ui/modal';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
@@ -34,6 +35,7 @@ function CreateAgentContent() {
     const [selectedWebhookEventId, setSelectedWebhookEventId] = useState<string>('github.push');
 
     const [loading, setLoading] = useState(false);
+    const [showLimitModal, setShowLimitModal] = useState(false);
 
     useEffect(() => {
         const loadTemplate = async () => {
@@ -154,9 +156,12 @@ function CreateAgentContent() {
             }
 
             router.push(`/app/agents/${agent._id}`);
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
             setLoading(false);
+            if (error.message && error.message.includes('Agent limit reached')) {
+                setShowLimitModal(true);
+            }
         }
     };
 
@@ -208,7 +213,42 @@ function CreateAgentContent() {
                     </Button>
                 </div>
             </Card>
-        </div>
+
+
+            <Modal
+                open={showLimitModal}
+                onClose={() => setShowLimitModal(false)}
+                size="md"
+                className="bg-surface/70 dark:bg-white/5 border-2 border-border dark:border-white/5 shadow-lg shadow-dark/4"
+            >
+                <Modal.Header onClose={() => setShowLimitModal(false)}>
+                    Plan Limit Reached
+                </Modal.Header>
+                <Modal.Body>
+                    <div className="flex flex-col gap-3">
+                        <p className="text-dark dark:text-white">
+                            You have reached the limit of 2 agents on the Free plan.
+                        </p>
+                        <p className="text-sm text-dark/60 dark:text-white/60">
+                            Upgrade to Pro to create unlimited agents, access faster models, and more.
+                        </p>
+                    </div>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button
+                        className="bg-dark/5 py-2.5 dark:bg-white/10 text-dark dark:text-white hover:bg-dark/10 dark:hover:bg-white/20"
+                        onClick={() => setShowLimitModal(false)}
+                    >
+                        Cancel
+                    </Button>
+                    <Link href="/app/billing">
+                        <Button className="bg-accent py-2.5 text-white hover:bg-accent/90">
+                            Upgrade Plan
+                        </Button>
+                    </Link>
+                </Modal.Footer>
+            </Modal>
+        </div >
     );
 }
 
