@@ -8,6 +8,7 @@ import { Input, Textarea } from '@/components/ui/input';
 import { api } from '@/lib/api';
 import { Card } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
+import { Dropdown } from '@/components/ui/dropdown';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
@@ -175,44 +176,181 @@ function CreateAgentContent() {
                 <p className="text-dark/40 dark:text-white/40 mt-1">Describe the role and responsibilities. The Agent handles the rest.</p>
             </div>
 
-            <Card className="py-3 bg-dark/0 dark:bg-white/0 border border-dark/0 dark:border-white/0 rounded-4xl space-y-6">
-                <Input
-                    label="Agent Name"
-                    placeholder="e.g. Research Assistant"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="bg-dark/3 dark:bg-white/1 text-sm rounded-full py-3 border-dark/5 dark:border-white/2"
-                />
+            {step === 1 && (
+                <Card className="py-3 bg-dark/0 dark:bg-white/0 border border-dark/0 dark:border-white/0 rounded-4xl space-y-6">
+                    <Input
+                        label="Agent Name"
+                        placeholder="e.g. Research Assistant"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        className="bg-dark/3 dark:bg-white/1 text-sm rounded-full py-3 border-dark/5 dark:border-white/2"
+                    />
 
-                <Input
-                    label="Short Description"
-                    placeholder="What does this agent do?"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="bg-dark/3 dark:bg-white/1 text-sm rounded-full py-3 border-dark/5 dark:border-white/2"
-                />
+                    <Input
+                        label="Short Description"
+                        placeholder="What does this agent do?"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className="bg-dark/3 dark:bg-white/1 text-sm rounded-full py-3 border-dark/5 dark:border-white/2"
+                    />
 
-                <Textarea
-                    label="Instructions"
-                    placeholder="You are a helpful assistant. Your goal is to..."
-                    helperText="Use natural language. No code or configuration needed."
-                    rows={8}
-                    value={formData.instructions}
-                    onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
-                    className="bg-dark/3 dark:bg-white/1 rounded-3xl outline-white/5 p-5 border-dark/5 dark:border-white/2 text-sm"
-                />
+                    <Textarea
+                        label="Instructions"
+                        placeholder="You are a helpful assistant. Your goal is to..."
+                        helperText="Use natural language. No code or configuration needed."
+                        rows={8}
+                        value={formData.instructions}
+                        onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+                        className="bg-dark/3 dark:bg-white/1 rounded-3xl outline-white/5 p-5 border-dark/5 dark:border-white/2 text-sm"
+                    />
 
-                <div className="flex justify-end gap-2">
-                    <Button
-                        onClick={() => handleSubmit()}
-                        disabled={!formData.name || !formData.instructions}
-                        className="py-3"
-                        loading={loading}
-                    >
-                        Create Agent
-                    </Button>
-                </div>
-            </Card>
+                    <div className="flex justify-end gap-2">
+                        <Button
+                            onClick={() => setStep(2)}
+                            disabled={!formData.name || !formData.instructions}
+                            className="py-3"
+                        >
+                            Continue
+                        </Button>
+                    </div>
+                </Card>
+            )}
+
+            {step === 2 && (
+                <>
+
+                    <Card className="py-6 px-6 bg-dark/0 dark:bg-white/0 border border-dark/0 dark:border-white/0 rounded-4xl space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-dark dark:text-white font-semibold text-lg">Run on Schedule</h3>
+                                <p className="text-dark/40 dark:text-white/40 text-sm">Automatically run this agent at specific times.</p>
+                            </div>
+                            <button
+                                onClick={() => setScheduleEnabled(!scheduleEnabled)}
+                                className={`w-14 h-8 rounded-full transition-colors relative ${scheduleEnabled ? 'bg-accent' : 'bg-dark/10 dark:bg-white/10'}`}
+                            >
+                                <div className={`w-6 h-6 bg-white rounded-full absolute top-1 transition-all ${scheduleEnabled ? 'left-7' : 'left-1'}`} />
+                            </button>
+                        </div>
+
+                        {scheduleEnabled && (
+                            <div className="bg-dark/3 dark:bg-white/5 p-5 rounded-3xl space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-dark/60 dark:text-white/60 text-xs font-semibold uppercase mb-1.5 block">Frequency</label>
+                                        <div className="flex bg-dark/5 dark:bg-white/5 p-1 rounded-xl">
+                                            <button
+                                                onClick={() => setScheduleFrequency('daily')}
+                                                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${scheduleFrequency === 'daily' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
+                                            >
+                                                Daily
+                                            </button>
+                                            <button
+                                                onClick={() => setScheduleFrequency('weekly')}
+                                                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${scheduleFrequency === 'weekly' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
+                                            >
+                                                Weekly
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {scheduleFrequency === 'weekly' && (
+                                        <div>
+                                            <Dropdown
+                                                label="Day"
+                                                value={scheduleDayOfWeek.toString()}
+                                                onChange={(val) => setScheduleDayOfWeek(Number(val))}
+                                                options={dayLabels.map(day => ({
+                                                    id: day.value.toString(),
+                                                    label: day.label,
+                                                    value: day.value.toString()
+                                                }))}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="text-dark/60 dark:text-white/60 text-xs font-semibold uppercase mb-1.5 block">Time</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max="12"
+                                            value={scheduleHour}
+                                            onChange={(e) => setScheduleHour(Number(e.target.value))}
+                                            className="w-full bg-dark/5 dark:bg-white/5 text-dark dark:text-white text-sm rounded-xl px-3 py-2.5 outline-none text-center font-medium"
+                                        />
+                                        <div className="flex bg-dark/5 dark:bg-white/5 p-1 rounded-xl w-32">
+                                            <button
+                                                onClick={() => setScheduleAmPm('AM')}
+                                                className={`flex-1 text-xs font-bold rounded-lg transition-all ${scheduleAmPm === 'AM' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
+                                            >
+                                                AM
+                                            </button>
+                                            <button
+                                                onClick={() => setScheduleAmPm('PM')}
+                                                className={`flex-1 text-xs font-bold rounded-lg transition-all ${scheduleAmPm === 'PM' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
+                                            >
+                                                PM
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </Card>
+
+                    <Card className="py-6 px-6 bg-dark/0 dark:bg-white/0 border border-dark/0 dark:border-white/0 rounded-4xl space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-dark dark:text-white font-semibold text-lg">Run on Webhook</h3>
+                                <p className="text-dark/40 dark:text-white/40 text-sm">Trigger this agent from external events.</p>
+                            </div>
+                            <button
+                                onClick={() => setWebhookEnabled(!webhookEnabled)}
+                                className={`w-14 h-8 rounded-full transition-colors relative ${webhookEnabled ? 'bg-accent' : 'bg-dark/10 dark:bg-white/10'}`}
+                            >
+                                <div className={`w-6 h-6 bg-white rounded-full absolute top-1 transition-all ${webhookEnabled ? 'left-7' : 'left-1'}`} />
+                            </button>
+                        </div>
+
+                        {webhookEnabled && (
+                            <div className="bg-dark/3 dark:bg-white/5 p-5 rounded-3xl space-y-4">
+                                <div>
+                                    <Dropdown
+                                        label="Event Source"
+                                        value={selectedWebhookEventId}
+                                        onChange={(val) => setSelectedWebhookEventId(val)}
+                                        options={webhookEvents.map(event => ({
+                                            id: event.id,
+                                            label: `${event.label} (${event.source})`,
+                                            value: event.id,
+                                            icon: event.icon
+                                        }))}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </Card>
+
+                    <div className="flex justify-end gap-2 mt-6">
+                        <Button
+                            onClick={() => setStep(1)}
+                            className="py-3 bg-transparent text-dark dark:text-white hover:bg-dark/5 dark:hover:bg-white/10"
+                        >
+                            Back
+                        </Button>
+                        <Button
+                            onClick={() => handleSubmit()}
+                            loading={loading}
+                            className="py-3"
+                        >
+                            Create Agent
+                        </Button>
+                    </div>
+                </>
+            )}
 
 
             <Modal
