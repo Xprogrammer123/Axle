@@ -1,5 +1,5 @@
 // API Configuration
-const API_ORIGIN = "https://axle-api-q8oa.onrender.com";
+const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000";
 const API_BASE_URL = `${API_ORIGIN.replace(/\/$/, "")}/api/v1`;
 
 // Token storage
@@ -57,6 +57,7 @@ class ApiClient {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
+        console.log("Fetch config:", config);
         const response = await fetch(`${this.baseURL}${endpoint}`, {
           ...config,
           signal: controller.signal,
@@ -399,9 +400,10 @@ class ApiClient {
   }
 
   async createCheckout(plan: string) {
+    console.log("createCheckout payload:", { products: [plan], plan });
     return this.request<{ url: string }>("/billing/checkout", {
       method: "POST",
-      body: JSON.stringify({ plan }),
+      body: JSON.stringify({ products: [plan] }),
     });
   }
 
