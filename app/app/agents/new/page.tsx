@@ -15,7 +15,7 @@ import { getScheduleLimit, getScheduleLimitLabel, canUseWebhooks, getAgentLimitL
 
 interface ScheduleConfig {
     id: string;
-    frequency: 'daily' | 'weekly';
+    frequency: 'hourly' | 'daily' | 'weekly';
     dayOfWeek: number;
     hour: number;
     amPm: 'AM' | 'PM';
@@ -143,6 +143,7 @@ function CreateAgentContent() {
     };
 
     const buildCron = (s: ScheduleConfig) => {
+        if (s.frequency === 'hourly') return '0 * * * *';
         const hour24 = to24Hour(s.hour, s.amPm);
         if (s.frequency === 'daily') return `0 ${hour24} * * *`;
         return `0 ${hour24} * * ${s.dayOfWeek}`;
@@ -332,9 +333,15 @@ function CreateAgentContent() {
                                         )}
 
                                         <div className="grid grid-cols-2 gap-4">
-                                            <div>
+                                            <div className={s.frequency === 'weekly' ? 'col-span-1' : 'col-span-2'}>
                                                 <label className="text-dark/60 dark:text-white/60 text-xs font-semibold uppercase mb-1.5 block">Frequency</label>
                                                 <div className="flex bg-dark/5 dark:bg-white/5 p-1 rounded-xl">
+                                                    <button
+                                                        onClick={() => updateSchedule(s.id, { frequency: 'hourly' })}
+                                                        className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${s.frequency === 'hourly' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
+                                                    >
+                                                        Hourly
+                                                    </button>
                                                     <button
                                                         onClick={() => updateSchedule(s.id, { frequency: 'daily' })}
                                                         className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${s.frequency === 'daily' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
@@ -366,33 +373,35 @@ function CreateAgentContent() {
                                             )}
                                         </div>
 
-                                        <div>
-                                            <label className="text-dark/60 dark:text-white/60 text-xs font-semibold uppercase mb-1.5 block">Time</label>
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    max="12"
-                                                    value={s.hour}
-                                                    onChange={(e) => updateSchedule(s.id, { hour: Number(e.target.value) })}
-                                                    className="w-full bg-dark/5 dark:bg-white/5 text-dark dark:text-white text-sm rounded-xl px-3 py-2.5 outline-none text-center font-medium"
-                                                />
-                                                <div className="flex bg-dark/5 dark:bg-white/5 p-1 rounded-xl w-32">
-                                                    <button
-                                                        onClick={() => updateSchedule(s.id, { amPm: 'AM' })}
-                                                        className={`flex-1 text-xs font-bold rounded-lg transition-all ${s.amPm === 'AM' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
-                                                    >
-                                                        AM
-                                                    </button>
-                                                    <button
-                                                        onClick={() => updateSchedule(s.id, { amPm: 'PM' })}
-                                                        className={`flex-1 text-xs font-bold rounded-lg transition-all ${s.amPm === 'PM' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
-                                                    >
-                                                        PM
-                                                    </button>
+                                        {s.frequency !== 'hourly' && (
+                                            <div>
+                                                <label className="text-dark/60 dark:text-white/60 text-xs font-semibold uppercase mb-1.5 block">Time</label>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        max="12"
+                                                        value={s.hour}
+                                                        onChange={(e) => updateSchedule(s.id, { hour: Number(e.target.value) })}
+                                                        className="w-full bg-dark/5 dark:bg-white/5 text-dark dark:text-white text-sm rounded-xl px-3 py-2.5 outline-none text-center font-medium"
+                                                    />
+                                                    <div className="flex bg-dark/5 dark:bg-white/5 p-1 rounded-xl w-32">
+                                                        <button
+                                                            onClick={() => updateSchedule(s.id, { amPm: 'AM' })}
+                                                            className={`flex-1 text-xs font-bold rounded-lg transition-all ${s.amPm === 'AM' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
+                                                        >
+                                                            AM
+                                                        </button>
+                                                        <button
+                                                            onClick={() => updateSchedule(s.id, { amPm: 'PM' })}
+                                                            className={`flex-1 text-xs font-bold rounded-lg transition-all ${s.amPm === 'PM' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
+                                                        >
+                                                            PM
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
                                 ))}
 

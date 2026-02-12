@@ -1,8 +1,3 @@
-/**
- * Plan-level feature limits for Axle.
- *
- * Plans: free → pro → premium → custom
- */
 
 const PLAN_TIERS = ['free', 'pro', 'premium', 'custom'] as const;
 type PlanTier = (typeof PLAN_TIERS)[number];
