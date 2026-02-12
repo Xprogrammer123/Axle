@@ -17,6 +17,7 @@ import Logo from "@/components-beta/Logo";
 import { StaggerContainer, StaggerItem, ScaleIn } from "@/components/ui/animations";
 import { DailyDigestModal } from "@/components/dashboard/DailyDigestModal";
 import { DailyDigestCard } from "@/components/dashboard/DailyDigestCard";
+import { UsageChart } from "@/components/dashboard/UsageChart";
 
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -429,6 +430,15 @@ const Page = () => {
             </div>
           </StaggerItem>
         </div>
+
+        {/* Usage Chart — full width row */}
+        <StaggerItem className="w-full mt-4">
+          <UsageChart
+            items={threads}
+            accountCreatedAt={asRecord(profile).createdAt as string}
+            agents={agents}
+          />
+        </StaggerItem>
 
         <div className="flex flex-col lg:flex-row gap-4 w-full mt-4">
           <StaggerItem className="w-full lg:w-1/2">
