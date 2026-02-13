@@ -599,6 +599,18 @@ class ApiClient {
       body: JSON.stringify(data),
     });
   }
+
+  // Generic methods
+  async get<T>(endpoint: string) {
+    return this.request<T>(endpoint);
+  }
+
+  async post<T>(endpoint: string, data: any) {
+    return this.request<T>(endpoint, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL);

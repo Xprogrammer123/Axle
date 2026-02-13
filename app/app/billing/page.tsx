@@ -3,11 +3,15 @@
 import { Button } from "@/components-beta/Button";
 import React, { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
-import { PlusIcon, Crown, Lock } from "@phosphor-icons/react";
+import { PlusIcon, Crown, Lock, Ticket } from "@phosphor-icons/react";
 import { getCreditLimit, getNextTierName } from "@/lib/planLimits";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 const page = () => {
+  const searchParams = useSearchParams();
+  const coupon = searchParams.get("coupon");
+
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState<any | null>(null);
   const [plans, setPlans] = useState<any[]>([]);
@@ -88,7 +92,10 @@ const page = () => {
           "Content-Type": "application/json",
           ...(token && { Authorization: `Bearer ${token}` }),
         },
-        body: JSON.stringify({ products: [planId] }),
+        body: JSON.stringify({
+          products: [planId],
+          ...(coupon && { discount_code: coupon })
+        }),
       });
 
       if (!res.ok) {
@@ -124,6 +131,19 @@ const page = () => {
   return (
     <div className="h-full pt-20 overflow-y-auto relative gap-7 flex flex-col w-full p-10 max-w-6xl mx-auto">
       <div className="bg-dark/15 dark:bg-white/7 w-2/3 mx-auto absolute -top-20 rounded-full blur-[100px] left-0 right-0 h-32"></div>
+
+      {coupon && (
+        <div className="bg-accent/10 border border-accent/20 rounded-2xl p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+          <div className="bg-accent text-white p-2 rounded-lg">
+            <Ticket weight="fill" className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="font-bold text-dark dark:text-white">Coupon Code Applied: <span className="font-mono text-accent">{coupon}</span></p>
+            <p className="text-xs text-dark/60 dark:text-white/60">Discount will be applied at checkout.</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex pb-6 border-b border-dark/10 dark:border-white/10 w-full flex-col gap-3">
         <div className="flex items-center gap-3">
           <p className="text-dark/35 dark:text-white/35 font-medium text-xs">CREDITS BALANCE</p>
