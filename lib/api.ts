@@ -104,7 +104,7 @@ class ApiClient {
           // If this is the last attempt, throw the error
           if (attempt === retries) {
             throw new Error(
-              "Unable to connect to server. Please make sure the backend API is running on http://localhost:7000 and try refreshing the page."
+              "Error !"
             );
           }
           // Wait before retrying (exponential backoff)
@@ -399,11 +399,14 @@ class ApiClient {
     return this.request<any>("/billing/subscription");
   }
 
-  async createCheckout(plan: string) {
-    console.log("createCheckout payload:", { products: [plan], plan });
+  async createCheckout(plan: string, discountCode?: string) {
+    console.log("createCheckout payload:", { plan, discountCode });
     return this.request<{ url: string }>("/billing/checkout", {
       method: "POST",
-      body: JSON.stringify({ products: [plan] }),
+      body: JSON.stringify({
+        plan,
+        ...(discountCode && { discountCode }),
+      }),
     });
   }
 
