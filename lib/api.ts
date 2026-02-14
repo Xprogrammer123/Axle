@@ -104,7 +104,7 @@ class ApiClient {
           // If this is the last attempt, throw the error
           if (attempt === retries) {
             throw new Error(
-              "Unable to connect to server. Please make sure the backend API is running on http://localhost:7000 and try refreshing the page."
+              "Error !"
             );
           }
           // Wait before retrying (exponential backoff)
