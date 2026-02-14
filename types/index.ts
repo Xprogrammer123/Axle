@@ -5,7 +5,7 @@ export interface User {
   _id: string;
   email: string;
   name?: string;
-  plan: 'free' | 'starter' | 'pro' | 'team' | 'business';
+  plan: 'free' | 'pro' | 'premium' | 'custom';
   credits: number;
   createdAt: string;
 }

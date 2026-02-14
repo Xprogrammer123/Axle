@@ -179,7 +179,7 @@ const page = () => {
   };
 
   return (
-    <div className="h-full pt-20 overflow-y-auto gap-7 flex flex-col w-full p-10 max-w-4xl mx-auto">
+    <div className="h-full pt-20 overflow-y-auto gap-7 flex flex-col w-full px-5 py-8 md:p-10 max-w-4xl mx-auto">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-0.5">
           <h3 className="text-dark dark:text-white font-semibold">Profile Picture</h3>
@@ -227,115 +227,121 @@ const page = () => {
           </div>
         </div>
       </div>
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-0.5">
-          <h3 className="text-dark dark:text-white font-semibold">Personal Information</h3>
-          <p className="text-dark/40 dark:text-white/40 text-sm font-medium">
-            Update your personal information
-          </p>
+      {/* Two-column layout: Personal Info + Change Password */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+        {/* Left: Personal Information */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-0.5">
+            <h3 className="text-dark dark:text-white font-semibold">Personal Information</h3>
+            <p className="text-dark/40 dark:text-white/40 text-sm font-medium">
+              Update your personal information
+            </p>
+          </div>
+          <form className="flex gap-3 flex-col" onSubmit={handleProfileSubmit}>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-dark/40 dark:text-white/40 font-semibold">
+                Name
+              </label>
+              <input
+                type="text"
+                className="bg-dark/3 dark:bg-white/2 border border-white/3 dark:text-white outline-0 rounded-xl text-sm p-2.5 text-dark w-full"
+                placeholder="Your Name..."
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-dark/40 dark:text-white/40 font-semibold">
+                Email
+              </label>
+              <input
+                type="email"
+                className="bg-dark/3 dark:bg-white/2 border border-white/3 dark:text-white outline-0 rounded-xl text-sm p-2.5 text-dark w-full"
+                placeholder="Your Email..."
+                value={email}
+                disabled
+              />
+            </div>
+            <Button
+              className="w-fit p-3 px-7 mt-3 bg-dark"
+              loading={saving}
+              disabled={loading || saving}
+            >
+              Save Changes
+            </Button>
+          </form>
         </div>
-        <form className="flex gap-3 flex-col" onSubmit={handleProfileSubmit}>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="" className="text-dark/40 dark:text-white/40 font-semibold">
-              Name
-            </label>
-            <input
-              type="text"
-              className="bg-dark/3 dark:bg-white/2 border border-white/3 dark:text-white outline-0 rounded-xl text-sm p-2.5 text-dark w-72"
-              placeholder="Your Name..."
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="" className="text-dark/40 dark:text-white/40 font-semibold">
-              Email
-            </label>
-            <input
-              type="email"
-              className="bg-dark/3 dark:bg-white/2 border border-white/3 dark:text-white outline-0 rounded-xl text-sm p-2.5 text-dark w-72"
-              placeholder="Your Email..."
-              value={email}
-              disabled
-            />
-          </div>
-          <Button
-            className="w-fit p-3 px-7 mt-3 bg-dark"
-            loading={saving}
-            disabled={loading || saving}
-          >
-            Save Changes
-          </Button>
-        </form>
-      </div>
-      <div className="w-full h-0.5 bg-dark rounded-full"></div>
 
-      <div className="flex flex-col gap-4">
-        <div className="flex justify-between items-center">
+        {/* Right: Change Password */}
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-0.5">
             <h3 className="text-dark dark:text-white font-semibold">Change Password</h3>
             <p className="text-dark/40 dark:text-white/40 text-sm font-medium">
               Update your password to keep your account secure
             </p>
           </div>
-          <Link
-            href="/auth/forgot-password"
-            className="text-dark/35 hover:text-dark transition-all duration-300 text-sm font-medium"
-          >
-            Forgot Password?
-          </Link>
+          <form className="flex gap-3 flex-col" onSubmit={handlePasswordSubmit}>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-dark/40 dark:text-white/40 font-semibold">
+                Current Password
+              </label>
+              <input
+                type="password"
+                className="bg-dark/3 dark:bg-white/2 dark:text-white outline-0 rounded-xl text-sm p-2.5 text-dark w-full"
+                placeholder="Current Password..."
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-dark/40 dark:text-white/40 font-semibold">
+                New Password
+              </label>
+              <input
+                type="password"
+                className="bg-dark/3 dark:bg-white/2 dark:text-white outline-0 rounded-xl text-sm p-2.5 text-dark w-full"
+                placeholder="New Password..."
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-dark/40 dark:text-white/40 font-semibold">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                className="bg-dark/3 dark:bg-white/2 dark:text-white outline-0 rounded-xl text-sm p-2.5 text-dark w-full"
+                placeholder="Confirm New Password..."
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+            <div className="flex items-center gap-3 mt-3">
+              <Button
+                className="w-fit p-3 px-7 bg-dark"
+                loading={passwordLoading}
+                disabled={passwordLoading}
+              >
+                Update Password
+              </Button>
+              <Link href="/auth/forgot-password">
+                <Button
+                  type="button"
+                  className="p-3 px-5 bg-transparent border border-dark/10 dark:border-white/10 text-dark/60 dark:text-white/50 hover:bg-dark/5 dark:hover:bg-white/5 text-sm"
+                >
+                  Forgot Password?
+                </Button>
+              </Link>
+            </div>
+          </form>
         </div>
-        <form className="flex gap-3 flex-col" onSubmit={handlePasswordSubmit}>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="" className="text-dark/40 dark:text-white/40 font-semibold">
-              Current Password
-            </label>
-            <input
-              type="password"
-              className="bg-dark/3 dark:bg-white/2 dark:text-white outline-0 rounded-xl text-sm p-2.5 text-dark w-72"
-              placeholder="Current Password..."
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="" className="text-dark/40 dark:text-white/40 font-semibold">
-              New Password
-            </label>
-            <input
-              type="password"
-              className="bg-dark/3 dark:bg-white/2 dark:text-white outline-0 rounded-xl text-sm p-2.5 text-dark w-72"
-              placeholder="New Password..."
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="" className="text-dark/40 dark:text-white/40 font-semibold">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              className="bg-dark/3 dark:bg-white/2 dark:text-white outline-0 rounded-xl text-sm p-2.5 text-dark w-72"
-              placeholder="Confirm New Password..."
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
-          <Button
-            className="w-fit p-3 px-7 mt-3 bg-dark"
-            loading={passwordLoading}
-            disabled={passwordLoading}
-          >
-            Update Password
-          </Button>
-        </form>
       </div>
 
-      <div className="w-72 h-0.5 bg-dark dark:bg-white/5 rounded-full"></div>
+      <div className="w-full h-px bg-dark/10 dark:bg-white/5 rounded-full"></div>
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-0.5">
@@ -344,14 +350,14 @@ const page = () => {
             Your account information
           </p>
         </div>
-        <div className="flex gap-3 w-72 items-center">
+        <div className="flex gap-3 w-full max-w-sm items-center">
           <div className="bg-dark/3 dark:bg-white/3 flex flex-col gap-1 w-full p-3.5 rounded-2xl">
             <p className="text-dark/40 dark:text-white/40 text-sm font-semibold">MEMBER SINCE</p>
             <p className="text-dark dark:text-white text-sm font-bold">{memberSince}</p>
           </div>
         </div>
       </div>
-      <div className="flex flex-col gap-4 rounded-3xl p-5 mt-6 bg-red-500/3 border border-red-500">
+      <div className="flex flex-col gap-4 rounded-3xl p-4 sm:p-5 mt-6 bg-red-500/3 border border-red-500">
         <div className="flex flex-col gap-0.5">
           <h3 className="text-dark dark:text-white font-semibold">Danger Zone</h3>
           <p className="text-dark/40 dark:text-white/40 text-sm font-medium">

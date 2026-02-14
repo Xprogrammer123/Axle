@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CaretLeft, Sparkle } from '@phosphor-icons/react';
+import { CaretLeft, Sparkle, Lock, Plus, Trash, Crown } from '@phosphor-icons/react';
 import { Button } from '@/components-beta/Button';
 import { Input, Textarea } from '@/components/ui/input';
 import { api } from '@/lib/api';
@@ -11,6 +11,23 @@ import { Modal } from '@/components/ui/modal';
 import { Dropdown } from '@/components/ui/dropdown';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { getScheduleLimit, getScheduleLimitLabel, canUseWebhooks, getAgentLimitLabel, getNextTierName } from '@/lib/planLimits';
+
+interface ScheduleConfig {
+    id: string;
+    frequency: 'hourly' | 'daily' | 'weekly';
+    dayOfWeek: number;
+    hour: number;
+    amPm: 'AM' | 'PM';
+}
+
+const defaultSchedule = (): ScheduleConfig => ({
+    id: crypto.randomUUID(),
+    frequency: 'daily',
+    dayOfWeek: 1,
+    hour: 9,
+    amPm: 'AM',
+});
 
 function CreateAgentContent() {
     const router = useRouter();
@@ -25,23 +42,49 @@ function CreateAgentContent() {
         instructions: ''
     });
 
-    const [scheduleEnabled, setScheduleEnabled] = useState(false);
-    const [scheduleFrequency, setScheduleFrequency] = useState<'daily' | 'weekly'>('daily');
-    const [scheduleDayOfWeek, setScheduleDayOfWeek] = useState<number>(1);
-    const [scheduleHour, setScheduleHour] = useState<number>(9);
-    const [scheduleAmPm, setScheduleAmPm] = useState<'AM' | 'PM'>('AM');
+    // ── Plan-gated state ──
+    const [userPlan, setUserPlan] = useState<string>('free');
+    const [planLoading, setPlanLoading] = useState(true);
 
+    // ── Schedules (array of configs) ──
+    const [scheduleEnabled, setScheduleEnabled] = useState(false);
+    const [schedules, setSchedules] = useState<ScheduleConfig[]>([defaultSchedule()]);
+
+    // ── Webhook ──
     const [webhookEnabled, setWebhookEnabled] = useState(false);
     const [webhookEvents, setWebhookEvents] = useState<any[]>([]);
     const [selectedWebhookEventId, setSelectedWebhookEventId] = useState<string>('github.push');
 
     const [loading, setLoading] = useState(false);
     const [showLimitModal, setShowLimitModal] = useState(false);
+    const [showWebhookUpgradeModal, setShowWebhookUpgradeModal] = useState(false);
+
+    // ── Derived plan limits ──
+    const scheduleLimit = useMemo(() => getScheduleLimit(userPlan), [userPlan]);
+    const scheduleLimitLabel = useMemo(() => getScheduleLimitLabel(userPlan), [userPlan]);
+    const webhooksAllowed = useMemo(() => canUseWebhooks(userPlan), [userPlan]);
+
+    // Fetch user plan
+    useEffect(() => {
+        const loadPlan = async () => {
+            try {
+                const subData = await api.getSubscription();
+                const sub = subData?.subscription || subData;
+                const plan = sub?.plan || sub?.planName || 'free';
+                setUserPlan(plan);
+            } catch (e) {
+                console.error('Failed to load subscription:', e);
+                setUserPlan('free');
+            } finally {
+                setPlanLoading(false);
+            }
+        };
+        loadPlan();
+    }, []);
 
     useEffect(() => {
         const loadTemplate = async () => {
             try {
-                // Check for direct query params first (from Templates page)
                 const paramName = searchParams.get('name');
                 const paramDesc = searchParams.get('description');
                 const paramInstr = searchParams.get('instructions');
@@ -99,10 +142,11 @@ function CreateAgentContent() {
         return h === 12 ? 12 : h + 12;
     };
 
-    const buildCron = () => {
-        const hour24 = to24Hour(scheduleHour, scheduleAmPm);
-        if (scheduleFrequency === 'daily') return `0 ${hour24} * * *`;
-        return `0 ${hour24} * * ${scheduleDayOfWeek}`;
+    const buildCron = (s: ScheduleConfig) => {
+        if (s.frequency === 'hourly') return '0 * * * *';
+        const hour24 = to24Hour(s.hour, s.amPm);
+        if (s.frequency === 'daily') return `0 ${hour24} * * *`;
+        return `0 ${hour24} * * ${s.dayOfWeek}`;
     };
 
     const dayLabels: { value: number; label: string }[] = [
@@ -114,6 +158,19 @@ function CreateAgentContent() {
         { value: 5, label: 'Fri' },
         { value: 6, label: 'Sat' },
     ];
+
+    const addSchedule = () => {
+        if (schedules.length >= scheduleLimit) return;
+        setSchedules(prev => [...prev, defaultSchedule()]);
+    };
+
+    const removeSchedule = (id: string) => {
+        setSchedules(prev => prev.filter(s => s.id !== id));
+    };
+
+    const updateSchedule = (id: string, patch: Partial<ScheduleConfig>) => {
+        setSchedules(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s));
+    };
 
     const handleSubmit = async () => {
         if (!formData.name || !formData.instructions) return;
@@ -127,19 +184,24 @@ function CreateAgentContent() {
             });
 
             const triggerCreates: Promise<any>[] = [];
-            const selectedCron = buildCron();
-            if (scheduleEnabled && selectedCron) {
-                triggerCreates.push(
-                    api.createTrigger({
-                        agentId: agent._id,
-                        type: 'schedule',
-                        cronExpression: selectedCron,
-                        enabled: true
-                    })
-                );
+
+            if (scheduleEnabled) {
+                for (const s of schedules) {
+                    const cron = buildCron(s);
+                    if (cron) {
+                        triggerCreates.push(
+                            api.createTrigger({
+                                agentId: agent._id,
+                                type: 'schedule',
+                                cronExpression: cron,
+                                enabled: true
+                            })
+                        );
+                    }
+                }
             }
 
-            if (webhookEnabled) {
+            if (webhookEnabled && webhooksAllowed) {
                 const selected = webhookEvents.find((e: any) => e.id === selectedWebhookEventId);
                 const source = selected?.source || selected?.id;
                 triggerCreates.push(
@@ -164,6 +226,14 @@ function CreateAgentContent() {
                 setShowLimitModal(true);
             }
         }
+    };
+
+    const handleWebhookToggle = () => {
+        if (!webhooksAllowed) {
+            setShowWebhookUpgradeModal(true);
+            return;
+        }
+        setWebhookEnabled(!webhookEnabled);
     };
 
     return (
@@ -218,7 +288,7 @@ function CreateAgentContent() {
 
             {step === 2 && (
                 <>
-
+                    {/* ═══════════ SCHEDULE TRIGGER ═══════════ */}
                     <Card className="py-6 px-6 bg-dark/0 dark:bg-white/0 border border-dark/0 dark:border-white/0 rounded-4xl space-y-6">
                         <div className="flex items-center justify-between">
                             <div>
@@ -234,88 +304,183 @@ function CreateAgentContent() {
                         </div>
 
                         {scheduleEnabled && (
-                            <div className="bg-dark/3 dark:bg-white/5 p-5 rounded-3xl space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-dark/60 dark:text-white/60 text-xs font-semibold uppercase mb-1.5 block">Frequency</label>
-                                        <div className="flex bg-dark/5 dark:bg-white/5 p-1 rounded-xl">
-                                            <button
-                                                onClick={() => setScheduleFrequency('daily')}
-                                                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${scheduleFrequency === 'daily' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
-                                            >
-                                                Daily
-                                            </button>
-                                            <button
-                                                onClick={() => setScheduleFrequency('weekly')}
-                                                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${scheduleFrequency === 'weekly' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
-                                            >
-                                                Weekly
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {scheduleFrequency === 'weekly' && (
-                                        <div>
-                                            <Dropdown
-                                                label="Day"
-                                                value={scheduleDayOfWeek.toString()}
-                                                onChange={(val) => setScheduleDayOfWeek(Number(val))}
-                                                options={dayLabels.map(day => ({
-                                                    id: day.value.toString(),
-                                                    label: day.label,
-                                                    value: day.value.toString()
-                                                }))}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <label className="text-dark/60 dark:text-white/60 text-xs font-semibold uppercase mb-1.5 block">Time</label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            max="12"
-                                            value={scheduleHour}
-                                            onChange={(e) => setScheduleHour(Number(e.target.value))}
-                                            className="w-full bg-dark/5 dark:bg-white/5 text-dark dark:text-white text-sm rounded-xl px-3 py-2.5 outline-none text-center font-medium"
-                                        />
-                                        <div className="flex bg-dark/5 dark:bg-white/5 p-1 rounded-xl w-32">
-                                            <button
-                                                onClick={() => setScheduleAmPm('AM')}
-                                                className={`flex-1 text-xs font-bold rounded-lg transition-all ${scheduleAmPm === 'AM' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
-                                            >
-                                                AM
-                                            </button>
-                                            <button
-                                                onClick={() => setScheduleAmPm('PM')}
-                                                className={`flex-1 text-xs font-bold rounded-lg transition-all ${scheduleAmPm === 'PM' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
-                                            >
-                                                PM
-                                            </button>
-                                        </div>
+                            <div className="space-y-4">
+                                {/* Plan limit badge */}
+                                <div className="flex items-center gap-2">
+                                    <div className="bg-accent/10 text-accent text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                                        <Crown weight="fill" size={14} />
+                                        {scheduleLimitLabel}
                                     </div>
                                 </div>
+
+                                {schedules.map((s, idx) => (
+                                    <div key={s.id} className="bg-dark/3 dark:bg-white/5 p-5 rounded-3xl space-y-4 relative">
+                                        {/* Remove button (only if more than 1) */}
+                                        {schedules.length > 1 && (
+                                            <button
+                                                onClick={() => removeSchedule(s.id)}
+                                                className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-red-500/10 text-dark/30 dark:text-white/30 hover:text-red-500 transition-all"
+                                                title="Remove schedule"
+                                            >
+                                                <Trash size={16} />
+                                            </button>
+                                        )}
+
+                                        {schedules.length > 1 && (
+                                            <div className="text-dark/40 dark:text-white/40 text-xs font-semibold uppercase">
+                                                Schedule {idx + 1}
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className={s.frequency === 'weekly' ? 'col-span-1' : 'col-span-2'}>
+                                                <label className="text-dark/60 dark:text-white/60 text-xs font-semibold uppercase mb-1.5 block">Frequency</label>
+                                                <div className="flex bg-dark/5 dark:bg-white/5 p-1 rounded-xl">
+                                                    <button
+                                                        onClick={() => updateSchedule(s.id, { frequency: 'hourly' })}
+                                                        className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${s.frequency === 'hourly' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
+                                                    >
+                                                        Hourly
+                                                    </button>
+                                                    <button
+                                                        onClick={() => updateSchedule(s.id, { frequency: 'daily' })}
+                                                        className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${s.frequency === 'daily' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
+                                                    >
+                                                        Daily
+                                                    </button>
+                                                    <button
+                                                        onClick={() => updateSchedule(s.id, { frequency: 'weekly' })}
+                                                        className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${s.frequency === 'weekly' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
+                                                    >
+                                                        Weekly
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {s.frequency === 'weekly' && (
+                                                <div>
+                                                    <Dropdown
+                                                        label="Day"
+                                                        value={s.dayOfWeek.toString()}
+                                                        onChange={(val) => updateSchedule(s.id, { dayOfWeek: Number(val) })}
+                                                        options={dayLabels.map(day => ({
+                                                            id: day.value.toString(),
+                                                            label: day.label,
+                                                            value: day.value.toString()
+                                                        }))}
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {s.frequency !== 'hourly' && (
+                                            <div>
+                                                <label className="text-dark/60 dark:text-white/60 text-xs font-semibold uppercase mb-1.5 block">Time</label>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        max="12"
+                                                        value={s.hour}
+                                                        onChange={(e) => updateSchedule(s.id, { hour: Number(e.target.value) })}
+                                                        className="w-full bg-dark/5 dark:bg-white/5 text-dark dark:text-white text-sm rounded-xl px-3 py-2.5 outline-none text-center font-medium"
+                                                    />
+                                                    <div className="flex bg-dark/5 dark:bg-white/5 p-1 rounded-xl w-32">
+                                                        <button
+                                                            onClick={() => updateSchedule(s.id, { amPm: 'AM' })}
+                                                            className={`flex-1 text-xs font-bold rounded-lg transition-all ${s.amPm === 'AM' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
+                                                        >
+                                                            AM
+                                                        </button>
+                                                        <button
+                                                            onClick={() => updateSchedule(s.id, { amPm: 'PM' })}
+                                                            className={`flex-1 text-xs font-bold rounded-lg transition-all ${s.amPm === 'PM' ? 'bg-white dark:bg-white/10 text-dark dark:text-white shadow-sm' : 'text-dark/40 dark:text-white/40'}`}
+                                                        >
+                                                            PM
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+
+                                {/* Add another schedule button */}
+                                {schedules.length < scheduleLimit ? (
+                                    <button
+                                        onClick={addSchedule}
+                                        className="w-full border-2 border-dashed flex gap-2 items-center justify-center border-dark/10 dark:border-white/10 rounded-2xl p-3.5 text-dark/50 dark:text-white/40 font-semibold text-sm hover:border-accent hover:text-accent transition-all"
+                                    >
+                                        <Plus size={16} weight="bold" /> Add Another Schedule
+                                    </button>
+                                ) : scheduleLimit !== Infinity && schedules.length >= scheduleLimit ? (
+                                    <div className="flex items-center gap-2 bg-dark/3 dark:bg-white/5 rounded-2xl p-3.5">
+                                        <Crown weight="fill" size={16} className="text-amber-500" />
+                                        <p className="text-dark/50 dark:text-white/40 text-sm font-medium">
+                                            Maximum {scheduleLimit} schedule{scheduleLimit > 1 ? 's' : ''} on your plan.{' '}
+                                            <Link href="/app/billing" className="text-accent hover:underline font-semibold">Upgrade →</Link>
+                                        </p>
+                                    </div>
+                                ) : null}
                             </div>
                         )}
                     </Card>
 
-                    <Card className="py-6 px-6 bg-dark/0 dark:bg-white/0 border border-dark/0 dark:border-white/0 rounded-4xl space-y-6">
+                    {/* ═══════════ WEBHOOK TRIGGER ═══════════ */}
+                    <Card className="py-6 px-6 mt-4 bg-dark/0 dark:bg-white/0 border border-dark/0 dark:border-white/0 rounded-4xl space-y-6">
                         <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="text-dark dark:text-white font-semibold text-lg">Run on Webhook</h3>
-                                <p className="text-dark/40 dark:text-white/40 text-sm">Trigger this agent from external events.</p>
+                            <div className="flex items-center gap-3">
+                                <div>
+                                    <h3 className="text-dark dark:text-white font-semibold text-lg flex items-center gap-2">
+                                        Run on Webhook
+                                        {!webhooksAllowed && (
+                                            <span className="bg-dark/5 dark:bg-white/5 text-dark/40 dark:text-white/40 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                                                <Lock size={10} weight="bold" /> PRO
+                                            </span>
+                                        )}
+                                    </h3>
+                                    <p className="text-dark/40 dark:text-white/40 text-sm">Trigger this agent from external events.</p>
+                                </div>
                             </div>
                             <button
-                                onClick={() => setWebhookEnabled(!webhookEnabled)}
-                                className={`w-14 h-8 rounded-full transition-colors relative ${webhookEnabled ? 'bg-accent' : 'bg-dark/10 dark:bg-white/10'}`}
+                                onClick={handleWebhookToggle}
+                                className={`w-14 h-8 rounded-full transition-colors relative ${!webhooksAllowed
+                                    ? 'bg-dark/5 dark:bg-white/5 cursor-not-allowed'
+                                    : webhookEnabled
+                                        ? 'bg-accent'
+                                        : 'bg-dark/10 dark:bg-white/10'
+                                    }`}
                             >
-                                <div className={`w-6 h-6 bg-white rounded-full absolute top-1 transition-all ${webhookEnabled ? 'left-7' : 'left-1'}`} />
+                                <div className={`w-6 h-6 rounded-full absolute top-1 transition-all ${!webhooksAllowed
+                                    ? 'bg-dark/20 dark:bg-white/20 left-1'
+                                    : webhookEnabled
+                                        ? 'bg-white left-7'
+                                        : 'bg-white left-1'
+                                    }`} />
                             </button>
                         </div>
 
-                        {webhookEnabled && (
+                        {/* Upgrade prompt for free users */}
+                        {!webhooksAllowed && (
+                            <div className="bg-gradient-to-r from-accent/5 to-accent/10 dark:from-accent/10 dark:to-accent/5 border border-accent/20 rounded-2xl p-4 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-accent/10 p-2 rounded-xl">
+                                        <Lock size={18} className="text-accent" weight="fill" />
+                                    </div>
+                                    <div>
+                                        <p className="text-dark dark:text-white text-sm font-semibold">Webhooks are a Pro feature</p>
+                                        <p className="text-dark/50 dark:text-white/50 text-xs">Upgrade to Pro to trigger agents from external events like GitHub pushes, X posts, and more.</p>
+                                    </div>
+                                </div>
+                                <Link href="/app/billing">
+                                    <Button className="bg-accent text-white text-sm py-2 px-5 whitespace-nowrap">
+                                        Upgrade
+                                    </Button>
+                                </Link>
+                            </div>
+                        )}
+
+                        {webhookEnabled && webhooksAllowed && (
                             <div className="bg-dark/3 dark:bg-white/5 p-5 rounded-3xl space-y-4">
                                 <div>
                                     <Dropdown
@@ -365,10 +530,10 @@ function CreateAgentContent() {
                 <Modal.Body>
                     <div className="flex flex-col gap-3">
                         <p className="text-dark dark:text-white">
-                            You have reached the limit of 2 agents on the Free plan.
+                            You have reached the limit of {getAgentLimitLabel(userPlan)}.
                         </p>
                         <p className="text-sm text-dark/60 dark:text-white/60">
-                            Upgrade to Pro to create unlimited agents, access faster models, and more.
+                            Upgrade to {getNextTierName(userPlan)} to create more agents, access faster models, and more.
                         </p>
                     </div>
                 </Modal.Body>
@@ -376,6 +541,41 @@ function CreateAgentContent() {
                     <Button
                         className="bg-dark/5 py-2.5 dark:bg-white/10 text-dark dark:text-white hover:bg-dark/10 dark:hover:bg-white/20"
                         onClick={() => setShowLimitModal(false)}
+                    >
+                        Cancel
+                    </Button>
+                    <Link href="/app/billing">
+                        <Button className="bg-accent py-2.5 text-white hover:bg-accent/90">
+                            Upgrade Plan
+                        </Button>
+                    </Link>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Webhook upgrade modal */}
+            <Modal
+                open={showWebhookUpgradeModal}
+                onClose={() => setShowWebhookUpgradeModal(false)}
+                size="md"
+                className="bg-surface/70 dark:bg-white/5 border-2 border-border dark:border-white/5 shadow-lg shadow-dark/4 rounded-4xl"
+            >
+                <Modal.Header onClose={() => setShowWebhookUpgradeModal(false)}>
+                    Upgrade to Use Webhooks
+                </Modal.Header>
+                <Modal.Body>
+                    <div className="flex flex-col gap-3">
+                        <p className="text-dark dark:text-white">
+                            Webhook triggers are available on Pro, Premium, and Custom plans.
+                        </p>
+                        <p className="text-sm text-dark/60 dark:text-white/60">
+                            Upgrade your plan to trigger agents from external events like GitHub pushes, Stripe payments, and more.
+                        </p>
+                    </div>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button
+                        className="bg-dark/5 py-2.5 dark:bg-white/10 text-dark dark:text-white hover:bg-dark/10 dark:hover:bg-white/20"
+                        onClick={() => setShowWebhookUpgradeModal(false)}
                     >
                         Cancel
                     </Button>

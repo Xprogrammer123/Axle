@@ -55,7 +55,7 @@ export function DailyDigestModal({ open, onClose, notifications }: DailyDigestMo
         <Modal open={open} onClose={onClose} size="lg" className="bg-surface/90 dark:bg-[#1a1a1a]/95 backdrop-blur-md border border-border dark:border-white/10 shadow-2xl rounded-3xl">
             <Modal.Header onClose={onClose}>
                 <div className="flex items-center justify-between w-full pr-8">
-                    <span className="text-xl font-bold bg-gradient-to-r from-accent to-purple-400 bg-clip-text text-transparent">Daily Digest</span>
+                    <span className="text-xl font-bold text-white">Daily Digest</span>
                 </div>
             </Modal.Header>
             <Modal.Body className="max-h-[60vh] overflow-y-auto custom-scrollbar">
