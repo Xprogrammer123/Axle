@@ -84,27 +84,7 @@ const page = () => {
     console.log("handleUpgrade called with planId:", planId);
     setCheckingOut(true);
     try {
-      // Direct fetch to debug ApiClient issues
-      const token = localStorage.getItem("axle_access_token");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7000'}/billing/checkout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify({
-          products: [planId],
-          ...(coupon && { discount_code: coupon })
-        }),
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("Direct fetch failed:", res.status, text);
-        throw new Error(`Checkout failed: ${res.status} ${text}`);
-      }
-
-      const { url } = await res.json();
+      const { url } = await api.createCheckout(planId, coupon || undefined);
       window.location.href = url;
     } catch (e) {
       console.error(e);

@@ -399,11 +399,14 @@ class ApiClient {
     return this.request<any>("/billing/subscription");
   }
 
-  async createCheckout(plan: string) {
-    console.log("createCheckout payload:", { products: [plan], plan });
+  async createCheckout(plan: string, discountCode?: string) {
+    console.log("createCheckout payload:", { plan, discountCode });
     return this.request<{ url: string }>("/billing/checkout", {
       method: "POST",
-      body: JSON.stringify({ products: [plan] }),
+      body: JSON.stringify({
+        plan,
+        ...(discountCode && { discountCode }),
+      }),
     });
   }
 
