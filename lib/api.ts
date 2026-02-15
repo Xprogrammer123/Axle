@@ -1,5 +1,5 @@
 // API Configuration
-const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000";
+const API_ORIGIN = process.env.NEXT_PUBLIC_API_URL ;
 const API_BASE_URL = `${API_ORIGIN.replace(/\/$/, "")}/api/v1`;
 
 // Token storage
