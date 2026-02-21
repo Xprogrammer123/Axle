@@ -242,60 +242,10 @@ const Page = () => {
   return (
     <div className="w-screen md:w-full h-full overflow-y-auto p-4 md:p-7 md:pt-24 pt-24">
       <StaggerContainer>
-        <div className="flex flex-col lg:flex-row gap-4 w-full">
-          <StaggerItem className="w-full lg:w-1/2 xl:w-[43%]">
-            <div id="dashboard-agents-card" className="bg-dark/3 dark:bg-white/1.5 w-full h-72 overflow-hidden border-0 border-dark/3 dark:border-white/2 rounded-4xl p-3 shadow-lg shadow-dark/4 dark:shadow-black/1">
-              <div className="flex w-full justify-between items-center">
-                <div className="p-2.5 bg-accent dark:bg-accent-dark text-white rounded-full">
-                  <CubeIcon size={24} />
-                </div>
-                <Link href="/app/agents">
-                  <Button variant="primary" className="py-2.5 px-6 md:py-2.5">
-                    See All
-                  </Button>
-                </Link>
-              </div>
-
-              <div className="flex flex-col overflow-auto h-[80%] mt-7 pb-3 gap-1.5">
-                {agents.length === 0 ? (
-                  <div className="text-dark/50 flex flex-col justify-center mt-4 items-center gap-5 text-sm p-3">
-                    <p className="text-dark/50 text-center dark:text-white/50">You have no agents yet, create an agent.</p>
-                    <Link href="/app/agents/new"><Button className="mx-auto py-3">Create an agent</Button></Link>
-                  </div>
-                ) : (
-                  agents.slice(0, 6).map((agent) => (
-                    <div
-                      key={agent._id}
-                      className="bg-dark/3 dark:bg-white/5 justify-between flex items-center rounded-2xl p-2.5"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="p-2 bg-surface/60 dark:bg-surface-dark/60 rounded-full">
-                          <OpenAiLogoIcon className="size-7" />
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <h3 className="text-dark/75 dark:text-dark-light/90 font-semibold truncate">
-                            {agent.name}
-                          </h3>
-                          <p className="text-sm text-dark/50 dark:text-dark-light/50 font-medium truncate">
-                            {agent.description || agent.instructions || ""}
-                          </p>
-                        </div>
-                      </div>
-                      <Link href={`/app/agents/${agent._id}`}>
-                        <Button
-                          variant="primary"
-                          className="py-2.5 px-6 md:py-2.5 text-sm"
-                        >
-                          View
-                        </Button>
-                      </Link>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </StaggerItem>
-
+        {/* Row 1: Chat input (first in DOM = first on mobile) | Agent List
+            lg:flex-row-reverse makes Agent List appear LEFT on desktop (original layout) */}
+        <div className="flex flex-col lg:flex-row-reverse gap-4 w-full">
+          {/* Agent Chat — DOM position 1 → first on mobile ✅ */}
           <StaggerItem className="w-full lg:w-1/2 xl:w-[57%]">
             <div className="bg-dark/3 dark:bg-white/1.5 w-full justify-between flex flex-col overflow-hidden h-72 border-0 border-dark/3 dark:border-white/2 rounded-4xl p-3 shadow-lg shadow-dark/4 dark:shadow-black/10">
               <div className="flex flex-col py-6 md:py-5 justify-center w-full items-center gap-0.5">
@@ -429,6 +379,60 @@ const Page = () => {
               </ScaleIn>
             </div>
           </StaggerItem>
+
+          {/* Agent List — DOM position 2 → second on mobile ✅ */}
+          <StaggerItem className="w-full lg:w-1/2 xl:w-[43%]">
+            <div id="dashboard-agents-card" className="bg-dark/3 dark:bg-white/1.5 w-full h-72 overflow-hidden border-0 border-dark/3 dark:border-white/2 rounded-4xl p-3 shadow-lg shadow-dark/4 dark:shadow-black/1">
+              <div className="flex w-full justify-between items-center">
+                <div className="p-2.5 bg-accent dark:bg-accent-dark text-white rounded-full">
+                  <CubeIcon size={24} />
+                </div>
+                <Link href="/app/agents">
+                  <Button variant="primary" className="py-2.5 px-6 md:py-2.5">
+                    See All
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="flex flex-col overflow-auto h-[80%] mt-7 pb-3 gap-1.5">
+                {agents.length === 0 ? (
+                  <div className="text-dark/50 flex flex-col justify-center mt-4 items-center gap-5 text-sm p-3">
+                    <p className="text-dark/50 text-center dark:text-white/50">You have no agents yet, create an agent.</p>
+                    <Link href="/app/agents/new"><Button className="mx-auto py-3">Create an agent</Button></Link>
+                  </div>
+                ) : (
+                  agents.slice(0, 6).map((agent) => (
+                    <div
+                      key={agent._id}
+                      className="bg-dark/3 dark:bg-white/5 justify-between flex items-center rounded-2xl p-2.5"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="p-2 bg-surface/60 dark:bg-surface-dark/60 rounded-full">
+                          <OpenAiLogoIcon className="size-7" />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <h3 className="text-dark/75 dark:text-dark-light/90 font-semibold truncate">
+                            {agent.name}
+                          </h3>
+                          <p className="text-sm text-dark/50 dark:text-dark-light/50 font-medium truncate">
+                            {agent.description || agent.instructions || ""}
+                          </p>
+                        </div>
+                      </div>
+                      <Link href={`/app/agents/${agent._id}`}>
+                        <Button
+                          variant="primary"
+                          className="py-2.5 px-6 md:py-2.5 text-sm"
+                        >
+                          View
+                        </Button>
+                      </Link>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </StaggerItem>
         </div>
 
         {/* Usage Chart — full width row */}
@@ -440,7 +444,15 @@ const Page = () => {
           />
         </StaggerItem>
 
-        <div className="flex flex-col lg:flex-row gap-4 w-full mt-4">
+        {/* Row 3: Daily Digest (first in DOM = first on mobile) | Integrations
+            lg:flex-row-reverse makes Integrations appear LEFT on desktop (original layout) */}
+        <div className="flex flex-col lg:flex-row-reverse gap-4 w-full mt-4">
+          {/* Daily Digest — DOM position 1 → fourth on mobile ✅ */}
+          <StaggerItem className="w-full lg:w-1/2">
+            <DailyDigestCard notifications={todaysNotifications} />
+          </StaggerItem>
+
+          {/* Integrations — DOM position 2 → fifth on mobile ✅ */}
           <StaggerItem className="w-full lg:w-1/2">
             <div id="dashboard-integrations-card" className="bg-dark/3 dark:bg-white/1.5 flex flex-col overflow-hidden h-72 border-0 border-dark/3 dark:border-white/10 rounded-4xl p-3 shadow-lg shadow-dark/4 dark:shadow-black/10">
               <div className="flex w-full justify-between items-center">
@@ -505,10 +517,6 @@ const Page = () => {
                 })}
               </div>
             </div>
-          </StaggerItem>
-
-          <StaggerItem className="w-full lg:w-1/2">
-            <DailyDigestCard notifications={todaysNotifications} />
           </StaggerItem>
         </div>
       </StaggerContainer>

@@ -45,7 +45,7 @@ export const UsageChart: React.FC<UsageChartProps> = ({
         return { years: yrs.reverse(), startYear: startYr };
     }, [accountCreatedAt]);
 
-    const [selectedYear, setSelectedYear] = useState<number>(startYear);
+    const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
     // 2. Filter items for selected year
     // Also keep full item objects for the standard "count" map
@@ -121,8 +121,8 @@ export const UsageChart: React.FC<UsageChartProps> = ({
     }, [grid, selectedYear]);
 
     // Dimensions
-    const CELL = 11; // Slightly smaller to fit layout
-    const GAP = 3;
+    const CELL = 14; // Bigger cells — consistent across all screen sizes
+    const GAP = 4;
     const STEP = CELL + GAP;
     const WIDTH = weeks * STEP + 28;
     const HEIGHT = 7 * STEP + 24;
@@ -255,68 +255,67 @@ export const UsageChart: React.FC<UsageChartProps> = ({
                     </div>
                 </div>
 
-                {/* Grid Container */}
-                <div className="w-full overflow-x-auto relative pb-2">
-                    <div className="min-w-[600px]">
-                        <svg
-                            viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-                            className="w-full h-auto max-h-[180px]"
-                            preserveAspectRatio="xMinYMin meet"
-                        >
-                            {monthLabels.map((m, i) => (
-                                <text
-                                    key={i}
-                                    x={m.col * STEP + 28}
-                                    y={10}
-                                    className="fill-dark/40 dark:fill-white/40 text-[10px] font-medium"
-                                    fontSize="10"
-                                >
-                                    {m.label}
-                                </text>
-                            ))}
+                {/* Grid Container — fixed height, scrolls on X only */}
+                <div className="w-full overflow-x-auto overflow-y-hidden pb-2">
+                    <svg
+                        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+                        width="100%"
+                        preserveAspectRatio="xMinYMin meet"
+                        style={{ display: "block", minWidth: WIDTH }}
+                    >
+                        {monthLabels.map((m, i) => (
+                            <text
+                                key={i}
+                                x={m.col * STEP + 28}
+                                y={10}
+                                className="fill-dark/40 dark:fill-white/40 text-[10px] font-medium"
+                                fontSize="10"
+                            >
+                                {m.label}
+                            </text>
+                        ))}
 
-                            {DAY_LABELS.map((d, i) => (
-                                <text
-                                    key={i}
-                                    x={0}
-                                    y={32 + i * STEP}
-                                    className="fill-dark/30 dark:fill-white/30 text-[9px] font-medium"
-                                    fontSize="9"
-                                >
-                                    {d}
-                                </text>
-                            ))}
+                        {DAY_LABELS.map((d, i) => (
+                            <text
+                                key={i}
+                                x={0}
+                                y={32 + i * STEP}
+                                className="fill-dark/30 dark:fill-white/30 text-[9px] font-medium"
+                                fontSize="9"
+                            >
+                                {d}
+                            </text>
+                        ))}
 
-                            <g transform="translate(26, 24)">
-                                {grid.map((cell, i) => {
-                                    const x = cell.col * STEP;
-                                    const y = cell.row * STEP;
-                                    const isSelected = selectedDate === cell.date;
+                        <g transform="translate(26, 24)">
+                            {grid.map((cell, i) => {
+                                const x = cell.col * STEP;
+                                const y = cell.row * STEP;
+                                const isSelected = selectedDate === cell.date;
 
-                                    return (
-                                        <rect
-                                            key={i}
-                                            x={x}
-                                            y={y}
-                                            width={CELL}
-                                            height={CELL}
-                                            rx={2}
-                                            ry={2}
-                                            className={`transition-all duration-100 ${cell.inYear ? 'cursor-pointer hover:opacity-80' : ''}`}
-                                            fill={getCellColor(cell.count, cell.inYear)}
-                                            stroke={isSelected ? "var(--color-accent, #6C5CE7)" : "none"}
-                                            strokeWidth={isSelected ? 1.5 : 0}
-                                            onClick={() => {
-                                                if (cell.inYear) setSelectedDate(cell.date);
-                                            }}
-                                        >
-                                            <title>{cell.count} runs on {cell.date}</title>
-                                        </rect>
-                                    );
-                                })}
-                            </g>
-                        </svg>
-                    </div>
+                                return (
+                                    <rect
+                                        key={i}
+                                        x={x}
+                                        y={y}
+                                        width={CELL}
+                                        height={CELL}
+                                        rx={2}
+                                        ry={2}
+                                        className={`transition-all duration-100 ${cell.inYear ? 'cursor-pointer hover:opacity-80' : ''}`}
+                                        fill={getCellColor(cell.count, cell.inYear)}
+                                        stroke={isSelected ? "var(--color-accent, #6C5CE7)" : "none"}
+                                        strokeWidth={isSelected ? 1.5 : 0}
+                                        onClick={() => {
+                                            if (cell.inYear) setSelectedDate(cell.date);
+                                        }}
+                                    >
+                                        <title>{cell.count} runs on {cell.date}</title>
+                                    </rect>
+                                );
+                            })}
+                        </g>
+                    </svg>
                 </div>
             </div>
 

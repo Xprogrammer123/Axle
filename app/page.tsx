@@ -57,7 +57,7 @@ export default function Home() {
             <div className="flex -space-x-3">
               <Image src="/tayo.png" alt="Logo" width={26} height={26} />
               <Image src="/tayo.png" alt="Logo" width={26} height={26} />
-              <Image src="/tayo.png" alt="Logo" width={26} height={26} />
+              <Image src="/saka.jpg" alt="Logo" width={26} height={26} />
             </div>
             <p className="text-dark/50 dark:text-white/50 font-medium">Trusted by users worldwide.</p>
           </motion.div>
@@ -87,7 +87,7 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="flex gap-2 mt-4 items-center"
             >
-              <Link href="/auth/signup">
+              <Link href="/auth/login">
                 <Button className="py-3.5 text-white">
                   Check it out
                   <ArrowUpRightIcon size={23} />

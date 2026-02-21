@@ -1,14 +1,14 @@
 "use client";
 
 import { Modal } from "@/components/ui/modal";
-import { useEffect, useState } from "react";
-import { Lightning, ChatCircle, Robot } from "@phosphor-icons/react";
+import { Lightning, ChatCircle } from "@phosphor-icons/react";
 import { Button } from "@/components-beta/Button";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export interface Notification {
     id: string;
-    source: "twitter" | "github" | "google" | "system";
+    source: string; // open string — supports twitter, github, google, slack, figma, notion, linear, discord, jira, system, etc.
     title: string;
     description: string;
     timestamp: string;
@@ -22,7 +22,19 @@ interface DailyDigestModalProps {
     notifications: Notification[];
 }
 
+/** Labels that indicate an action should be handled via the agent chat */
+const ACTION_KEYWORDS = [
+    "reply", "review", "comment", "respond", "change status",
+    "view issue", "view ticket", "view channel", "open channel",
+];
+
+function isAgentAction(label: string) {
+    const l = label.toLowerCase();
+    return ACTION_KEYWORDS.some((kw) => l.includes(kw));
+}
+
 export function DailyDigestModal({ open, onClose, notifications }: DailyDigestModalProps) {
+    const router = useRouter();
 
     const getSourceIcon = (source: string) => {
         switch (source) {
@@ -38,10 +50,8 @@ export function DailyDigestModal({ open, onClose, notifications }: DailyDigestMo
                 return <Image src="/notion.svg" alt="Notion" width={20} height={20} />;
             case "slack":
                 return <Image src="/slack.svg" alt="Slack" width={20} height={20} />;
-            // For others like Linear, Discord etc we might not have icons yet, so we can use generic or specific if available
-            // Assuming we might have them or fall back
             case "linear":
-                return <Lightning size={20} className="text-orange-500" />; // Fallback or use specific if added
+                return <Lightning size={20} className="text-orange-500" />;
             case "discord":
                 return <ChatCircle size={20} className="text-indigo-500" />;
             case "jira":
@@ -49,6 +59,12 @@ export function DailyDigestModal({ open, onClose, notifications }: DailyDigestMo
             default:
                 return <Lightning size={20} className="text-gray-500" />;
         }
+    };
+
+    const handleAction = (action: string, notification: Notification) => {
+        onClose();
+        sessionStorage.setItem(`axle_notif_${notification.id}`, JSON.stringify(notification));
+        router.push(`/app/notifications/${notification.id}`);
     };
 
     return (
@@ -92,7 +108,7 @@ export function DailyDigestModal({ open, onClose, notifications }: DailyDigestMo
                                                 <Button
                                                     key={idx}
                                                     className="py-1.5 px-4 text-xs bg-dark/5 dark:bg-white/10 hover:bg-dark/10 dark:hover:bg-white/20 text-dark dark:text-white border-0 h-auto"
-                                                    onClick={() => console.log(`Action: ${action} for ${notification.id}`)}
+                                                    onClick={() => handleAction(action, notification)}
                                                 >
                                                     {action}
                                                 </Button>

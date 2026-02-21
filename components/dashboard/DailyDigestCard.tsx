@@ -1,9 +1,10 @@
 "use client";
 
-import { Lightning, ChatCircle, Robot, ArrowRight } from "@phosphor-icons/react";
+import { Lightning, ChatCircle } from "@phosphor-icons/react";
 import { Button } from "@/components-beta/Button";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Notification } from "./DailyDigestModal";
 
 interface DailyDigestCardProps {
@@ -11,29 +12,26 @@ interface DailyDigestCardProps {
 }
 
 export function DailyDigestCard({ notifications }: DailyDigestCardProps) {
+    const router = useRouter();
+
     const getSourceIcon = (source: string) => {
         switch (source) {
-            case "twitter":
-                return <Image src="/twitter.svg" alt="Twitter" width={18} height={18} />;
-            case "github":
-                return <Image src="/beta/github.svg" alt="GitHub" width={18} height={18} />;
-            case "google":
-                return <Image src="/google.svg" alt="Google" width={18} height={18} />;
-            case "figma":
-                return <Image src="/figma.svg" alt="Figma" width={18} height={18} />;
-            case "notion":
-                return <Image src="/notion.svg" alt="Notion" width={18} height={18} />;
-            case "slack":
-                return <Image src="/slack.svg" alt="Slack" width={18} height={18} />;
-            case "linear":
-                return <Lightning size={18} className="text-orange-500" />;
-            case "discord":
-                return <ChatCircle size={18} className="text-indigo-500" />;
-            case "jira":
-                return <Lightning size={18} className="text-blue-500" />;
-            default:
-                return <Lightning size={18} className="text-gray-500" />;
+            case "twitter": return <Image src="/twitter.svg" alt="Twitter" width={18} height={18} />;
+            case "github": return <Image src="/beta/github.svg" alt="GitHub" width={18} height={18} />;
+            case "google": return <Image src="/google.svg" alt="Google" width={18} height={18} />;
+            case "figma": return <Image src="/figma.svg" alt="Figma" width={18} height={18} />;
+            case "notion": return <Image src="/notion.svg" alt="Notion" width={18} height={18} />;
+            case "slack": return <Image src="/slack.svg" alt="Slack" width={18} height={18} />;
+            case "linear": return <Lightning size={18} className="text-orange-500" />;
+            case "discord": return <ChatCircle size={18} className="text-indigo-500" />;
+            case "jira": return <Lightning size={18} className="text-blue-500" />;
+            default: return <Lightning size={18} className="text-gray-500" />;
         }
+    };
+
+    const handleAction = (notification: Notification) => {
+        sessionStorage.setItem(`axle_notif_${notification.id}`, JSON.stringify(notification));
+        router.push(`/app/notifications/${notification.id}`);
     };
 
     return (
@@ -84,7 +82,7 @@ export function DailyDigestCard({ notifications }: DailyDigestCardProps) {
                                 </span>
                             </div>
 
-                            {/* Action Buttons for Card */}
+                            {/* Action Buttons */}
                             {notification.suggestedActions && notification.suggestedActions.length > 0 && (
                                 <div className="flex gap-2 pl-[44px]">
                                     {notification.suggestedActions.slice(0, 2).map((action, idx) => (
@@ -93,7 +91,7 @@ export function DailyDigestCard({ notifications }: DailyDigestCardProps) {
                                             className="py-1 px-3 text-[10px] bg-dark/5 dark:bg-white/10 hover:bg-dark/10 dark:hover:bg-white/20 text-dark dark:text-white border-0 h-auto"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                console.log(`Action: ${action} for ${notification.id}`);
+                                                handleAction(notification);
                                             }}
                                         >
                                             {action}

@@ -44,7 +44,7 @@ export function LandingHeader() {
                     FAQ
                 </Link>
             </div>
-            <Link href="/auth/signup">
+            <Link href="/auth/login">
                 <Button className="py-3">Get Started</Button>
             </Link>
         </div>
