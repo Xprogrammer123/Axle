@@ -19,6 +19,7 @@ interface ScheduleConfig {
     dayOfWeek: number;
     hour: number;
     amPm: 'AM' | 'PM';
+    taskInstructions: string;
 }
 
 const defaultSchedule = (): ScheduleConfig => ({
@@ -27,6 +28,7 @@ const defaultSchedule = (): ScheduleConfig => ({
     dayOfWeek: 1,
     hour: 9,
     amPm: 'AM',
+    taskInstructions: '',
 });
 
 function CreateAgentContent() {
@@ -54,6 +56,7 @@ function CreateAgentContent() {
     const [webhookEnabled, setWebhookEnabled] = useState(false);
     const [webhookEvents, setWebhookEvents] = useState<any[]>([]);
     const [selectedWebhookEventId, setSelectedWebhookEventId] = useState<string>('github.push');
+    const [webhookTaskInstructions, setWebhookTaskInstructions] = useState('');
 
     const [loading, setLoading] = useState(false);
     const [showLimitModal, setShowLimitModal] = useState(false);
@@ -194,6 +197,7 @@ function CreateAgentContent() {
                                 agentId: agent._id,
                                 type: 'schedule',
                                 cronExpression: cron,
+                                taskInstructions: s.taskInstructions || undefined,
                                 enabled: true
                             })
                         );
@@ -209,6 +213,7 @@ function CreateAgentContent() {
                         agentId: agent._id,
                         type: 'webhook',
                         config: { source },
+                        taskInstructions: webhookTaskInstructions || undefined,
                         enabled: true
                     })
                 );
@@ -402,6 +407,19 @@ function CreateAgentContent() {
                                                 </div>
                                             </div>
                                         )}
+
+                                        {/* Task instructions for this schedule */}
+                                        <div>
+                                            <label className="text-dark/60 dark:text-white/60 text-xs font-semibold uppercase mb-1.5 block">Task Instructions</label>
+                                            <p className="text-dark/30 dark:text-white/25 text-[11px] mb-2">What should this agent do when this schedule runs?</p>
+                                            <textarea
+                                                placeholder="e.g. Write a blog post about the latest AI news from this week"
+                                                rows={3}
+                                                value={s.taskInstructions}
+                                                onChange={(e) => updateSchedule(s.id, { taskInstructions: e.target.value })}
+                                                className="w-full bg-dark/5 dark:bg-white/5 text-dark dark:text-white text-sm rounded-2xl px-4 py-3 outline-none resize-none placeholder:text-dark/25 dark:placeholder:text-white/20"
+                                            />
+                                        </div>
                                     </div>
                                 ))}
 
@@ -493,6 +511,19 @@ function CreateAgentContent() {
                                             value: event.id,
                                             icon: event.icon
                                         }))}
+                                    />
+                                </div>
+
+                                {/* Task instructions for webhook */}
+                                <div>
+                                    <label className="text-dark/60 dark:text-white/60 text-xs font-semibold uppercase mb-1.5 block">Task Instructions</label>
+                                    <p className="text-dark/30 dark:text-white/25 text-[11px] mb-2">What should this agent do when this webhook fires?</p>
+                                    <textarea
+                                        placeholder="e.g. Summarize the incoming data and send a Slack notification"
+                                        rows={3}
+                                        value={webhookTaskInstructions}
+                                        onChange={(e) => setWebhookTaskInstructions(e.target.value)}
+                                        className="w-full bg-dark/5 dark:bg-white/5 text-dark dark:text-white text-sm rounded-2xl px-4 py-3 outline-none resize-none placeholder:text-dark/25 dark:placeholder:text-white/20"
                                     />
                                 </div>
                             </div>
