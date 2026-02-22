@@ -15,6 +15,7 @@ import { HistorySidebar } from "@/components-beta/chat/HistorySidebar";
 import { EditAgentModal } from "@/components/ui/EditAgentModal";
 import { api } from "@/lib/api";
 import { socketClient } from "@/lib/socket";
+import { AutomatedRunsBanner } from "@/components-beta/chat/AutomatedRunsBanner";
 
 interface ChatMessage {
   id: string;
@@ -898,6 +899,9 @@ const Page = () => {
             <SlidersHorizontalIcon className="text-dark/80 dark:text-white/80 text-xl" />
           </button>
         </div>
+
+        {/* Automated Runs Banner (Schedule + Webhook) */}
+        <AutomatedRunsBanner agentId={agentId} />
 
         {/* Messages Container */}
         <div
