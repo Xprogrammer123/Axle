@@ -6,7 +6,7 @@ import { UIProvider } from "@/context/UIContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://axle.ai"), // change if different
+  metadataBase: new URL("https://heyaxle.click"), // change if different
   title: {
     default: "Axle",
     template: "%s | Axle",
