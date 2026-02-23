@@ -13,8 +13,8 @@ function tier(plan: string): PlanTier {
 export function getAgentLimit(plan: string): number {
     const t = tier(plan);
     if (t === 'free') return 2;
-    if (t === 'pro') return 5;
-    if (t === 'premium') return 20;
+    if (t === 'pro') return 10;
+    if (t === 'premium') return 50;
     return Infinity; // custom
 }
 
@@ -32,8 +32,9 @@ export function getAgentLimitLabel(plan: string): string {
 export function getScheduleLimit(plan: string): number {
     const t = tier(plan);
     if (t === 'free') return 1;
-    if (t === 'pro') return 3;
-    return Infinity; // premium / custom
+    if (t === 'pro') return 5;
+    if (t === 'premium') return 20;
+    return Infinity; // custom
 }
 
 /** Human-friendly label for the schedule limit. */
@@ -50,6 +51,15 @@ export function canUseWebhooks(plan: string): boolean {
     return tier(plan) !== 'free';
 }
 
+/** Max webhook triggers allowed *per agent* for the given plan. */
+export function getWebhookLimit(plan: string): number {
+    const t = tier(plan);
+    if (t === 'free') return 0;
+    if (t === 'pro') return 5;
+    if (t === 'premium') return 20;
+    return Infinity; // custom
+}
+
 /** Next upgrade tier name (for upgrade prompts). */
 export function getNextTierName(plan: string): string {
     const t = tier(plan);
@@ -60,11 +70,11 @@ export function getNextTierName(plan: string): string {
 
 // ── Credit purchase limits ──
 
-/** Max credits a user can buy on their plan. */
+/** Max credits a user can have on their plan. */
 export function getCreditLimit(plan: string): number {
     const t = tier(plan);
-    if (t === 'free') return 200;
-    if (t === 'pro') return 700;
-    if (t === 'premium') return 1500;
-    return Infinity; // custom
+    if (t === 'free') return 100;
+    if (t === 'pro') return 2500;
+    if (t === 'premium') return 5000;
+    return 10000; // custom limit is 10k by default
 }

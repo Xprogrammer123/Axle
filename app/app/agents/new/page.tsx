@@ -11,7 +11,7 @@ import { Modal } from '@/components/ui/modal';
 import { Dropdown } from '@/components/ui/dropdown';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { getScheduleLimit, getScheduleLimitLabel, canUseWebhooks, getAgentLimitLabel, getNextTierName } from '@/lib/planLimits';
+import { getScheduleLimit, getScheduleLimitLabel, canUseWebhooks, getWebhookLimit, getAgentLimitLabel, getNextTierName } from '@/lib/planLimits';
 
 interface ScheduleConfig {
     id: string;
@@ -66,17 +66,17 @@ function CreateAgentContent() {
     const scheduleLimit = useMemo(() => getScheduleLimit(userPlan), [userPlan]);
     const scheduleLimitLabel = useMemo(() => getScheduleLimitLabel(userPlan), [userPlan]);
     const webhooksAllowed = useMemo(() => canUseWebhooks(userPlan), [userPlan]);
+    const webhookLimit = useMemo(() => getWebhookLimit(userPlan), [userPlan]);
 
     // Fetch user plan
     useEffect(() => {
         const loadPlan = async () => {
             try {
-                const subData = await api.getSubscription();
-                const sub = subData?.subscription || subData;
-                const plan = sub?.plan || sub?.planName || 'free';
+                const subData = await api.getBillingStatus();
+                const plan = subData?.plan || 'free';
                 setUserPlan(plan);
             } catch (e) {
-                console.error('Failed to load subscription:', e);
+                console.error('Failed to load billing status:', e);
                 setUserPlan('free');
             } finally {
                 setPlanLoading(false);
@@ -189,6 +189,7 @@ function CreateAgentContent() {
             const triggerCreates: Promise<any>[] = [];
 
             if (scheduleEnabled) {
+                let idx = 1;
                 for (const s of schedules) {
                     const cron = buildCron(s);
                     if (cron) {
@@ -196,11 +197,13 @@ function CreateAgentContent() {
                             api.createTrigger({
                                 agentId: agent._id,
                                 type: 'schedule',
+                                name: `Schedule ${idx}`,
                                 cronExpression: cron,
                                 taskInstructions: s.taskInstructions || undefined,
                                 enabled: true
                             })
                         );
+                        idx++;
                     }
                 }
             }
@@ -212,7 +215,8 @@ function CreateAgentContent() {
                     api.createTrigger({
                         agentId: agent._id,
                         type: 'webhook',
-                        config: { source },
+                        name: 'Webhook Trigger',
+                        webhookUrl: source,
                         taskInstructions: webhookTaskInstructions || undefined,
                         enabled: true
                     })
@@ -223,6 +227,7 @@ function CreateAgentContent() {
                 await Promise.allSettled(triggerCreates);
             }
 
+            setLoading(false);
             router.push(`/app/agents/${agent._id}`);
         } catch (error: any) {
             console.error(error);
@@ -236,6 +241,9 @@ function CreateAgentContent() {
     const handleWebhookToggle = () => {
         if (!webhooksAllowed) {
             setShowWebhookUpgradeModal(true);
+            return;
+        }
+        if (!webhookEnabled && webhookLimit !== Infinity && webhookLimit < 1) {
             return;
         }
         setWebhookEnabled(!webhookEnabled);
@@ -479,7 +487,7 @@ function CreateAgentContent() {
                         </div>
 
                         {/* Upgrade prompt for free users */}
-                        {!webhooksAllowed && (
+                        {!webhooksAllowed ? (
                             <div className="bg-gradient-to-r from-accent/5 to-accent/10 dark:from-accent/10 dark:to-accent/5 border border-accent/20 rounded-2xl p-4 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="bg-accent/10 p-2 rounded-xl">
@@ -496,7 +504,24 @@ function CreateAgentContent() {
                                     </Button>
                                 </Link>
                             </div>
-                        )}
+                        ) : webhookLimit !== Infinity && webhookLimit < 1 ? (
+                            <div className="bg-gradient-to-r from-amber-500/5 to-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-amber-500/10 p-2 rounded-xl">
+                                        <Crown size={18} className="text-amber-500" weight="fill" />
+                                    </div>
+                                    <div>
+                                        <p className="text-dark dark:text-white text-sm font-semibold">Webhook limit reached</p>
+                                        <p className="text-dark/50 dark:text-white/50 text-xs">You have reached the maximum number of webhooks for your current plan.</p>
+                                    </div>
+                                </div>
+                                <Link href="/app/billing">
+                                    <Button className="bg-amber-500 text-white text-sm py-2 px-5 whitespace-nowrap border-0">
+                                        Upgrade
+                                    </Button>
+                                </Link>
+                            </div>
+                        ) : null}
 
                         {webhookEnabled && webhooksAllowed && (
                             <div className="bg-dark/3 dark:bg-white/5 p-5 rounded-3xl space-y-4">

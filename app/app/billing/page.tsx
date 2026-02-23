@@ -15,6 +15,8 @@ const page = () => {
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState<any | null>(null);
   const [plans, setPlans] = useState<any[]>([]);
+  const [allCreditPackages, setAllCreditPackages] = useState<{ id: string; credits: number; price: number; label: string; tag?: string; }[]>([]);
+  const [creditHistory, setCreditHistory] = useState<any[]>([]);
 
   const [buyOpen, setBuyOpen] = useState(false);
   const [selectedCredits, setSelectedCredits] = useState<number>(0);
@@ -24,12 +26,20 @@ const page = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [subData, plansData] = await Promise.all([
-          api.getSubscription(),
+        const [subData, plansData, packagesData, historyData] = await Promise.all([
+          api.getBillingStatus(),
           api.getPlans(),
+          api.getCreditPackages(),
+          api.getCreditHistory().catch(() => ({ history: [] }))
         ]);
-        setSubscription(subData?.subscription || subData);
+        setSubscription(subData);
         setPlans(plansData?.plans || []);
+        if (packagesData?.packages) {
+          setAllCreditPackages(packagesData.packages);
+        }
+        if (historyData?.history) {
+          setCreditHistory(historyData.history);
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -40,22 +50,10 @@ const page = () => {
   }, []);
 
   const activeCredits = subscription?.credits ?? 0;
-  const activePlan = subscription?.plan || subscription?.planName || "free";
+  const activePlan = subscription?.plan || "free";
   const creditCap = useMemo(() => getCreditLimit(activePlan), [activePlan]);
 
-  const allCreditPackages = useMemo(
-    () => [
-      { credits: 100, price: 2, tag: "Lite" },
-      { credits: 200, price: 4, tag: "Starter" },
-      { credits: 500, price: 10, tag: "Growth" },
-      { credits: 700, price: 14, tag: "Pro" },
-      { credits: 1000, price: 20, tag: "Business" },
-      { credits: 1500, price: 30, tag: "Premium" },
-    ],
-    [],
-  );
-
-
+  // Packages are now fetched from backend
   const selectedPrice = useMemo(() => {
     const direct = allCreditPackages.find((p) => p.credits === selectedCredits)
       ?.price;
@@ -95,13 +93,15 @@ const page = () => {
   const handleBuyCredits = async () => {
     setCheckingOut(true);
     try {
-      // Backend credits checkout endpoint will be added; for now route to portal as fallback.
-      const { url } = await api.getPortalLink();
-      window.open(url, "_blank");
-      setBuyOpen(false);
+      const selectedPkg = allCreditPackages.find(p => p.credits === selectedCredits);
+      if (!selectedPkg) {
+        throw new Error("Invalid credit package selected.");
+      }
+
+      const { url } = await api.createCreditsCheckout(selectedPkg.id);
+      window.location.href = url;
     } catch (e) {
       console.error(e);
-    } finally {
       setCheckingOut(false);
     }
   };
@@ -264,6 +264,48 @@ const page = () => {
         })}
       </div>
 
+      {creditHistory.length > 0 && (
+        <div className="w-full mt-4">
+          <h3 className="text-xl font-bold dark:text-white text-dark mb-4 filter drop-shadow-sm">Credit History</h3>
+          <div className="bg-surface/70 dark:bg-white/5 border border-dark/10 dark:border-white/10 rounded-3xl overflow-hidden shadow-sm backdrop-blur-xl">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-dark/5 dark:bg-white/5 text-dark/70 dark:text-white/70 text-sm">
+                  <th className="py-3 px-6 font-semibold border-b border-dark/10 dark:border-white/10">Date</th>
+                  <th className="py-3 px-6 font-semibold border-b border-dark/10 dark:border-white/10">Description</th>
+                  <th className="py-3 px-6 font-semibold border-b border-dark/10 dark:border-white/10">Amount</th>
+                  <th className="py-3 px-6 font-semibold border-b border-dark/10 dark:border-white/10">Type</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm">
+                {creditHistory.map((item) => (
+                  <tr key={item.id} className="border-b border-dark/5 dark:border-white/5 last:border-0 hover:bg-dark/2 dark:hover:bg-white/2 transition-colors">
+                    <td className="py-4 px-6 text-dark/60 dark:text-white/60">
+                      {new Date(item.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="py-4 px-6 text-dark dark:text-white font-medium">
+                      {item.description}
+                    </td>
+                    <td className={`py-4 px-6 font-bold ${item.amount > 0 ? 'text-emerald-500' : 'text-dark dark:text-white'}`}>
+                      {item.amount > 0 ? '+' : ''}{item.amount}
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${item.type === 'purchase' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
+                          item.type === 'usage' ? 'bg-dark/10 dark:bg-white/10 text-dark/70 dark:text-white/70' :
+                            item.type === 'bonus' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' :
+                              'bg-dark/10 dark:bg-white/10 text-dark/70 dark:text-white/70'
+                        }`}>
+                        {item.type}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {buyOpen ? (
         <>
           <div
@@ -324,7 +366,7 @@ const page = () => {
                         {pkg.credits.toLocaleString()}
                       </div>
                       <div className={`text-xs font-semibold uppercase ${isOverCap ? 'text-dark/20 dark:text-white/20' : 'text-dark/50 dark:text-white/50'}`}>
-                        {pkg.tag}
+                        {pkg.label}
                       </div>
                       <div className={`mt-2 inline-flex text-sm rounded-xl px-2 py-1 font-semibold ${isOverCap ? 'bg-dark/3 text-dark/30 dark:text-white/30' : 'bg-dark/5 text-dark dark:text-white'}`}>
                         ${pkg.price.toFixed(2)}
