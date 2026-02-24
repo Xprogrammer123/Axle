@@ -8,13 +8,70 @@ import { getCreditLimit, getNextTierName } from "@/lib/planLimits";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
+export const staticPlans = [
+  {
+    id: "pro",
+    name: "Pro",
+    price: 9.99,
+    priceText: "$9.99/month",
+    agentLimit: 10,
+    monthlyCredits: 1000,
+    description: "Perfect for indie hackers and small projects",
+    features: [
+      "5 agents",
+      "1,000 monthly credits (~250 executions)",
+      "Email support",
+      "All 80+ integrations",
+      "3 active schedule triggers per agent",
+      "Webhook triggers",
+      "3 proactive Agents Access"
+    ]
+  },
+  {
+    id: "premium",
+    name: "Premium",
+    price: 49.99,
+    priceText: "$49.99/month",
+    agentLimit: 50,
+    monthlyCredits: 5000,
+    popular: true,
+    description: "Best for growing teams",
+    features: [
+      "20 agents",
+      "5,000 monthly credits (~1,250 executions)",
+      "Priority support",
+      "Advanced features (memory, reasoning)",
+      "Webhook triggers",
+      "10 proactive Agents Access"
+    ]
+  },
+  {
+    id: "custom",
+    name: "Custom",
+    price: 249.99,
+    priceText: "$249.99/month",
+    agentLimit: Number.POSITIVE_INFINITY,
+    monthlyCredits: 20000,
+    description: "Enterprise-grade automation",
+    features: [
+      "Unlimited agents",
+      "20,000 monthly credits (~5,000 executions)",
+      "Unlimited team members",
+      "Dedicated support",
+      "SLA guarantees",
+      "White-label option",
+      "On-premise deployment"
+    ]
+  }
+];
+
 const page = () => {
   const searchParams = useSearchParams();
   const coupon = searchParams.get("coupon");
 
   const [loading, setLoading] = useState(true);
   const [subscription, setSubscription] = useState<any | null>(null);
-  const [plans, setPlans] = useState<any[]>([]);
+  const [plans, setPlans] = useState<any[]>(staticPlans);
   const [allCreditPackages, setAllCreditPackages] = useState<{ id: string; credits: number; price: number; label: string; tag?: string; }[]>([]);
   const [creditHistory, setCreditHistory] = useState<any[]>([]);
 
@@ -26,14 +83,12 @@ const page = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [subData, plansData, packagesData, historyData] = await Promise.all([
+        const [subData, packagesData, historyData] = await Promise.all([
           api.getBillingStatus(),
-          api.getPlans(),
-          api.getCreditPackages(),
+          api.getCreditPackages().catch(() => ({ packages: [] })),
           api.getCreditHistory().catch(() => ({ history: [] }))
         ]);
         setSubscription(subData);
-        setPlans(plansData?.plans || []);
         if (packagesData?.packages) {
           setAllCreditPackages(packagesData.packages);
         }
@@ -237,10 +292,11 @@ const page = () => {
                     key={f}
                     className={
                       isPopular
-                        ? "text-white/70 dark:text-white/70 text-sm font-medium"
-                        : "text-dark/60 dark:text-white/60 text-sm font-medium"
+                        ? "text-white/70 dark:text-white/70 text-sm font-medium flex items-start gap-2"
+                        : "text-dark/60 dark:text-white/60 text-sm font-medium flex items-start gap-2"
                     }
                   >
+                    <span className="text-[10px] mt-1 text-accent">●</span>
                     {f}
                   </div>
                 ))}
@@ -262,6 +318,53 @@ const page = () => {
             </div>
           );
         })}
+      </div>
+
+      <div className="mt-10 mb-6 bg-surface/70 dark:bg-white/5 border border-dark/10 dark:border-white/10 rounded-3xl p-6 lg:p-8">
+        <h3 className="text-dark dark:text-white font-bold text-xl mb-6">Plan Limits Comparison</h3>
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left whitespace-nowrap min-w-[600px]">
+            <thead>
+              <tr className="border-b border-dark/10 dark:border-white/10">
+                <th className="pb-4 text-dark/50 dark:text-white/50 font-semibold text-sm">Plan</th>
+                <th className="pb-4 text-dark/50 dark:text-white/50 font-semibold text-sm">Agents</th>
+                <th className="pb-4 text-dark/50 dark:text-white/50 font-semibold text-sm">Schedules</th>
+                <th className="pb-4 text-dark/50 dark:text-white/50 font-semibold text-sm">Webhooks</th>
+                <th className="pb-4 text-dark/50 dark:text-white/50 font-semibold text-sm">Monthly Credits</th>
+              </tr>
+            </thead>
+            <tbody className="text-dark dark:text-white">
+              <tr className="border-b border-dark/5 dark:border-white/5">
+                <td className="py-4 font-bold">Free</td>
+                <td className="py-4 font-medium">2</td>
+                <td className="py-4 font-medium text-dark/70 dark:text-white/70">1 / agent</td>
+                <td className="py-4 font-medium text-red-500/70">❌</td>
+                <td className="py-4 font-medium font-mono bg-dark/5 dark:bg-white/5 rounded px-2">100</td>
+              </tr>
+              <tr className="border-b border-dark/5 dark:border-white/5 bg-accent/5">
+                <td className="py-4 font-bold text-accent">Pro</td>
+                <td className="py-4 font-medium">10</td>
+                <td className="py-4 font-medium text-dark/70 dark:text-white/70">5 / agent</td>
+                <td className="py-4 font-medium text-dark/70 dark:text-white/70">5</td>
+                <td className="py-4 font-medium font-mono bg-dark/5 dark:bg-white/5 rounded px-2">2,500</td>
+              </tr>
+              <tr className="border-b border-dark/5 dark:border-white/5">
+                <td className="py-4 font-bold">Premium</td>
+                <td className="py-4 font-medium">50</td>
+                <td className="py-4 font-medium text-dark/70 dark:text-white/70">20 / agent</td>
+                <td className="py-4 font-medium text-dark/70 dark:text-white/70">20</td>
+                <td className="py-4 font-medium font-mono bg-dark/5 dark:bg-white/5 rounded px-2">5,000</td>
+              </tr>
+              <tr>
+                <td className="py-4 font-bold text-amber-500">Custom</td>
+                <td className="py-4 font-medium text-xl">∞</td>
+                <td className="py-4 font-medium text-xl text-dark/70 dark:text-white/70">∞</td>
+                <td className="py-4 font-medium text-xl text-dark/70 dark:text-white/70">∞</td>
+                <td className="py-4 font-medium font-mono bg-dark/5 dark:bg-white/5 rounded px-2">10,000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {creditHistory.length > 0 && (
@@ -291,9 +394,9 @@ const page = () => {
                     </td>
                     <td className="py-4 px-6">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${item.type === 'purchase' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
-                          item.type === 'usage' ? 'bg-dark/10 dark:bg-white/10 text-dark/70 dark:text-white/70' :
-                            item.type === 'bonus' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' :
-                              'bg-dark/10 dark:bg-white/10 text-dark/70 dark:text-white/70'
+                        item.type === 'usage' ? 'bg-dark/10 dark:bg-white/10 text-dark/70 dark:text-white/70' :
+                          item.type === 'bonus' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400' :
+                            'bg-dark/10 dark:bg-white/10 text-dark/70 dark:text-white/70'
                         }`}>
                         {item.type}
                       </span>

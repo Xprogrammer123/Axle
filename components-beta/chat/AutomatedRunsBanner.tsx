@@ -106,7 +106,16 @@ export function AutomatedRunsBanner({ agentId }: AutomatedRunsBannerProps) {
 
             // Fetch triggers for this agent
             const triggerData = await api.getTriggers(agentId);
-            const agentTriggers = (triggerData.triggers || []) as Trigger[];
+            const rawTriggers = triggerData.triggers || [];
+            const agentTriggers: Trigger[] = rawTriggers.map((t: any) => ({
+                id: t._id || t.id,
+                name: t.name || 'Trigger',
+                type: t.type as 'schedule' | 'webhook' | 'manual',
+                enabled: !!t.enabled,
+                cronExpression: t.cronExpression,
+                webhookUrl: t.webhookUrl || t.config?.source,
+            }));
+
             const automatedTriggers = agentTriggers.filter(
                 (t) => t.type === 'schedule' || t.type === 'webhook'
             );
