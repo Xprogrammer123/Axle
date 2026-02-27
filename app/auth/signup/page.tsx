@@ -459,7 +459,7 @@ const Page = () => {
                 Sign Up
               </Button>
             </StaggerItem>
-
+{/*
             <StaggerItem>
               <div className="flex items-center gap-3 w-full mt-4">
                 <div className="h-[1px] bg-dark/10 dark:bg-white/10 flex-1" />
@@ -467,7 +467,7 @@ const Page = () => {
                 <div className="h-[1px] bg-dark/10 dark:bg-white/10 flex-1" />
               </div>
             </StaggerItem>
-{/*
+
             <StaggerItem>
               <Button
                 type="button"
