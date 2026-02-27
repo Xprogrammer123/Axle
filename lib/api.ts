@@ -89,8 +89,8 @@ class ApiClient {
         }
 
         return response.json();
-      } catch (error) {
-        // Handle network errors (connection refused, timeout, etc.)
+      } catch (error: any) {
+
         const isNetworkError =
           error instanceof TypeError ||
           error?.name === "TypeError" ||
@@ -326,6 +326,12 @@ class ApiClient {
     });
   }
 
+  async toggleTrigger(id: string) {
+    return this.request(`/triggers/${id}/toggle`, {
+      method: "PATCH",
+    });
+  }
+
   async deleteTrigger(id: string) {
     return this.request(`/triggers/${id}`, { method: "DELETE" });
   }
@@ -399,6 +405,17 @@ class ApiClient {
     return this.request<any>("/billing/subscription");
   }
 
+  async getBillingStatus() {
+    return this.request<{
+      plan: string;
+      subscriptionStatus: string;
+      credits: number;
+      creditsLimit: number;
+      agentLimit: number;
+      subscriptionCurrentPeriodEnd: string;
+    }>("/billing/status");
+  }
+
   async createCheckout(plan: string, discountCode?: string) {
     console.log("createCheckout payload:", { plan, discountCode });
     return this.request<{ url: string }>("/billing/checkout", {
@@ -422,6 +439,46 @@ class ApiClient {
     return this.request<{ plans: any[] }>("/billing/plans");
   }
 
+  async getDailyDigest() {
+    return this.request<any>("/digest/today");
+  }
+
+  async getCreditPackages() {
+    return this.request<{
+      packages: {
+        id: string;
+        credits: number;
+        price: number;
+        label: string;
+      }[];
+    }>("/billing/credits/packages");
+  }
+
+  async createCreditsCheckout(packageId: string) {
+    return this.request<{
+      url: string;
+      packageDetails: {
+        credits: number;
+        price: number;
+        label: string;
+      };
+    }>("/billing/credits/checkout", {
+      method: "POST",
+      body: JSON.stringify({ packageId }),
+    });
+  }
+
+  async getCreditHistory() {
+    return this.request<{
+      history: {
+        id: string;
+        amount: number;
+        type: "purchase" | "usage" | "refund" | "bonus";
+        description: string;
+        createdAt: string;
+      }[];
+    }>("/billing/credits/history");
+  }
   // Chatbot - FIXED
   async sendMessage(message: string) {
     return this.request("/chatbot/message", {

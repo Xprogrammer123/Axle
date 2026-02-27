@@ -37,10 +37,8 @@ export default function AgentsPage() {
 
   useEffect(() => {
     fetchAgents();
-    // Fetch user plan
-    api.getSubscription().then((subData) => {
-      const sub = subData?.subscription || subData;
-      setUserPlan(sub?.plan || sub?.planName || 'free');
+    api.getBillingStatus().then((subData) => {
+      setUserPlan(subData?.plan || 'free');
     }).catch(() => setUserPlan('free'));
   }, []);
 
@@ -50,22 +48,28 @@ export default function AgentsPage() {
       const allAgents = (data.agents || []).filter(Boolean);
       setAgents(allAgents);
 
-      // Fetch triggers for all agents
-      const triggersMap: Record<string, any[]> = {};
-      await Promise.all(
-        allAgents.map(async (agent: any) => {
-          try {
-            const triggerData = await api.getTriggers(agent._id);
-            const triggers = (triggerData.triggers || []).filter(
-              (t: any) => t.type === 'schedule' || t.type === 'webhook'
-            );
-            if (triggers.length > 0) {
-              triggersMap[agent._id] = triggers;
+      // Fetch all triggers across all agents in one request
+      try {
+        const triggerData = await api.getTriggers();
+        const allTriggers = triggerData.triggers || [];
+
+        const triggersMap: Record<string, any[]> = {};
+        allTriggers.forEach((t: any) => {
+          if (t.type === 'schedule' || t.type === 'webhook') {
+            // Depending on the backend schema, the agent ID field could be agentId or agent
+            const agentId = t.agentId || t.agent;
+            if (agentId) {
+              if (!triggersMap[agentId]) {
+                triggersMap[agentId] = [];
+              }
+              triggersMap[agentId].push(t);
             }
-          } catch { }
-        })
-      );
-      setAgentTriggers(triggersMap);
+          }
+        });
+        setAgentTriggers(triggersMap);
+      } catch (err) {
+        console.error("Failed to fetch triggers:", err);
+      }
     } finally {
       setLoading(false);
     }
@@ -281,8 +285,36 @@ export default function AgentsPage() {
                     show: { opacity: 1, y: 0 },
                   }}
                 >
-                  <Link href={`/app/agents/${agent._id}`} className="block h-full">
+                  <div onClick={() => router.push(`/app/agents/${agent._id}`)} className="block h-full cursor-pointer">
                     <div className="bg-white/50 shadow-dark/2 shadow-lg dark:bg-white/5 border border-dark/3 dark:border-white/5 p-5 rounded-4xl h-full flex flex-col justify-between hover:border-dark/10 dark:hover:border-white/10 transition-colors group relative overflow-hidden">
+                      <div className="absolute top-5 right-5 flex flex-col items-end gap-1.5 z-10">
+                        <div className="bg-dark/5 dark:bg-white/5 border border-dark/10 dark:border-white/10 rounded-full px-2.5 py-1 flex items-center gap-1.5">
+                          <Lightning weight="fill" size={12} className="text-accent" />
+                          <span className="text-[10px] font-bold text-dark/70 dark:text-white/70">
+                            {agent.runs || 0} Runs
+                          </span>
+                        </div>
+                        {agentTriggers[agent._id] && agentTriggers[agent._id].length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 justify-end">
+                            {agentTriggers[agent._id].filter((t: any) => t.type === 'schedule').length > 0 && (
+                              <div className="flex items-center gap-1 bg-orange-500/5 dark:bg-orange-500/10 border border-orange-500/10 dark:border-orange-500/20 rounded-full px-2 py-1">
+                                <Clock weight="bold" size={11} className="text-orange-400" />
+                                <span className="text-[10px] font-semibold text-orange-600 dark:text-orange-300">
+                                  {agentTriggers[agent._id].filter((t: any) => t.type === 'schedule').length} Schedule{agentTriggers[agent._id].filter((t: any) => t.type === 'schedule').length > 1 ? 's' : ''}
+                                </span>
+                              </div>
+                            )}
+                            {agentTriggers[agent._id].filter((t: any) => t.type === 'webhook').length > 0 && (
+                              <div className="flex items-center gap-1 bg-violet-500/5 dark:bg-violet-500/10 border border-violet-500/10 dark:border-violet-500/20 rounded-full px-2 py-1">
+                                <LinkIcon weight="bold" size={11} className="text-violet-400" />
+                                <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-300">
+                                  Webhook
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                       {/* Status Indicator */}
                       {/* <div className="absolute top-5 right-5 flex gap-2">
                       <button
@@ -311,31 +343,11 @@ export default function AgentsPage() {
                         )}
                       </div>
 
-                      {/* Trigger badges */}
-                      {agentTriggers[agent._id] && agentTriggers[agent._id].length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-3">
-                          {agentTriggers[agent._id].filter((t: any) => t.type === 'schedule').length > 0 && (
-                            <div className="flex items-center gap-1 bg-orange-500/5 dark:bg-orange-500/10 border border-orange-500/10 dark:border-orange-500/20 rounded-lg px-2 py-1">
-                              <Clock weight="bold" size={11} className="text-orange-400" />
-                              <span className="text-[10px] font-semibold text-orange-600 dark:text-orange-300">
-                                {agentTriggers[agent._id].filter((t: any) => t.type === 'schedule').length} Schedule{agentTriggers[agent._id].filter((t: any) => t.type === 'schedule').length > 1 ? 's' : ''}
-                              </span>
-                            </div>
-                          )}
-                          {agentTriggers[agent._id].filter((t: any) => t.type === 'webhook').length > 0 && (
-                            <div className="flex items-center gap-1 bg-violet-500/5 dark:bg-violet-500/10 border border-violet-500/10 dark:border-violet-500/20 rounded-lg px-2 py-1">
-                              <LinkIcon weight="bold" size={11} className="text-violet-400" />
-                              <span className="text-[10px] font-semibold text-violet-600 dark:text-violet-300">
-                                Webhook
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      {/* Trigger badges moved to top right */}
                       <div className="flex pt-5 mt-5 border-t border-dark/5 dark:border-white/5 items-center justify-between gap-2 w-full">
-                        <Link className="w-[90%]" href={`/app/agents/${agent._id}`}>
+                        <div className="w-[90%]" onClick={(e) => { e.stopPropagation(); router.push(`/app/agents/${agent._id}`); }}>
                           <Button className="w-full p-3">View Agent</Button>
-                        </Link>
+                        </div>
 
                         <Button
                           onClick={(e) => handleDeleteAgent(e, agent._id)}
@@ -348,7 +360,7 @@ export default function AgentsPage() {
                         </Button>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 </motion.div>
               ))}
 

@@ -9,9 +9,10 @@ import { Notification } from "./DailyDigestModal";
 
 interface DailyDigestCardProps {
     notifications: Notification[];
+    loading?: boolean;
 }
 
-export function DailyDigestCard({ notifications }: DailyDigestCardProps) {
+export function DailyDigestCard({ notifications, loading }: DailyDigestCardProps) {
     const router = useRouter();
 
     const getSourceIcon = (source: string) => {
@@ -48,7 +49,17 @@ export function DailyDigestCard({ notifications }: DailyDigestCardProps) {
             </div>
 
             <div className="flex flex-col mt-4 gap-2 w-full overflow-auto px-1 pb-2 custom-scrollbar">
-                {notifications.length === 0 ? (
+                {loading ? (
+                    [1, 2, 3].map((i) => (
+                        <div key={i} className="flex gap-3 p-3 bg-dark/3 dark:bg-white/2 rounded-2xl animate-pulse cursor-default">
+                            <div className="w-9 h-9 bg-dark/5 dark:bg-white/5 rounded-xl shrink-0" />
+                            <div className="flex flex-col gap-2 w-full pt-1">
+                                <div className="h-4 bg-dark/5 dark:bg-white/5 rounded w-2/3" />
+                                <div className="h-3 bg-dark/5 dark:bg-white/5 rounded w-1/2" />
+                            </div>
+                        </div>
+                    ))
+                ) : notifications.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-40 text-center">
                         <p className="text-dark/50 dark:text-dark-light/50 text-sm">
                             No new notifications.

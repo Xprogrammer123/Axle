@@ -111,6 +111,7 @@ const Page = () => {
   // Daily Digest State
   const [showDigestModal, setShowDigestModal] = useState(false);
   const [todaysNotifications, setTodaysNotifications] = useState<any[]>([]);
+  const [digestLoading, setDigestLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
@@ -143,38 +144,6 @@ const Page = () => {
         if (fetchedAgents.length && !selectedAgentId) {
           setSelectedAgentId(fetchedAgents[0]._id);
         }
-
-        // Daily Digest Logic: Fetch Notifications from API
-        const notificationRes = await api.syncNotifications().catch((e) => {
-          console.error('Failed to sync notifications:', e);
-          return { notifications: [] };
-        }) as any;
-        console.log('Daily Digest: fetched notifications', notificationRes);
-
-        const rawNotifications = notificationRes?.notifications || [];
-
-        // Debug
-        // console.log('Raw Notifications:', rawNotifications);
-
-        let processedNotifications = normalizeNotifications(rawNotifications);
-
-        // Sort by timestamp descending (most recent first)
-        processedNotifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-
-        setTodaysNotifications(processedNotifications);
-
-        // Show once per session (simulating "every new login")
-        const hasShownSession = sessionStorage.getItem('axle_session_digest_shown');
-        console.log('Daily Digest: hasShownSession?', hasShownSession);
-
-        if (!hasShownSession) {
-          console.log('Daily Digest: Showing modal now!');
-          setShowDigestModal(true);
-          sessionStorage.setItem('axle_session_digest_shown', 'true');
-        } else {
-          console.log('Daily Digest: Skipping modal (already shown this session)');
-        }
-
       } finally {
         setLoading(false);
       }
@@ -182,6 +151,56 @@ const Page = () => {
 
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Daily Digest Polling
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    const pollDigest = async () => {
+      try {
+        const res = await api.getDailyDigest();
+
+        // If the digest exists and has an array of items (or notifications), it's ready.
+        // Assuming the backend might return { status: 'building' } or { digest: { ... } } or { notifications: [...] }
+        if (res && res.status !== 'building') {
+          const rawNotifications = res.notifications || res.digest?.notifications || res.items || res.digest?.items || [];
+
+          if (Array.isArray(rawNotifications)) {
+            let processedNotifications = normalizeNotifications(rawNotifications);
+            processedNotifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+            setTodaysNotifications(processedNotifications);
+            setDigestLoading(false);
+
+            // Show once per session
+            const hasShownSession = sessionStorage.getItem('axle_session_digest_shown');
+            if (!hasShownSession && processedNotifications.length > 0) {
+              setShowDigestModal(true);
+              sessionStorage.setItem('axle_session_digest_shown', 'true');
+            }
+            return; // done polling
+          }
+        }
+
+        // If we get here, it's missing or still building
+        timeoutId = setTimeout(pollDigest, 3000);
+      } catch (e: any) {
+        // If 404 or a similar error, keep polling. Otherwise, stop polling.
+        if (e?.status === 404 || e?.status === 202 || (e?.message && e.message.toLowerCase().includes('not found'))) {
+          timeoutId = setTimeout(pollDigest, 3000);
+        } else {
+          console.error('Failed to fetch digest:', e);
+          setDigestLoading(false);
+        }
+      }
+    };
+
+    pollDigest();
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const displayName = useMemo(() => {
@@ -449,7 +468,7 @@ const Page = () => {
         <div className="flex flex-col lg:flex-row-reverse gap-4 w-full mt-4">
           {/* Daily Digest — DOM position 1 → fourth on mobile ✅ */}
           <StaggerItem className="w-full lg:w-1/2">
-            <DailyDigestCard notifications={todaysNotifications} />
+            <DailyDigestCard notifications={todaysNotifications} loading={digestLoading} />
           </StaggerItem>
 
           {/* Integrations — DOM position 2 → fifth on mobile ✅ */}

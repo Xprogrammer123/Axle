@@ -12,17 +12,19 @@ import {
     X,
     ArrowRight,
     Link as LinkIcon,
+    Trash,
 } from '@phosphor-icons/react';
 import { api } from '@/lib/api';
 
 /* ─── Types ─── */
 
 interface Trigger {
-    _id: string;
-    type: string; // 'schedule' | 'webhook'
-    cronExpression?: string;
-    config?: { source?: string };
+    id: string;
+    name: string;
+    type: "schedule" | "webhook" | "manual";
     enabled: boolean;
+    cronExpression?: string;
+    webhookUrl?: string;
 }
 
 interface AutomatedExecution {
@@ -95,6 +97,8 @@ export function AutomatedRunsBanner({ agentId }: AutomatedRunsBannerProps) {
     const [loading, setLoading] = useState(true);
     const [collapsed, setCollapsed] = useState(false);
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [updatingTrigger, setUpdatingTrigger] = useState<string | null>(null);
+    const [deletingTrigger, setDeletingTrigger] = useState<string | null>(null);
 
     const fetchData = useCallback(async () => {
         try {
@@ -102,7 +106,16 @@ export function AutomatedRunsBanner({ agentId }: AutomatedRunsBannerProps) {
 
             // Fetch triggers for this agent
             const triggerData = await api.getTriggers(agentId);
-            const agentTriggers = (triggerData.triggers || []) as Trigger[];
+            const rawTriggers = triggerData.triggers || [];
+            const agentTriggers: Trigger[] = rawTriggers.map((t: any) => ({
+                id: t._id || t.id,
+                name: t.name || 'Trigger',
+                type: t.type as 'schedule' | 'webhook' | 'manual',
+                enabled: !!t.enabled,
+                cronExpression: t.cronExpression,
+                webhookUrl: t.webhookUrl || t.config?.source,
+            }));
+
             const automatedTriggers = agentTriggers.filter(
                 (t) => t.type === 'schedule' || t.type === 'webhook'
             );
@@ -131,6 +144,34 @@ export function AutomatedRunsBanner({ agentId }: AutomatedRunsBannerProps) {
             setLoading(false);
         }
     }, [agentId]);
+
+    const toggleTrigger = async (trigger: Trigger) => {
+        try {
+            setUpdatingTrigger(trigger.id);
+            await api.toggleTrigger(trigger.id);
+            setTriggers((prev) =>
+                prev.map((t) =>
+                    t.id === trigger.id ? { ...t, enabled: !t.enabled } : t
+                )
+            );
+        } catch (e) {
+            console.error('Failed to toggle trigger:', e);
+        } finally {
+            setUpdatingTrigger(null);
+        }
+    };
+
+    const deleteTrigger = async (triggerId: string) => {
+        try {
+            setDeletingTrigger(triggerId);
+            await api.deleteTrigger(triggerId);
+            setTriggers((prev) => prev.filter((t) => t.id !== triggerId));
+        } catch (e) {
+            console.error('Failed to delete trigger:', e);
+        } finally {
+            setDeletingTrigger(null);
+        }
+    };
 
     useEffect(() => {
         fetchData();
@@ -203,32 +244,70 @@ export function AutomatedRunsBanner({ agentId }: AutomatedRunsBannerProps) {
                             <div className="flex flex-wrap gap-2">
                                 {scheduleTriggers.map((t) => (
                                     <div
-                                        key={t._id}
-                                        className="flex items-center gap-1.5 bg-orange-500/5 dark:bg-orange-500/10 border border-orange-500/10 dark:border-orange-500/20 rounded-lg px-2.5 py-1.5"
+                                        key={t.id}
+                                        className={`flex items-center gap-2 border rounded-lg pl-2.5 pr-1.5 py-1.5 transition-colors ${t.enabled
+                                            ? 'bg-orange-500/5 dark:bg-orange-500/10 border-orange-500/10 dark:border-orange-500/20'
+                                            : 'bg-gray-500/5 dark:bg-gray-500/10 border-gray-500/10 dark:border-gray-500/20 grayscale opacity-70'
+                                            }`}
                                     >
-                                        <Clock weight="bold" size={12} className="text-orange-400" />
-                                        <span className="text-[11px] font-semibold text-orange-600 dark:text-orange-300">
+                                        <Clock weight="bold" size={12} className={t.enabled ? "text-orange-400" : "text-gray-400"} />
+                                        <span className={`text-[11px] font-semibold ${t.enabled ? 'text-orange-600 dark:text-orange-300' : 'text-gray-500 dark:text-gray-400'}`}>
                                             {t.cronExpression ? describeCron(t.cronExpression) : 'Schedule'}
                                         </span>
-                                        <span
-                                            className={`w-1.5 h-1.5 rounded-full ${t.enabled ? 'bg-emerald-500' : 'bg-gray-400'
-                                                }`}
-                                        />
+                                        <button
+                                            onClick={() => toggleTrigger(t)}
+                                            disabled={updatingTrigger === t.id}
+                                            className={`relative inline-flex h-3.5 w-6 items-center rounded-full transition-colors focus:outline-none ${t.enabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
+                                                } ${updatingTrigger === t.id ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                            title={t.enabled ? "Disable trigger" : "Enable trigger"}
+                                        >
+                                            <span
+                                                className={`inline-block h-2 w-2 transform rounded-full bg-white transition-transform ${t.enabled ? 'translate-x-[14px]' : 'translate-x-[2px]'
+                                                    }`}
+                                            />
+                                        </button>
+                                        <button
+                                            onClick={() => deleteTrigger(t.id)}
+                                            disabled={deletingTrigger === t.id}
+                                            className="ml-1 p-1 rounded-md hover:bg-red-500/10 text-gray-400 hover:text-red-500 transition-colors"
+                                            title="Delete trigger"
+                                        >
+                                            <Trash weight="bold" size={12} />
+                                        </button>
                                     </div>
                                 ))}
                                 {webhookTriggers.map((t) => (
                                     <div
-                                        key={t._id}
-                                        className="flex items-center gap-1.5 bg-violet-500/5 dark:bg-violet-500/10 border border-violet-500/10 dark:border-violet-500/20 rounded-lg px-2.5 py-1.5"
+                                        key={t.id}
+                                        className={`flex items-center gap-2 border rounded-lg pl-2.5 pr-1.5 py-1.5 transition-colors ${t.enabled
+                                            ? 'bg-violet-500/5 dark:bg-violet-500/10 border-violet-500/10 dark:border-violet-500/20'
+                                            : 'bg-gray-500/5 dark:bg-gray-500/10 border-gray-500/10 dark:border-gray-500/20 grayscale opacity-70'
+                                            }`}
                                     >
-                                        <LinkIcon weight="bold" size={12} className="text-violet-400" />
-                                        <span className="text-[11px] font-semibold text-violet-600 dark:text-violet-300">
-                                            {t.config?.source || 'Webhook'}
+                                        <LinkIcon weight="bold" size={12} className={t.enabled ? "text-violet-400" : "text-gray-400"} />
+                                        <span className={`text-[11px] font-semibold ${t.enabled ? 'text-violet-600 dark:text-violet-300' : 'text-gray-500 dark:text-gray-400'}`}>
+                                            {t.webhookUrl || 'Webhook'}
                                         </span>
-                                        <span
-                                            className={`w-1.5 h-1.5 rounded-full ${t.enabled ? 'bg-emerald-500' : 'bg-gray-400'
-                                                }`}
-                                        />
+                                        <button
+                                            onClick={() => toggleTrigger(t)}
+                                            disabled={updatingTrigger === t.id}
+                                            className={`relative inline-flex h-3.5 w-6 items-center rounded-full transition-colors focus:outline-none ${t.enabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'
+                                                } ${updatingTrigger === t.id ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                            title={t.enabled ? "Disable trigger" : "Enable trigger"}
+                                        >
+                                            <span
+                                                className={`inline-block h-2 w-2 transform rounded-full bg-white transition-transform ${t.enabled ? 'translate-x-[14px]' : 'translate-x-[2px]'
+                                                    }`}
+                                            />
+                                        </button>
+                                        <button
+                                            onClick={() => deleteTrigger(t.id)}
+                                            disabled={deletingTrigger === t.id}
+                                            className="ml-1 p-1 rounded-md hover:bg-red-500/10 text-gray-400 hover:text-red-500 transition-colors"
+                                            title="Delete trigger"
+                                        >
+                                            <Trash weight="bold" size={12} />
+                                        </button>
                                     </div>
                                 ))}
                             </div>
