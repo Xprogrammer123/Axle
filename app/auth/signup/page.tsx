@@ -467,7 +467,7 @@ const Page = () => {
                 <div className="h-[1px] bg-dark/10 dark:bg-white/10 flex-1" />
               </div>
             </StaggerItem>
-
+{/*
             <StaggerItem>
               <Button
                 type="button"
@@ -496,6 +496,7 @@ const Page = () => {
                 </span>
               </Button>
             </StaggerItem>
+            */}
           </form>
 
           <StaggerItem>
