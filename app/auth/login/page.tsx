@@ -469,7 +469,6 @@ const Page = () => {
                 Login
               </Button>
             </StaggerItem>
-
             <StaggerItem>
               <div className="flex items-center gap-3 w-full mt-4">
                 <div className="h-[1px] bg-dark/10 dark:bg-white/10 flex-1" />
@@ -478,7 +477,25 @@ const Page = () => {
               </div>
             </StaggerItem>
 
-           
+            <StaggerItem>
+              <Button
+                type="button"
+                onClick={onGoogleLogin}
+                className="w-full bg-white dark:bg-white/5 border border-dark/10 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10 transition-all duration-200 rounded-full py-3 flex items-center justify-center gap-3 group"
+                loading={googleloading}
+              >
+                <Image
+                  src="/google.svg"
+                  alt="Google"
+                  width={20}
+                  height={20}
+                  className="opacity-70 group-hover:opacity-100 transition-opacity"
+                />
+                <span className="text-sm font-medium text-dark/70 dark:text-white/80 group-hover:text-dark dark:group-hover:text-white">
+                  Continue with Google
+                </span>
+              </Button>
+            </StaggerItem>
           </form>
 
           <StaggerItem>
