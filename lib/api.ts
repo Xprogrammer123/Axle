@@ -416,13 +416,14 @@ class ApiClient {
     }>("/billing/status");
   }
 
-  async createCheckout(plan: string, discountCode?: string) {
-    console.log("createCheckout payload:", { plan, discountCode });
+  async createCheckout(plan: string, discountCode?: string, successUrl?: string) {
+    console.log("createCheckout payload:", { plan, discountCode, successUrl });
     return this.request<{ url: string }>("/billing/checkout", {
       method: "POST",
       body: JSON.stringify({
         plan,
         ...(discountCode && { discountCode }),
+        ...(successUrl && { successUrl }),
       }),
     });
   }
@@ -454,7 +455,7 @@ class ApiClient {
     }>("/billing/credits/packages");
   }
 
-  async createCreditsCheckout(packageId: string) {
+  async createCreditsCheckout(packageId: string, successUrl?: string) {
     return this.request<{
       url: string;
       packageDetails: {
@@ -464,7 +465,7 @@ class ApiClient {
       };
     }>("/billing/credits/checkout", {
       method: "POST",
-      body: JSON.stringify({ packageId }),
+      body: JSON.stringify({ packageId, ...(successUrl && { successUrl }) }),
     });
   }
 

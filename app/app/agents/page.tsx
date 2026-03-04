@@ -19,6 +19,7 @@ import { Card } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { getAgentLimit, getNextTierName } from "@/lib/planLimits";
 import { safeFormatDistanceToNow } from "@/lib/utils";
+import { usePlan } from "@/context/PlanContext";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/utils";
 import { RefreshCw } from "lucide-react";
@@ -31,16 +32,19 @@ export default function AgentsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [agentTriggers, setAgentTriggers] = useState<Record<string, any[]>>({});
   const [userPlan, setUserPlan] = useState<string>('free');
+  const { plan: contextPlan } = usePlan();
   const [showCreateDropdown, setShowCreateDropdown] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     fetchAgents();
-    api.getBillingStatus().then((subData) => {
-      setUserPlan(subData?.plan || 'free');
-    }).catch(() => setUserPlan('free'));
   }, []);
+
+  // Sync plan from context whenever it updates
+  useEffect(() => {
+    setUserPlan(contextPlan || 'free');
+  }, [contextPlan]);
 
   const fetchAgents = async () => {
     try {
