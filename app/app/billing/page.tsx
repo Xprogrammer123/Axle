@@ -6,7 +6,8 @@ import { api } from "@/lib/api";
 import { PlusIcon, Crown, Lock, Ticket } from "@phosphor-icons/react";
 import { getCreditLimit, getNextTierName } from "@/lib/planLimits";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { usePlan } from "@/context/PlanContext";
 
 export const staticPlans = [
   {
@@ -59,9 +60,13 @@ export const staticPlans = [
 
 const page = () => {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { plan: contextPlan, credits: contextCredits, creditsLimit: contextCreditsLimit, refresh: refreshPlan } = usePlan();
   const coupon = searchParams.get("coupon");
+  const checkoutStatus = searchParams.get("checkout");
 
   const [loading, setLoading] = useState(true);
+  const [successBanner, setSuccessBanner] = useState(false);
   const [subscription, setSubscription] = useState<any | null>(null);
   const [plans, setPlans] = useState<any[]>(staticPlans);
   const [creditHistory, setCreditHistory] = useState<any[]>([]);
@@ -71,28 +76,46 @@ const page = () => {
   const [customCredits, setCustomCredits] = useState<string>("");
   const [checkingOut, setCheckingOut] = useState(false);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [subData, historyData] = await Promise.all([
-          api.getBillingStatus(),
-          api.getCreditHistory().catch(() => ({ history: [] }))
-        ]);
-        setSubscription(subData);
-        if (historyData?.history) {
-          setCreditHistory(historyData.history);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
+  const loadBillingData = async () => {
+    setLoading(true);
+    try {
+      const [subData, historyData] = await Promise.all([
+        api.getBillingStatus(),
+        api.getCreditHistory().catch(() => ({ history: [] }))
+      ]);
+      setSubscription(subData);
+      if (historyData?.history) {
+        setCreditHistory(historyData.history);
       }
-    };
-    load();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadBillingData();
   }, []);
 
-  const activeCredits = subscription?.credits ?? 0;
-  const activePlan = subscription?.plan || "free";
+  // Handle return from Polar checkout
+  useEffect(() => {
+    if (checkoutStatus === "success") {
+      setSuccessBanner(true);
+      // Re-fetch billing status to reflect the new plan — also refreshes global context
+      loadBillingData();
+      refreshPlan();
+      // Clean up the URL so a refresh doesn't re-trigger this
+      router.replace("/app/billing");
+      // Auto-hide banner after 6 seconds
+      const t = setTimeout(() => setSuccessBanner(false), 6000);
+      return () => clearTimeout(t);
+    }
+  }, [checkoutStatus]);
+
+  // Use live data from context when local subscription hasn't loaded yet
+  const activeCredits = subscription?.credits ?? contextCredits ?? 0;
+  const activePlan = subscription?.plan || contextPlan || "free";
   const creditCap = useMemo(() => getCreditLimit(activePlan), [activePlan]);
 
   const allCreditPackages = useMemo(
@@ -132,11 +155,15 @@ const page = () => {
     return Number.isFinite(custom) && custom > creditCap;
   }, [customCredits, creditCap]);
 
+  const successUrl = typeof window !== "undefined"
+    ? `${window.location.origin}/app/billing?checkout=success`
+    : "/app/billing?checkout=success";
+
   const handleUpgrade = async (planId: string) => {
     console.log("handleUpgrade called with planId:", planId);
     setCheckingOut(true);
     try {
-      const { url } = await api.createCheckout(planId, coupon || undefined);
+      const { url } = await api.createCheckout(planId, coupon || undefined, successUrl);
       window.location.href = url;
     } catch (e) {
       console.error(e);
@@ -152,7 +179,7 @@ const page = () => {
         throw new Error("Invalid credit package selected.");
       }
 
-      const { url } = await api.createCreditsCheckout(selectedPkg.id);
+      const { url } = await api.createCreditsCheckout(selectedPkg.id, successUrl);
       window.location.href = url;
     } catch (e) {
       console.error(e);
@@ -165,6 +192,18 @@ const page = () => {
   return (
     <div className="h-full pt-20 overflow-y-auto relative gap-7 flex flex-col w-full p-10 max-w-6xl mx-auto">
       <div className="bg-dark/15 dark:bg-white/7 w-2/3 mx-auto absolute -top-20 rounded-full blur-[100px] left-0 right-0 h-32"></div>
+
+      {successBanner && (
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+          <div className="bg-emerald-500 text-white p-2 rounded-lg">
+            <Crown weight="fill" className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="font-bold text-dark dark:text-white">You&apos;re all set!</p>
+            <p className="text-xs text-dark/60 dark:text-white/60">Your plan has been upgraded. Credits and limits have been updated.</p>
+          </div>
+        </div>
+      )}
 
       {coupon && (
         <div className="bg-accent/10 border border-accent/20 rounded-2xl p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
@@ -483,7 +522,7 @@ const page = () => {
                     </p>
                   )}
                 </div>
-               ) : null}
+              ) : null}
 
               <div className="flex gap-2 mt-4">
                 <Button

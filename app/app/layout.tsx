@@ -10,6 +10,7 @@ import { OnboardingTrigger } from "@/components-beta/OnboardingTrigger";
 import MobileOnboarding from "@/components-beta/MobileOnboarding";
 import { api } from "@/lib/api";
 import { SlideIn, FadeIn } from "@/components/ui/animations";
+import { PlanProvider } from "@/context/PlanContext";
 
 
 export default function AppLayout({
@@ -69,21 +70,23 @@ export default function AppLayout({
   }
 
   const content = (
-    <div className="text-dark bg-surface dark:bg-[#0a0a0a] dark:text-dark-light flex w-screen h-screen">
-      {!isMobile && !user?.hasCompletedOnboarding && <OnboardingTrigger />}
-      <MobileNav />
-      <SlideIn direction="right" duration={0.6} className="h-full z-20">
-        <Sidebar />
-      </SlideIn>
-      <div className="flex bg-background dark:bg-[#0e0e0e] w-screen md:w-[85%] md:m-2 md:rounded-l-xl border border-white/3 border-r-0 md:mr-0 flex-col overflow-hidden">
-        <SlideIn direction="down" duration={0.6} delay={0.2} className="w-full">
-          <Header />
+    <PlanProvider>
+      <div className="text-dark bg-surface dark:bg-[#0a0a0a] dark:text-dark-light flex w-screen h-screen">
+        {!isMobile && !user?.hasCompletedOnboarding && <OnboardingTrigger />}
+        <MobileNav />
+        <SlideIn direction="right" duration={0.6} className="h-full z-20">
+          <Sidebar />
         </SlideIn>
-        <FadeIn duration={0.8} delay={0.4} className="h-full overflow-auto">
-          {children}
-        </FadeIn>
+        <div className="flex bg-background dark:bg-[#0e0e0e] w-screen md:w-[85%] md:m-2 md:rounded-l-xl border border-white/3 border-r-0 md:mr-0 flex-col overflow-hidden">
+          <SlideIn direction="down" duration={0.6} delay={0.2} className="w-full">
+            <Header />
+          </SlideIn>
+          <FadeIn duration={0.8} delay={0.4} className="h-full overflow-auto">
+            {children}
+          </FadeIn>
+        </div>
       </div>
-    </div>
+    </PlanProvider>
   );
 
   if (isMobile) {

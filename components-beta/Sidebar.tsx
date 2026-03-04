@@ -17,6 +17,7 @@ import Image from "next/image";
 import AccountSettingsModal from "./AccountSettingsModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
+import { usePlan } from "@/context/PlanContext";
 
 type ProfileData = {
   name?: string;
@@ -30,6 +31,7 @@ type ProfileData = {
 
 const Sidebar = () => {
   const pathname = usePathname();
+  const { plan: activePlan } = usePlan();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,9 +45,9 @@ const Sidebar = () => {
           name: profileData?.name || profileData?.email?.split("@")[0] || "User",
           email: profileData?.email || "",
           avatar: profileData?.avatar || profileData?.profileImageUrl || "/tayo.png",
-          plan: profileData?.plan || "free",
+          plan: profileData?.plan || activePlan || "free",
           tokensUsed: profileData?.credits ?? 0,
-          tokensTotal: profileData?.plan === "pro" ? 500 : 100, // Basic mapping, Modal will fetch precise limits
+          tokensTotal: profileData?.plan === "pro" ? 500 : 100,
           tokensPurchased: 0,
         });
       } catch (error) {

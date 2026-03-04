@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { api, clearToken } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { usePlan } from "@/context/PlanContext";
 
 type ProfileData = {
   name?: string;
@@ -24,30 +25,13 @@ type AccountSettingsModalProps = {
 
 const AccountSettingsModal = ({ profile, loading: initialLoading, onClose }: AccountSettingsModalProps) => {
   const router = useRouter();
-  const [subscription, setSubscription] = React.useState<any>(null);
-  const [fetching, setFetching] = React.useState(true);
+  const { plan: contextPlan, credits: contextCredits, creditsLimit: contextCreditsLimit, subscriptionCurrentPeriodEnd, loading: planLoading } = usePlan();
 
-  const loading = initialLoading || fetching;
+  const loading = initialLoading || planLoading;
 
-  React.useEffect(() => {
-    const fetchSubscription = async () => {
-      try {
-        setFetching(true);
-        const data = await api.getBillingStatus();
-        setSubscription(data);
-      } catch (error) {
-        console.error("Failed to fetch billing status:", error);
-      } finally {
-        setFetching(false);
-      }
-    };
-
-    fetchSubscription();
-  }, []);
-
-  const credits = subscription?.credits ?? profile?.tokensUsed ?? 0;
-  const creditsLimit = subscription?.creditsLimit ?? profile?.tokensTotal ?? 1000;
-  const plan = subscription?.plan || profile?.plan || "Free";
+  const credits = contextCredits ?? profile?.tokensUsed ?? 0;
+  const creditsLimit = contextCreditsLimit ?? profile?.tokensTotal ?? 1000;
+  const plan = contextPlan || profile?.plan || "free";
   const usedPercentage = creditsLimit > 0 ? ((creditsLimit - credits) / creditsLimit) * 100 : 0;
 
   const handleLogout = async () => {
@@ -113,7 +97,7 @@ const AccountSettingsModal = ({ profile, loading: initialLoading, onClose }: Acc
               {loading ? (
                 <div className="w-32 h-3 bg-dark/10 dark:bg-white/10 rounded animate-pulse" />
               ) : (
-                <>Plan: <span className="capitalize ml-1 mr-1">{plan}</span> • {subscription?.subscriptionCurrentPeriodEnd ? `Resets: ${new Date(subscription.subscriptionCurrentPeriodEnd).toLocaleDateString()}` : "Free Plan"}</>
+                <>Plan: <span className="capitalize ml-1 mr-1">{plan}</span> • {subscriptionCurrentPeriodEnd ? `Resets: ${new Date(subscriptionCurrentPeriodEnd).toLocaleDateString()}` : "Free Plan"}</>
               )}
             </div>
           </motion.div>
