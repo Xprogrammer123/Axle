@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components-beta/Button";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import { PlusIcon, Crown, Lock, Ticket } from "@phosphor-icons/react";
 import { getCreditLimit, getNextTierName } from "@/lib/planLimits";
@@ -76,8 +76,6 @@ const page = () => {
   const [customCredits, setCustomCredits] = useState<string>("");
   const [checkingOut, setCheckingOut] = useState(false);
 
-  const poller = useRef<ReturnType<typeof setInterval> | null>(null);
-
   const loadBillingData = async () => {
     setLoading(true);
     try {
@@ -100,49 +98,19 @@ const page = () => {
     loadBillingData();
   }, []);
 
-  // Handle return from Polar checkout — poll until webhook has updated the plan
+  // Handle return from Polar checkout
   useEffect(() => {
-    if (checkoutStatus !== "success") return;
-
-    // Immediately clean the URL so a refresh doesn't re-trigger this
-    router.replace("/app/billing");
-
-    let attempts = 0;
-    const MAX_ATTEMPTS = 10; // 10 × 3s = 30s max
-    const INTERVAL_MS = 3000;
-
-    const poll = async () => {
-      attempts++;
-      try {
-        const data = await api.getBillingStatus();
-        const isPlanUpgraded = data.plan && data.plan !== "free";
-        if (isPlanUpgraded) {
-          // Plan updated — refresh everything and show success banner
-          setSubscription(data);
-          refreshPlan();
-          setSuccessBanner(true);
-          const t = setTimeout(() => setSuccessBanner(false), 6000);
-          clearInterval(poller.current!);
-          return () => clearTimeout(t);
-        }
-      } catch { /* ignore */ }
-
-      if (attempts >= MAX_ATTEMPTS) {
-        // Webhook didn't arrive in time; do a final refresh anyway
-        loadBillingData();
-        refreshPlan();
-        setSuccessBanner(true);
-        const t = setTimeout(() => setSuccessBanner(false), 6000);
-        clearInterval(poller.current!);
-        return () => clearTimeout(t);
-      }
-    };
-
-    // Run once immediately, then on interval
-    poll();
-    poller.current = setInterval(poll, INTERVAL_MS);
-
-    return () => clearInterval(poller.current!);
+    if (checkoutStatus === "success") {
+      setSuccessBanner(true);
+      // Re-fetch billing status to reflect the new plan — also refreshes global context
+      loadBillingData();
+      refreshPlan();
+      // Clean up the URL so a refresh doesn't re-trigger this
+      router.replace("/app/billing");
+      // Auto-hide banner after 6 seconds
+      const t = setTimeout(() => setSuccessBanner(false), 6000);
+      return () => clearTimeout(t);
+    }
   }, [checkoutStatus]);
 
   // Use live data from context when local subscription hasn't loaded yet
